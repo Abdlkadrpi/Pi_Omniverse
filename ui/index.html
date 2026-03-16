@@ -1,0 +1,32 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pi-Omniverse Dashboard</title>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+</head>
+<body style="background:#1a1a1a;color:#ffd700;text-align:center;padding-top:50px;font-family:Arial;">
+    <h1>🛡️ Pi-Omniverse Control Center</h1>
+    <p>City Status: <span style="color:#00ff00;">Active ✅</span></p>
+
+    <div style="border:2px solid #ffd700;display:inline-block;padding:20px;border-radius:15px;background:#252525;">
+        <h2>💰 My Profits: 0.4750 $UNIT</h2>
+        <button id="pi_login" style="background:#ffd700;color:#000;border:none;padding:10px 20px;font-weight:bold;cursor:pointer;border-radius:5px;">
+            Connect Pi Wallet
+        </button>
+    </div>
+
+    <script>
+        const Pi = window.Pi;
+        Pi.init({ version: "2.0", sandbox: true });
+
+        document.getElementById('pi_login').onclick = function() {
+            Pi.authenticate(['payments', 'username']).then(function(auth) {
+                alert("Welcome " + auth.user.username + " to your Digital City!");
+            }).catch(function(error) {
+                console.error(error);
+                alert("Please open this inside Pi Browser to connect your wallet.");
+            });
+        };
+    </script>
+</body>
+</html>
