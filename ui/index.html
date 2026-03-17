@@ -9,9 +9,9 @@
         :root { --gold: #ffd700; --dark: #0a0a0a; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; }
         .omni-card { border: 1px solid var(--gold); background: rgba(20,20,20,0.9); padding: 50px; border-radius: 30px; text-align: center; box-shadow: 0 0 50px rgba(255, 215, 0, 0.2); }
-        h1 { color: var(--gold); letter-spacing: 5px; text-shadow: 0 0 10px var(--gold); }
+        h1 { color: var(--gold); letter-spacing: 5px; }
         .btn-connect { background: var(--gold); color: black; border: none; padding: 15px 45px; font-weight: 900; border-radius: 10px; cursor: pointer; transition: 0.4s; margin-top: 20px; text-transform: uppercase; }
-        .btn-connect:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--gold); }
+        .btn-connect:active { transform: scale(0.95); opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -20,22 +20,37 @@
         <p style="opacity: 0.6;">Decentralized Social Intelligence</p>
         <hr style="border: 0.5px solid #333; margin: 20px 0;">
         <h2 id="user-display">IDENTITY: UNKNOWN</h2>
+        <p id="debug-info" style="font-size: 0.7rem; color: #666;"></p>
         <button class="btn-connect" id="btn-auth">Establish Link</button>
     </div>
 
     <script>
         const Pi = window.Pi;
-        Pi.init({ version: "2.0", sandbox: true });
+        
+        // محاولة تهيئة النظام مع إظهار الأخطاء
+        try {
+            Pi.init({ version: "2.0", sandbox: true });
+            document.getElementById('debug-info').innerText = "SDK Initialized";
+        } catch(e) {
+            document.getElementById('debug-info').innerText = "SDK Error: " + e.message;
+        }
 
         document.getElementById('btn-auth').onclick = async () => {
+            document.getElementById('debug-info').innerText = "Authenticating...";
             try {
+                // نستخدم مصفوفة الصلاحيات الأساسية
                 const auth = await Pi.authenticate(['username', 'payments'], (payment) => {
-                    console.log("Web3 Payment Protocol Active", payment);
+                    console.log("Payment flow active", payment);
                 });
+                
                 document.getElementById('user-display').innerText = "CITIZEN: " + auth.user.username.toUpperCase();
-                alert("Success! Welcome to Omniverse, " + auth.user.username);
+                document.getElementById('debug-info').innerText = "Link Secured ✅";
+                alert("Success! Welcome, " + auth.user.username);
             } catch (e) {
-                alert("Security Alert: Use Pi Browser for Web3 Authentication.");
+                console.error(e);
+                // إظهار الخطأ الحقيقي للمطور
+                document.getElementById('debug-info').innerText = "Auth Error: " + JSON.stringify(e);
+                alert("بروتوكول الربط فشل. تأكد أنك تفتح الرابط من داخل Pi Browser وأن الرابط مسجل تماماً في بوابة المطورين.");
             }
         };
     </script>
