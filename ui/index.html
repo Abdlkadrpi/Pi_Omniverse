@@ -7,52 +7,51 @@
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <style>
         :root { --gold: #ffd700; --dark: #0a0a0a; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; }
-        .omni-card { border: 1px solid var(--gold); background: rgba(20,20,20,0.9); padding: 50px; border-radius: 30px; text-align: center; box-shadow: 0 0 50px rgba(255, 215, 0, 0.2); }
-        h1 { color: var(--gold); letter-spacing: 5px; }
-        .btn-connect { background: var(--gold); color: black; border: none; padding: 15px 45px; font-weight: 900; border-radius: 10px; cursor: pointer; transition: 0.4s; margin-top: 20px; text-transform: uppercase; }
-        .btn-connect:active { transform: scale(0.95); opacity: 0.8; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .omni-card { border: 2px solid var(--gold); background: #111; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); }
+        .btn-connect { background: var(--gold); color: black; border: none; padding: 15px 35px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 10px; }
+        #debug { font-size: 0.7rem; color: #888; margin-top: 15px; background: #000; padding: 10px; border-radius: 5px; width: 80%; }
     </style>
 </head>
 <body>
     <div class="omni-card">
         <h1>OMNIVERSE HUB</h1>
-        <p style="opacity: 0.6;">Decentralized Social Intelligence</p>
-        <hr style="border: 0.5px solid #333; margin: 20px 0;">
         <h2 id="user-display">IDENTITY: UNKNOWN</h2>
-        <p id="debug-info" style="font-size: 0.7rem; color: #666;"></p>
-        <button class="btn-connect" id="btn-auth">Establish Link</button>
+        <button class="btn-connect" onclick="login()">ESTABLISH LINK</button>
+        <button style="background:transparent; color:#888; border:1px solid #444; padding:5px 10px; font-size:10px; cursor:pointer;" onclick="location.reload(true)">FORCE REFRESH</button>
+        <div id="debug">System Booting...</div>
     </div>
 
     <script>
         const Pi = window.Pi;
-        
-        // محاولة تهيئة النظام مع إظهار الأخطاء
-        try {
-            Pi.init({ version: "2.0", sandbox: true });
-            document.getElementById('debug-info').innerText = "SDK Initialized";
-        } catch(e) {
-            document.getElementById('debug-info').innerText = "SDK Error: " + e.message;
+        const debug = document.getElementById('debug');
+
+        async function initPi() {
+            try {
+                // تفعيل الـ Sandbox بشكل صريح
+                await Pi.init({ version: "2.0", sandbox: true });
+                debug.innerText = "Protocol Ready. Click the button.";
+            } catch (e) {
+                debug.innerText = "Init Error: " + e.message;
+            }
         }
 
-        document.getElementById('btn-auth').onclick = async () => {
-            document.getElementById('debug-info').innerText = "Authenticating...";
+        async function login() {
+            debug.innerText = "Requesting Blockchain Auth...";
             try {
-                // نستخدم مصفوفة الصلاحيات الأساسية
                 const auth = await Pi.authenticate(['username', 'payments'], (payment) => {
-                    console.log("Payment flow active", payment);
+                    console.log("Payment flow", payment);
                 });
-                
                 document.getElementById('user-display').innerText = "CITIZEN: " + auth.user.username.toUpperCase();
-                document.getElementById('debug-info').innerText = "Link Secured ✅";
-                alert("Success! Welcome, " + auth.user.username);
+                debug.innerText = "Access Granted! Connection Secure.";
             } catch (e) {
+                debug.innerText = "Auth Failed: " + JSON.stringify(e);
                 console.error(e);
-                // إظهار الخطأ الحقيقي للمطور
-                document.getElementById('debug-info').innerText = "Auth Error: " + JSON.stringify(e);
-                alert("بروتوكول الربط فشل. تأكد أنك تفتح الرابط من داخل Pi Browser وأن الرابط مسجل تماماً في بوابة المطورين.");
             }
-        };
+        }
+
+        // تشغيل التهيئة فور تحميل الصفحة
+        window.onload = initPi;
     </script>
 </body>
 </html>
