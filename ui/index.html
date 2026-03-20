@@ -30,7 +30,7 @@
             msg.text = "مرحباً بك يا قائد عبد القادر. أنظمة أومني فيرس تحت أمرك. أنا المساعد الذكي، جاري ربط البيانات وتحليل الشبكة الآن.";
             msg.lang = 'ar-SA';
             msg.rate = 0.9;
-            window.speechSynthesis.speak(msg);
+            window.speechSynthesis.cancel(); setTimeout(() => { window.speechSynthesis.speak(msg); }, 200);
             
             // تأثير بصري عند التحدث
             document.querySelector('.ai-agent').style.animationDuration = '0.5s';
