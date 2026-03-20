@@ -1,3 +1,7 @@
+#!/bin/bash
+HTML_FILE="ui/index.html"
+
+cat << 'HTML' > $HTML_FILE
 <!DOCTYPE html>
 <html lang="ar">
 <head>
@@ -44,3 +48,9 @@
     </script>
 </body>
 </html>
+HTML
+
+git add .
+git commit -m "إطلاق المساعد الذكي وتحسين واجهة المستخدم"
+git push origin main
+echo "✅ تم إطلاق المساعد الذكي! حدث الصفحة في هاتفك الآن."
