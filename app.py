@@ -1,21 +1,22 @@
-import requests
 from flask import Flask, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
-
-# هذا هو محرك الذكاء الاصطناعي المالي (Agent 4)
-PI_API_URL = "https://api.minepi.com/v2"
-# سنقوم بحقن الـ API Key الخاص بك هنا لاحقاً بشكل آمن
-PLATFORM_API_KEY = "YOUR_API_KEY_HERE" 
+CORS(app)  # هذا السطر هو "الجسر" الذي يسمح لهاتفك بالاتصال باللابتوب
 
 @app.route('/')
 def home():
-    return "Omniverse Hub AI Engine is Running..."
+    return jsonify({
+        "status": "Online",
+        "city": "Omniverse Hub",
+        "commander": "Abdlkadr",
+        "message": "Welcome to the Smart City Backend V1.0"
+    })
 
-@app.route('/check_status')
-def status():
-    # دالة لفحص اتصال الذكاء الاصطناعي بشبكة باي
-    return jsonify({"status": "AI Agent Active", "network": "Pi Testnet"})
+@app.route('/api/status')
+def get_status():
+    # هنا سنربط لاحقاً حالة الـ Pi Node الخاص بك
+    return jsonify({"node_status": "Active", "sync_level": "99%"})
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
