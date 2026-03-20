@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+      const Pi = window.Pi;
+      Pi.init({ version: "2.0" });
+      async function authenticateUser() {
+        try {
+          const user = await Pi.authenticate(["username", "payments", "wallet_address"], (payment) => {});
+          console.log("Welcome Commander: " + user.user.username);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      window.onload = authenticateUser;
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🛡️ Omniverse Hub | Web3 Core</title>
