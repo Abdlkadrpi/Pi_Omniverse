@@ -1,3 +1,7 @@
+#!/bin/bash
+HTML_FILE="ui/index.html"
+
+cat << 'HTML' > $HTML_FILE
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -65,3 +69,9 @@
     </script>
 </body>
 </html>
+HTML
+
+git add .
+git commit -m "إضافة الصوت الذكي وتحسين الربط الأمني"
+git push origin main
+echo "✅ تم إطلاق النسخة الصوتية! حدث الصفحة في متصفح باي واضغط على الكرة."
