@@ -1,3 +1,8 @@
+#!/bin/bash
+HTML_FILE="ui/index.html"
+NEW_IP="10.91.114.153"
+
+cat << 'HTML' > $HTML_FILE
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -60,3 +65,9 @@
     </script>
 </body>
 </html>
+HTML
+
+git add .
+git commit -m "تحديث الـ IP الجديد وإضافة لوحة التحكم الاحترافية"
+git push origin main
+echo "✅ تم التحديث بنجاح! جرب الآن في متصفح باي."
