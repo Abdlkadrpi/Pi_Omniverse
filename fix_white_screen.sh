@@ -1,3 +1,8 @@
+#!/bin/bash
+HTML_FILE="ui/index.html"
+
+# إعادة بناء الملف بهيكل نظيف جداً ومتوافق مع متصفح باي
+cat << 'HTML' > $HTML_FILE
 <!DOCTYPE html>
 <html lang="ar">
 <head>
@@ -37,3 +42,10 @@
     </script>
 </body>
 </html>
+HTML
+
+# الرفع لـ GitHub
+git add .
+git commit -m "إصلاح الشاشة البيضاء وتحسين التوافق مع متصفح باي"
+git push origin main
+echo "✅ تم الإصلاح! انتظر دقيقة ثم حدث الصفحة في هاتفك."
