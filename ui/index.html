@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omniverse Hub | Final Sync</title>
+    <title>Omniverse Hub | Web3 Ready</title>
     <style>
         body { background: #080a0f; color: white; font-family: sans-serif; text-align: center; margin: 0; padding-top: 30px; }
         .logo { font-size: 2.2rem; font-weight: bold; color: #ffcc00; text-shadow: 0 0 20px #ffcc00; margin-bottom: 20px; letter-spacing: 2px; }
@@ -14,7 +14,7 @@
         .card-title { font-size: 0.75rem; color: #ffcc00; margin-bottom: 10px; }
         .card-val { font-size: 1.2rem; font-weight: bold; }
         #server-status { margin-top: 25px; font-weight: bold; padding: 10px; border-radius: 10px; display: inline-block; }
-        .btn-fix { display: none; background: #ff4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; margin-top: 15px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
+        .btn-fix { display: none; background: #ffcc00; color: #000; border: none; padding: 12px 25px; border-radius: 10px; margin-top: 15px; cursor: pointer; text-decoration: none; font-size: 1rem; font-weight: bold; box-shadow: 0 0 15px #ffcc00; }
     </style>
 </head>
 <body>
@@ -32,11 +32,16 @@
         </div>
     </div>
 
-    <div id="server-status" style="color: #ff4444;">🔴 السيرفر: غير متصل</div>
+    <div id="server-status" style="color: #ff4444;">🔴 السيرفر: جاري الاتصال...</div>
     <br>
-    <a id="fix-link" href="http://10.91.114.153:5000" target="_blank" class="btn-fix">⚠️ اضغط هنا لتفعيل الاتصال المحلي</a>
+    <a id="fix-link" href="#" target="_blank" class="btn-fix">🛡️ اضغط هنا لتفويض الاتصال الآمن</a>
 
     <script>
+        // ضع الرابط العالمي الجديد هنا بين القوسين
+        const API_URL = "https://be7de7e2638c64.lhr.life"; 
+
+        document.getElementById('fix-link').href = API_URL;
+
         function speak() {
             const msg = new SpeechSynthesisUtterance("مرحباً بك يا قائد عبد القادر. أنظمة أومني فيرس في انتظار المزامنة النهائية.");
             msg.lang = 'ar-SA';
@@ -45,22 +50,20 @@
 
         async function checkServer() {
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 1500);
-                
-                const res = await fetch('http://10.91.114.153:5000/', { signal: controller.signal });
-                if(res.ok) {
-                    document.getElementById('server-status').innerText = "✅ السيرفر المحلي: متصل بنجاح";
+                const res = await fetch(API_URL + '/');
+                if(res.ok || res.status === 404) { // 404 تعني أن السيرفر استجاب وهذا جيد
+                    document.getElementById('server-status').innerText = "✅ السيرفر العالمي: متصل";
                     document.getElementById('server-status').style.color = "#00ff00";
                     document.getElementById('node-status').innerText = "Synced ✅";
                     document.getElementById('node-status').style.color = "#00ff00";
                     document.getElementById('fix-link').style.display = "none";
                 }
             } catch (e) {
+                document.getElementById('server-status').innerText = "🔴 السيرفر: غير متصل";
                 document.getElementById('fix-link').style.display = "inline-block";
             }
         }
-        setInterval(checkServer, 2000);
+        setInterval(checkServer, 3000);
         checkServer();
     </script>
 </body>
