@@ -1,13 +1,8 @@
 #!/bin/bash
-NEW_URL="https://quiet-needles-play.loca.lt"
-FILE_PATH="ui/index.html"
-
-echo "🔄 Updating API URL..."
-sed -i "s|const API_URL = \".*\";|const API_URL = \"$NEW_URL\";|g" "$FILE_PATH"
-
-echo "📤 Pushing to GitHub..."
+echo "🌐 Paste Ngrok URL:"
+read NEW_URL
+sed -i "s|const API_URL = \".*\";|const API_URL = \"$NEW_URL\";|g" ui/index.html
 git add .
-git commit -m "Auto-sync with localtunnel"
+git commit -m "Update Tunnel: $NEW_URL"
 git push origin main
-
-echo "✅ Done! Check your Pi Browser now."
+echo "🚀 DONE! Check Pi Browser."
