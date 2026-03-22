@@ -16,6 +16,7 @@
         #server-status { margin-top: 25px; font-weight: bold; padding: 10px; border-radius: 10px; display: inline-block; }
         .btn-fix { display: none; background: #ffcc00; color: #000; border: none; padding: 12px 25px; border-radius: 10px; margin-top: 15px; cursor: pointer; text-decoration: none; font-size: 1rem; font-weight: bold; box-shadow: 0 0 15px #ffcc00; }
     </style>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 <body>
     <div class="ai-agent" onclick="speak()"></div>
@@ -66,5 +67,39 @@
         setInterval(checkServer, 3000);
         checkServer();
     </script>
+
+    <script>
+    const Pi = window.Pi;
+    Pi.init({ version: "2.0", sandbox: true });
+
+    async function authPi() {
+        try {
+            console.log("Requesting Pi Auth...");
+            const scopes = ['username', 'payments'];
+            const auth = await Pi.authenticate(scopes, (payment) => {});
+            
+            // تحديث الواجهة باسم القائد عبد القادر الحقيقي من Pi
+            const userElement = document.querySelector('.user-name') || document.body;
+            if(userElement) {
+                userElement.innerHTML = "Welcome, @" + auth.user.username;
+                userElement.style.color = "#00ffcc";
+            }
+            alert("Welcome to Omniverse, @" + auth.user.username);
+            
+            // إرسال البيانات للسيرفر المحلي في طرابلس
+            fetch("https://kind-insects-hunt.loca.lt/register", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: auth.user.username, uid: auth.user.uid })
+            }).catch(e => console.log("Local server offline, but Pi Auth Success!"));
+
+        } catch (err) {
+            console.error("Auth failed:", err);
+        }
+    }
+    // تشغيل التوثيق تلقائياً
+    authPi();
+    </script>
+    
 </body>
 </html>
