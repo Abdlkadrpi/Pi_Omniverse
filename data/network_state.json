@@ -1,0 +1,11 @@
+{
+    "assets": [
+        {
+            "name": "Tripoli_Smart_Unit",
+            "value": 100,
+            "owner": "Test_User",
+            "asset_id": "ASSET_0b6c5da07e26"
+        }
+    ],
+    "connections": []
+}

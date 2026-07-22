@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white p-4">
+    <div class="max-w-md mx-auto bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
+        <h1 class="text-2xl text-yellow-500 font-bold mb-4 text-center">OMNIVERSE HUB - SURGICAL FIX</h1>
+        
+        <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition">CONNECT PI</button>
+        
+        <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-4 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
+
+        <div class="space-y-4">
+            <input id="assetName" placeholder="اسم الأصل (مثال: سيارة هونداي 2012)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+            <input id="assetVal" type="number" placeholder="القيمة (Pi)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+            <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition">PAY & REGISTER</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = "https://pi-omniverse-1.onrender.com"; 
+        const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
+        let currentUser = null;
+
+        Pi.init({ version: "2.0", sandbox: true, clientId: CLIENT_ID });
+
+        async function connectPi() {
+            try {
+                // التدخل الجراحي: تمرير دالة فارغة تماماً لـ onIncompletePayment لمنع نافذة التعليق المنبثقة من الإزعاج
+                const auth = await Pi.authenticate(['username', 'payments'], function(payment) {
+                    console.log("Bypassing stuck payment locally:", payment);
+                });
+                currentUser = auth.user;
+                document.getElementById('authBtn').innerText = "✅ " + currentUser.username;
+                alert("تم الاتصال بنجاح وتجاوز المعلقات بنجاح!");
+            } catch (err) { 
+                console.error("Auth Error:", err);
+                alert("خطأ في المصادقة: " + err.message);
+            }
+        }
+
+        async function forceResetPayments() {
+            try {
+                await fetch(`${API_BASE_URL}/api/force_cancel_all`);
+                localStorage.clear();
+                alert("تم تطهير السيرفر والذاكرة المحلية بنجاح. يرجى إعادة تحميل الصفحة أو إعادة فتح متصفح Pi بالكامل.");
+            } catch(e) {
+                alert("خطأ: " + e.message);
+            }
+        }
+
+        // دالة آمنة لمعالجة أي معاملات يتم إنشاؤها حديثاً فقط
+        function onIncompletePayment(payment) {
+            const paymentId = payment.identifier || payment.paymentId;
+            if (!paymentId) return;
+            fetch(`${API_BASE_URL}/api/approve_payment`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({paymentId: paymentId, userId: currentUser ? currentUser.uid : "unknown"})
+            }).catch(err => console.log(err));
+        }
+
+        async function processPayment() {
+            if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
+            const name = document.getElementById('assetName').value;
+            const val = parseFloat(document.getElementById('assetVal').value);
+
+            if (!name || !val) return alert("يرجى إدخال اسم الأصل والقيمة!");
+
+            Pi.createPayment({ amount: val, memo: name, metadata: { asset: name } }, {
+                onReadyForServerApproval: async (id) => {
+                    await fetch(`${API_BASE_URL}/api/approve_payment`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({paymentId: id, userId: currentUser.uid})
+                    });
+                },
+                onReadyForServerCompletion: async (id, txid) => {
+                    const res = await fetch(`${API_BASE_URL}/api/complete_payment`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({paymentId: id, txid: txid, asset_name: name, asset_value: val, owner: currentUser.uid})
+                    });
+                    if (res.ok) alert("تم إتمام العملية بنجاح وتسجيل الأصل في البلوكشين!");
+                    else alert("خطأ في إكمال الدفع على السيرفر.");
+                },
+                onCancel: (id) => alert("تم إلغاء العملية."),
+                onError: (e) => alert("خطأ SDK: " + e.message)
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+--- Omniverse Asset & RWA Registry (Tripoli Node) ---
+
+[Physical Assets]
+ASSET_001: HP-Gen11-Server | LOCATION: Tripoli-HQ | OWNER: Al-Ryada-Computers | STATUS: BACKING-LYO-TOKEN
+
+[Digital Intelligence Assets]
+ASSET_002: Ollama-Local-AI-Instance | STATUS: ACTIVE | ROLE: Sovereign-Decision-Making
+ASSET_003: Pi-Consensus-Engine | STATUS: SYNCING | ROLE: Ledger-Validation
+
+[Financial Backing]
+TOKEN_SYMBOL: LYO
+TOTAL_RESERVE_BACKING: Fixed-Assets-Registered-Above
+VALIDATION_NODE: GASOJABWJR2YZBCOBRXWTU2L62FUFNHK57U2LVFABY4W4NL6L25CTYLB
+
+--- End of Registry ---
