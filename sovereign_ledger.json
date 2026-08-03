@@ -1,0 +1,8 @@
+[
+    {
+        "transaction_id": "pi_test_payment_900_files",
+        "user_id": "developer_node_01",
+        "signature": "a1ae90c379287f1220f6077bdf1c960e1233db4f41e9178c8d52d84e2d913efc",
+        "status": "SEALED_AND_VERIFIED"
+    }
+]
