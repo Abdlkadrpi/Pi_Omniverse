@@ -12,15 +12,15 @@
         <h1 class="text-2xl text-yellow-500 font-bold mb-2 text-center">OMNIVERSE HUB</h1>
         <p class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - آمن ومحمي بجدار سيادي</p>
         
-        <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
+        <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI (MAINNET)</button>
         
         <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-6 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
 
         <div class="space-y-4 border-t border-zinc-800 pt-4">
-            <h2 class="text-sm font-bold text-yellow-400">تسجيل وتوثيق الأصول (Real-World Assets)</h2>
-            <input id="assetName" placeholder="اسم الأصل (مثال: سيارة هونداي 2012)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
-            <input id="assetVal" type="number" placeholder="القيمة بـ Pi" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
-            <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg">PAY & REGISTER</button>
+            <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (Mainnet RWA)</h2>
+            <input id="assetName" placeholder="اسم الأصل (مثال: عقار ذكي رقم 01)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+            <input id="assetVal" type="number" placeholder="القيمة بـ Pi الحقيقية" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+            <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg">PAY & REGISTER ON MAINNET</button>
         </div>
 
         <div class="mt-6 text-center">
@@ -33,15 +33,15 @@
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
 
-        // تهيئة Pi SDK مع معرّف التطبيق والوضع التجريبي
-        Pi.init({ version: "2.0", sandbox: true, clientId: CLIENT_ID });
+        // تفعيل الشبكة الرئيسية عبر جعل sandbox تساوي false
+        Pi.init({ version: "2.0", sandbox: false, clientId: CLIENT_ID });
 
         async function connectPi() {
             try {
                 const auth = await Pi.authenticate(['username', 'payments'], onIncompletePayment);
                 currentUser = auth.user;
                 document.getElementById('authBtn').innerText = "✅ " + currentUser.username;
-                alert("تم الاتصال بنجاح وتفعيل جلسة المستخدم الآمنة!");
+                alert("تم الاتصال بالشبكة الرئيسية (Mainnet) بنجاح!");
             } catch (err) { 
                 console.error("Auth Error:", err);
                 alert("خطأ في المصادقة: " + err.message);
@@ -58,7 +58,6 @@
             }
         }
 
-        // معالجة المدفوعات غير المكتملة تلقائياً عبر السيرفر
         function onIncompletePayment(payment) {
             const paymentId = payment.identifier || payment.paymentId;
             if (!paymentId) return;
@@ -76,7 +75,7 @@
 
             if (!name || !val) return alert("يرجى إدخال اسم الأصل والقيمة بشكل صحيح!");
 
-            Pi.createPayment({ amount: val, memo: name, metadata: { asset: name } }, {
+            Pi.createPayment({ amount: val, memo: name, metadata: { asset: name, type: "Mainnet_RWA" } }, {
                 onReadyForServerApproval: async (id) => {
                     await fetch(`${API_BASE_URL}/api/approve_payment`, {
                         method: 'POST',
@@ -90,7 +89,7 @@
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({paymentId: id, txid: txid, asset_name: name, asset_value: val, owner: currentUser.uid})
                     });
-                    if (res.ok) alert("تم إتمام العملية بنجاح وتوثيق الأصل تحت الحماية السيادية!");
+                    if (res.ok) alert("تم توثيق الأصل رسمياً على الشبكة الرئيسية للبلوكشين!");
                     else alert("خطأ في إكمال الدفع على السيرفر.");
                 },
                 onCancel: (id) => alert("تم إلغاء المعاملة."),
