@@ -89,7 +89,7 @@ def legal_policy():
     return render_template("legal.html")
 
 
-@app.route("/api/force_cancel_all", methods=["GET"])
+@app.route("/api/force_cancel_all", methods=["GET", "POST"])
 def force_cancel_all():
     try:
         with sqlite3.connect(DB_PATH) as conn:
@@ -125,7 +125,7 @@ def force_cancel_all():
             jsonify({
                 "status": "forced_cleaned_all",
                 "message": (
-                    "Local and remote sandbox payments cleared successfully under"
+                    "Local and remote payments cleared successfully under"
                     " sovereign security"
                 ),
             }),
@@ -245,7 +245,6 @@ def pi_webhook():
     try:
         data = request.get_json() or {}
         payment_id = data.get("paymentId") or data.get("payment_id") or "unknown_tx"
-        user_id = data.get("userId") or data.get("user_uid") or "anonymous"
         status = data.get("status", "COMPLETED")
 
         audit_result = compliance_engine.audit_transaction(
