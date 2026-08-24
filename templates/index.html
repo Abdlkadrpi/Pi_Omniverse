@@ -50,7 +50,7 @@
         }
 
         function onIncompletePayment(payment) {
-            console.log("Incomplete payment detected, processing...");
+            console.log("Incomplete payment detected, processing...", payment.identifier);
             approvePaymentOnServer(payment.identifier);
         }
 
@@ -59,9 +59,11 @@
                 const response = await fetch(`${API_BASE_URL}/api/approve_payment`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ paymentId: paymentId })
+                    body: JSON.stringify({ paymentId: paymentId, userId: currentUser ? currentUser.username : "unknown" })
                 });
-                return await response.json();
+                const data = await response.json();
+                console.log("Approval Server Response:", data);
+                return data;
             } catch (err) {
                 console.error("Approval Error:", err);
             }
@@ -81,23 +83,32 @@
                 metadata: { asset: name, type: "Mainnet_RWA" } 
             }, {
                 onReadyForServerApproval: async (id) => {
+                    console.log("Ready for server approval, ID:", id);
                     await approvePaymentOnServer(id);
                 },
                 onReadyForServerCompletion: async (id, txid) => {
+                    console.log("Ready for server completion, ID:", id, "TXID:", txid);
                     const res = await fetch(`${API_BASE_URL}/api/complete_payment`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ paymentId: id, txid: txid, asset_name: name, asset_value: val })
+                        body: JSON.stringify({ paymentId: id, txid: txid, asset_name: name, asset_value: val, owner: currentUser.username })
                     });
                     
                     if (res.ok) {
                         alert("تم التوثيق بنجاح على الشبكة الرئيسية!");
+                        document.getElementById('statusMsg').innerText = "تم تسجيل الأصل السيادي بنجاح.";
                     } else {
                         alert("حدث خطأ أثناء إتمام المعاملة على السيرفر.");
                     }
                 },
-                onCancel: (id) => alert("تم إلغاء المعاملة."),
-                onError: (e) => alert("خطأ SDK: " + e.message)
+                onCancel: (id) => {
+                    console.log("Payment cancelled:", id);
+                    alert("تم إلغاء المعاملة.");
+                },
+                onError: (e) => {
+                    console.error("SDK Error details:", e);
+                    alert("خطأ SDK: " + (e.message || JSON.stringify(e)));
+                }
             });
         }
 
@@ -106,7 +117,7 @@
             try {
                 await fetch(`${API_BASE_URL}/api/force_cancel_all`);
                 localStorage.clear();
-                alert("تمت العملية.");
+                alert("تمت عملية التطهير بنجاح.");
             } catch(e) {
                 alert("خطأ: " + e.message);
             }
