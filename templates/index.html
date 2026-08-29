@@ -4,24 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Omniverse Hub - Sovereign Gateway</title>
-    <!-- استدعاء SDK باي -->
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-white p-4">
     <div class="max-w-md mx-auto bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
         <h1 class="text-2xl text-yellow-500 font-bold mb-2 text-center">OMNIVERSE HUB</h1>
-        <p class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - Mainnet Mode</p>
+        <p id="envBadge" class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - Auto Mode</p>
         
-        <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI (MAINNET)</button>
+        <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
         
         <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-6 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
 
         <div class="space-y-4 border-t border-zinc-800 pt-4">
-            <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (Mainnet RWA)</h2>
+            <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (RWA)</h2>
             <input id="assetName" placeholder="اسم الأصل (مثال: عقار ذكي رقم 01)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
-            <input id="assetVal" type="number" step="0.01" placeholder="القيمة بـ Pi الحقيقية" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
-            <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg">PAY & REGISTER ON MAINNET</button>
+            <input id="assetVal" type="number" step="0.01" placeholder="القيمة بـ Pi" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+            <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg">PAY & REGISTER</button>
         </div>
 
         <div class="mt-6 text-center">
@@ -30,27 +29,35 @@
     </div>
 
     <script>
-        const API_BASE_URL = "https://pi-omniverse-1.onrender.com"; 
+        const API_BASE_URL = window.location.origin;  
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
 
-        // تهيئة الـ SDK للشبكة الرئيسية
-        Pi.init({ version: "2.0", sandbox: false, clientId: CLIENT_ID });
+        // اكتشاف البيئة تلقائياً (إذا كان الرابط يحتوي على test أو localhost يعتبر Testnet، وإلا Mainnet)
+        const isSandbox = window.location.hostname.includes('localhost') || 
+                          window.location.hostname.includes('test') || 
+                          window.location.search.includes('sandbox=true');
+
+        // تهيئة الـ SDK مع التكيف التلقائي للبيئة
+        Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
+
+        // تحديث عنوان الواجهة بناءً على وضع البيئة الحالي
+        document.getElementById('envBadge').innerText = `منصة المدن الذكية - Mode: ${isSandbox ? 'TESTNET (Sandbox)' : 'MAINNET'}`;
+        document.getElementById('authBtn').innerText = `CONNECT PI (${isSandbox ? 'TESTNET' : 'MAINNET'})`;
 
         async function connectPi() {
             try {
                 const auth = await Pi.authenticate(['username', 'payments'], onIncompletePayment);
                 currentUser = auth.user;
                 document.getElementById('authBtn').innerText = "✅ " + currentUser.username;
-                console.log("Authenticated User:", currentUser.username);
-            } catch (err) { 
+            } catch (err) {  
                 console.error("Auth Error:", err);
                 alert("فشل الاتصال: تأكد من أنك تستخدم متصفح Pi.");
             }
         }
 
         function onIncompletePayment(payment) {
-            console.log("Incomplete payment detected, processing...", payment.identifier);
+            console.log("Incomplete payment detected:", payment.identifier);
             approvePaymentOnServer(payment.identifier);
         }
 
@@ -61,9 +68,7 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ paymentId: paymentId, userId: currentUser ? currentUser.username : "unknown" })
                 });
-                const data = await response.json();
-                console.log("Approval Server Response:", data);
-                return data;
+                return await response.json();
             } catch (err) {
                 console.error("Approval Error:", err);
             }
@@ -80,14 +85,12 @@
             Pi.createPayment({ 
                 amount: val, 
                 memo: `Registration: ${name}`, 
-                metadata: { asset: name, type: "Mainnet_RWA" } 
+                metadata: { asset: name, type: "Omniverse_RWA" } 
             }, {
                 onReadyForServerApproval: async (id) => {
-                    console.log("Ready for server approval, ID:", id);
                     await approvePaymentOnServer(id);
                 },
                 onReadyForServerCompletion: async (id, txid) => {
-                    console.log("Ready for server completion, ID:", id, "TXID:", txid);
                     const res = await fetch(`${API_BASE_URL}/api/complete_payment`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -95,25 +98,23 @@
                     });
                     
                     if (res.ok) {
-                        alert("تم التوثيق بنجاح على الشبكة الرئيسية!");
+                        alert("تمت المعاملة وتوثيق الأصل بنجاح!");
                         document.getElementById('statusMsg').innerText = "تم تسجيل الأصل السيادي بنجاح.";
                     } else {
                         alert("حدث خطأ أثناء إتمام المعاملة على السيرفر.");
                     }
                 },
                 onCancel: (id) => {
-                    console.log("Payment cancelled:", id);
                     alert("تم إلغاء المعاملة.");
                 },
                 onError: (e) => {
-                    console.error("SDK Error details:", e);
                     alert("خطأ SDK: " + (e.message || JSON.stringify(e)));
                 }
             });
         }
 
         async function forceResetPayments() {
-            if(!confirm("هل أنت متأكد؟ سيؤدي هذا لتطهير جلسات الدفع المعلقة.")) return;
+            if(!confirm("هل أنت متأكد من تطهير المعاملات المعلقة؟")) return;
             try {
                 await fetch(`${API_BASE_URL}/api/force_cancel_all`);
                 localStorage.clear();
