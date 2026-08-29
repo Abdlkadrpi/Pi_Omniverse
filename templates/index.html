@@ -10,7 +10,7 @@
 <body class="bg-black text-white p-4">
     <div class="max-w-md mx-auto bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
         <h1 class="text-2xl text-yellow-500 font-bold mb-2 text-center">OMNIVERSE HUB</h1>
-        <p id="envBadge" class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - Auto Mode</p>
+        <p id="envBadge" class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين</p>
         
         <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
         
@@ -33,17 +33,14 @@
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
 
-        // اكتشاف البيئة تلقائياً (إذا كان الرابط يحتوي على test أو localhost يعتبر Testnet، وإلا Mainnet)
+        // اكتشاف البيئة تلقائياً
         const isSandbox = window.location.hostname.includes('localhost') || 
                           window.location.hostname.includes('test') || 
                           window.location.search.includes('sandbox=true');
 
-        // تهيئة الـ SDK مع التكيف التلقائي للبيئة
         Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
 
-        // تحديث عنوان الواجهة بناءً على وضع البيئة الحالي
-        document.getElementById('envBadge').innerText = `منصة المدن الذكية - Mode: ${isSandbox ? 'TESTNET (Sandbox)' : 'MAINNET'}`;
-        document.getElementById('authBtn').innerText = `CONNECT PI (${isSandbox ? 'TESTNET' : 'MAINNET'})`;
+        document.getElementById('envBadge').innerText = `Mode: ${isSandbox ? 'TESTNET (Sandbox)' : 'MAINNET'}`;
 
         async function connectPi() {
             try {
@@ -52,12 +49,12 @@
                 document.getElementById('authBtn').innerText = "✅ " + currentUser.username;
             } catch (err) {  
                 console.error("Auth Error:", err);
-                alert("فشل الاتصال: تأكد من أنك تستخدم متصفح Pi.");
+                alert("فشل الاتصال: تأكد من استخدام متصفح Pi.");
             }
         }
 
         function onIncompletePayment(payment) {
-            console.log("Incomplete payment detected:", payment.identifier);
+            console.log("Incomplete payment found:", payment.identifier);
             approvePaymentOnServer(payment.identifier);
         }
 
@@ -74,7 +71,7 @@
             }
         }
 
-        async function processPayment() {
+        function processPayment() {
             if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
             
             const name = document.getElementById('assetName').value;
@@ -82,35 +79,47 @@
 
             if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال بيانات صحيحة للأصل والقيمة!");
 
-            Pi.createPayment({ 
-                amount: val, 
-                memo: `Registration: ${name}`, 
-                metadata: { asset: name, type: "Omniverse_RWA" } 
-            }, {
-                onReadyForServerApproval: async (id) => {
-                    await approvePaymentOnServer(id);
+            const paymentData = {
+                amount: val,
+                memo: `Registration: ${name}`,
+                metadata: { asset: name, type: "Omniverse_RWA" }
+            };
+
+            const callbacks = {
+                onReadyForServerApproval: async (paymentId) => {
+                    console.log("onReadyForServerApproval called for ID:", paymentId);
+                    await approvePaymentOnServer(paymentId);
                 },
-                onReadyForServerCompletion: async (id, txid) => {
-                    const res = await fetch(`${API_BASE_URL}/api/complete_payment`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ paymentId: id, txid: txid, asset_name: name, asset_value: val, owner: currentUser.username })
-                    });
-                    
-                    if (res.ok) {
-                        alert("تمت المعاملة وتوثيق الأصل بنجاح!");
-                        document.getElementById('statusMsg').innerText = "تم تسجيل الأصل السيادي بنجاح.";
-                    } else {
-                        alert("حدث خطأ أثناء إتمام المعاملة على السيرفر.");
+                onReadyForServerCompletion: async (paymentId, txid) => {
+                    console.log("onReadyForServerCompletion called:", paymentId, txid);
+                    try {
+                        const res = await fetch(`${API_BASE_URL}/api/complete_payment`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ paymentId: paymentId, txid: txid, asset_name: name, asset_value: val, owner: currentUser.username })
+                        });
+                        
+                        if (res.ok) {
+                            alert("تمت المعاملة وتوثيق الأصل بنجاح!");
+                            document.getElementById('statusMsg').innerText = "تم تسجيل الأصل السيادي بنجاح.";
+                        } else {
+                            alert("خطأ في إتمام المعاملة على السيرفر.");
+                        }
+                    } catch (e) {
+                        console.error("Completion fetch error:", e);
                     }
                 },
-                onCancel: (id) => {
-                    alert("تم إلغاء المعاملة.");
+                onCancel: (paymentId) => {
+                    console.log("Payment cancelled:", paymentId);
+                    alert("تم إلغاء المعاملة من قِبل المستخدم.");
                 },
-                onError: (e) => {
-                    alert("خطأ SDK: " + (e.message || JSON.stringify(e)));
+                onError: (error, payment) => {
+                    console.error("Payment SDK Error:", error, payment);
+                    alert("خطأ في محفظة باي: " + (error.message || JSON.stringify(error)));
                 }
-            });
+            };
+
+            Pi.createPayment(paymentData, callbacks);
         }
 
         async function forceResetPayments() {
