@@ -33,14 +33,12 @@
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
 
-        // اكتشاف البيئة تلقائياً
-        const isSandbox = window.location.hostname.includes('localhost') || 
-                          window.location.hostname.includes('test') || 
-                          window.location.search.includes('sandbox=true');
+        // فرض وضع Testnet (Sandbox) بصراحة ليتطابق تماماً مع مفتاح Render
+        const isSandbox = true;
 
         Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
 
-        document.getElementById('envBadge').innerText = `Mode: ${isSandbox ? 'TESTNET (Sandbox)' : 'MAINNET'}`;
+        document.getElementById('envBadge').innerText = `Mode: TESTNET (Sandbox)`;
 
         async function connectPi() {
             try {

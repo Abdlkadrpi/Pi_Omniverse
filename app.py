@@ -11,8 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 PI_API_KEY = os.environ.get("PI_API_KEY")
-# دعم البيئتين: إذا لم يتم تحديد البيئة صراحة، يتم اكتشافها أو الافتراض بناءً على المفتاح أو المتغير
-PI_ENV = os.environ.get("PI_ENV", "mainnet")  # mainnet or sandbox
+PI_ENV = os.environ.get("PI_ENV", "sandbox")  # فرض وضع الساندبوكس افتراضياً للتوافق مع مفتاحك
 PI_BASE_URL = "https://api.minepi.com/v2"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
