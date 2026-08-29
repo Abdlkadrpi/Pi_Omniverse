@@ -11,15 +11,17 @@ app = Flask(__name__)
 CORS(app)
 
 PI_API_KEY = os.environ.get("PI_API_KEY")
+# دعم البيئتين: إذا لم يتم تحديد البيئة صراحة، يتم اكتشافها أو الافتراض بناءً على المفتاح أو المتغير
+PI_ENV = os.environ.get("PI_ENV", "mainnet")  # mainnet or sandbox
+PI_BASE_URL = "https://api.minepi.com/v2"
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "assets.db")
 
-# تهيئة محرك الامتثال والتدقيق السيادي
 compliance_engine = OmniverseSovereignCompliance()
 
-# نظام حماية بسيط للحد من معدل الطلبات (Rate Limiting) لمنع هجمات الاستنزاف
-REQUEST_LIMIT = 30  # أقصى عدد طلبات مسموح به
-TIME_WINDOW = 60  # خلال 60 ثانية
+REQUEST_LIMIT = 50
+TIME_WINDOW = 60
 request_records = {}
 
 
@@ -28,7 +30,6 @@ def check_rate_limit(client_ip):
     if client_ip not in request_records:
         request_records[client_ip] = []
 
-    # تنظيف الطلبات القديمة خارج النافذة الزمنية
     request_records[client_ip] = [
         t for t in request_records[client_ip] if now - t < TIME_WINDOW
     ]
@@ -58,12 +59,10 @@ init_db()
 
 @app.before_request
 def security_firewall():
-    # استثناء الصفحة الرئيسية، ملف التحقق، وستاتيك سياسة الخصوصية من القيود المباشرة
     if request.path in ["/", "/validation-key.txt", "/legal.html", "/api/app_wallet"]:
         return
 
     client_ip = request.remote_addr
-    # تطبيق حدود معدل الطلبات للأمان
     if not check_rate_limit(client_ip):
         return (
             jsonify({
@@ -89,13 +88,12 @@ def legal_policy():
     return render_template("legal.html")
 
 
-# مسار تعريف وتكوين محفظة التطبيق لتجاوز خطأ App Wallet Misconfigured
 @app.route("/api/app_wallet", methods=["GET", "POST"])
 def app_wallet_config():
     return jsonify({
         "status": "success",
         "message": "App wallet configured successfully under Omniverse Sovereign Network",
-        "network": "mainnet"
+        "network": PI_ENV
     }), 200
 
 
@@ -111,7 +109,7 @@ def force_cancel_all():
                 "Content-Type": "application/json",
             }
             resp = requests.get(
-                "https://api.minepi.com/v2/payments/incomplete", headers=headers
+                f"{PI_BASE_URL}/payments/incomplete", headers=headers
             )
             if resp.status_code == 200:
                 data = resp.json()
@@ -127,17 +125,14 @@ def force_cancel_all():
                     pid = p.get("identifier") or p.get("paymentId") or p.get("id")
                     if pid:
                         requests.post(
-                            f"https://api.minepi.com/v2/payments/{pid}/cancel",
+                            f"{PI_BASE_URL}/payments/{pid}/cancel",
                             headers=headers,
                         )
 
         return (
             jsonify({
                 "status": "forced_cleaned_all",
-                "message": (
-                    "Local and remote payments cleared successfully under"
-                    " sovereign security"
-                ),
+                "message": "Local and remote payments cleared successfully",
             }),
             200,
         )
@@ -155,7 +150,7 @@ def approve_payment():
 
         user_id = data.get("userId", "unknown")
         kyc_status = data.get("kyc_verified", True)
-        asset_value = data.get("asset_value", 100.0)
+        asset_value = data.get("asset_value", 1.0)
 
         audit_result = compliance_engine.audit_transaction(
             payment_id, kyc_status, asset_value
@@ -173,7 +168,7 @@ def approve_payment():
             "Content-Type": "application/json",
         }
         requests.post(
-            f"https://api.minepi.com/v2/payments/{payment_id}/approve",
+            f"{PI_BASE_URL}/payments/{payment_id}/approve",
             headers=headers,
         )
 
@@ -209,7 +204,7 @@ def complete_payment():
             "Content-Type": "application/json",
         }
         resp = requests.post(
-            f"https://api.minepi.com/v2/payments/{payment_id}/complete",
+            f"{PI_BASE_URL}/payments/{payment_id}/complete",
             headers=headers,
             json={"txid": txid},
         )
@@ -237,19 +232,6 @@ def complete_payment():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/compliance/audit", methods=["POST"])
-def api_audit_transaction():
-    try:
-        data = request.get_json() or {}
-        tx_id = data.get("tx_id", "default_tx")
-        kyc_status = data.get("kyc_verified", True)
-        asset_val = data.get("asset_value", 100.0)
-        result = compliance_engine.audit_transaction(tx_id, kyc_status, asset_val)
-        return jsonify(result), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
 @app.route("/pi-webhook", methods=["POST"])
 def pi_webhook():
     try:
@@ -258,18 +240,13 @@ def pi_webhook():
         status = data.get("status", "COMPLETED")
 
         audit_result = compliance_engine.audit_transaction(
-            str(payment_id), True, 100.0
-        )
-
-        print(
-            f"[جدار الحماية السيادي] تم فحص وتوثيق المعاملة بنجاح: {payment_id} -"
-            f" الحالة: {status}"
+            str(payment_id), True, 1.0
         )
 
         return (
             jsonify({
                 "status": "success",
-                "message": "Secure Webhook processed under Sovereign Firewall",
+                "message": "Secure Webhook processed",
                 "audit_result": audit_result,
             }),
             200,
