@@ -10,7 +10,15 @@
 <body class="bg-black text-white p-4">
     <div class="max-w-md mx-auto bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
         <h1 class="text-2xl text-yellow-500 font-bold mb-2 text-center">OMNIVERSE HUB</h1>
-        <p id="envBadge" class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين</p>
+        
+        <!-- زر تبديل البيئة بين Testnet و Mainnet -->
+        <div class="flex justify-center items-center gap-2 mb-4">
+            <button id="envToggleBtn" onclick="toggleEnvironment()" class="text-xs px-3 py-1 rounded border border-yellow-600 bg-yellow-900/40 text-yellow-400 font-bold transition">
+                Mode: TESTNET (Sandbox)
+            </button>
+        </div>
+
+        <p class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين</p>
         
         <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
         
@@ -33,12 +41,24 @@
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
 
-        // فرض وضع Testnet (Sandbox) بصراحة ليتطابق تماماً مع مفتاح Render
-        const isSandbox = true;
+        // الحالة الافتراضية للبيئة (يمكنك تغييرها لاحقاً أو جعلها تتغير بالزر)
+        let isSandbox = true;
 
-        Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
+        function initPiSDK() {
+            Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
+            document.getElementById('envToggleBtn').innerText = isSandbox ? `Mode: TESTNET (Sandbox)` : `Mode: MAINNET (Production)`;
+            document.getElementById('envToggleBtn').className = isSandbox 
+                ? "text-xs px-3 py-1 rounded border border-yellow-600 bg-yellow-900/40 text-yellow-400 font-bold transition"
+                : "text-xs px-3 py-1 rounded border border-green-600 bg-green-900/40 text-green-400 font-bold transition";
+        }
 
-        document.getElementById('envBadge').innerText = `Mode: TESTNET (Sandbox)`;
+        function toggleEnvironment() {
+            isSandbox = !isSandbox;
+            initPiSDK();
+            alert(`تم الانتقال إلى وضع: ${isSandbox ? 'Testnet' : 'Mainnet'}`);
+        }
+
+        initPiSDK();
 
         async function connectPi() {
             try {
@@ -61,7 +81,7 @@
                 const response = await fetch(`${API_BASE_URL}/api/approve_payment`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ paymentId: paymentId, userId: currentUser ? currentUser.username : "unknown" })
+                    body: JSON.stringify({ paymentId: paymentId, userId: currentUser ? currentUser.username : "unknown", sandbox: isSandbox })
                 });
                 return await response.json();
             } catch (err) {
@@ -85,16 +105,14 @@
 
             const callbacks = {
                 onReadyForServerApproval: async (paymentId) => {
-                    console.log("onReadyForServerApproval called for ID:", paymentId);
                     await approvePaymentOnServer(paymentId);
                 },
                 onReadyForServerCompletion: async (paymentId, txid) => {
-                    console.log("onReadyForServerCompletion called:", paymentId, txid);
                     try {
                         const res = await fetch(`${API_BASE_URL}/api/complete_payment`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ paymentId: paymentId, txid: txid, asset_name: name, asset_value: val, owner: currentUser.username })
+                            body: JSON.stringify({ paymentId: paymentId, txid: txid, asset_name: name, asset_value: val, owner: currentUser.username, sandbox: isSandbox })
                         });
                         
                         if (res.ok) {
@@ -108,11 +126,9 @@
                     }
                 },
                 onCancel: (paymentId) => {
-                    console.log("Payment cancelled:", paymentId);
                     alert("تم إلغاء المعاملة من قِبل المستخدم.");
                 },
                 onError: (error, payment) => {
-                    console.error("Payment SDK Error:", error, payment);
                     alert("خطأ في محفظة باي: " + (error.message || JSON.stringify(error)));
                 }
             };
@@ -123,7 +139,11 @@
         async function forceResetPayments() {
             if(!confirm("هل أنت متأكد من تطهير المعاملات المعلقة؟")) return;
             try {
-                await fetch(`${API_BASE_URL}/api/force_cancel_all`);
+                await fetch(`${API_BASE_URL}/api/force_cancel_all`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ sandbox: isSandbox })
+                });
                 localStorage.clear();
                 alert("تمت عملية التطهير بنجاح.");
             } catch(e) {

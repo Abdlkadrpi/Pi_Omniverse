@@ -10,8 +10,9 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-PI_API_KEY = os.environ.get("PI_API_KEY")
-PI_ENV = os.environ.get("PI_ENV", "sandbox")  # فرض وضع الساندبوكس افتراضياً للتوافق مع مفتاحك
+# دعم مفتاحين منفصلين للبيئتين في Render
+PI_API_KEY_SANDBOX = os.environ.get("PI_API_KEY_SANDBOX") or os.environ.get("PI_API_KEY")
+PI_API_KEY_MAINNET = os.environ.get("PI_API_KEY_MAINNET")
 PI_BASE_URL = "https://api.minepi.com/v2"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +24,8 @@ REQUEST_LIMIT = 50
 TIME_WINDOW = 60
 request_records = {}
 
+def get_pi_key(is_sandbox):
+    return PI_API_KEY_SANDBOX if is_sandbox else (PI_API_KEY_MAINNET or PI_API_KEY_SANDBOX)
 
 def check_rate_limit(client_ip):
     now = time.time()
@@ -39,7 +42,6 @@ def check_rate_limit(client_ip):
     request_records[client_ip].append(now)
     return True
 
-
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
@@ -52,9 +54,7 @@ def init_db():
             " KEY, user_id TEXT, status TEXT)"
         )
 
-
 init_db()
-
 
 @app.before_request
 def security_firewall():
@@ -71,53 +71,53 @@ def security_firewall():
             429,
         )
 
-
 @app.route("/validation-key.txt")
 def pi_validation():
     return send_from_directory(BASE_DIR, "validation-key.txt")
-
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-
 @app.route("/legal.html")
 def legal_policy():
     return render_template("legal.html")
-
 
 @app.route("/api/app_wallet", methods=["GET", "POST"])
 def app_wallet_config():
     return jsonify({
         "status": "success",
         "message": "App wallet configured successfully under Omniverse Sovereign Network",
-        "network": PI_ENV
+        "sandbox_configured": bool(PI_API_KEY_SANDBOX),
+        "mainnet_configured": bool(PI_API_KEY_MAINNET)
     }), 200
-
 
 @app.route("/api/force_cancel_all", methods=["GET", "POST"])
 def force_cancel_all():
     try:
+        data = request.get_json() or {}
+        is_sandbox = data.get("sandbox", True)
+        active_key = get_pi_key(is_sandbox)
+
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute("DELETE FROM pending_payments")
 
-        if PI_API_KEY:
+        if active_key:
             headers = {
-                "Authorization": f"Key {PI_API_KEY}",
+                "Authorization": f"Key {active_key}",
                 "Content-Type": "application/json",
             }
             resp = requests.get(
                 f"{PI_BASE_URL}/payments/incomplete", headers=headers
             )
             if resp.status_code == 200:
-                data = resp.json()
+                data_resp = resp.json()
                 payments = []
-                if isinstance(data, list):
-                    payments = data
-                elif isinstance(data, dict):
-                    payments = data.get(
-                        "payments", data.get("incomplete_payments", [])
+                if isinstance(data_resp, list):
+                    payments = data_resp
+                elif isinstance(data_resp, dict):
+                    payments = data_resp.get(
+                        "payments", data_resp.get("incomplete_payments", [])
                     )
 
                 for p in payments:
@@ -138,7 +138,6 @@ def force_cancel_all():
     except Exception as e:
         return jsonify({"status": "partial_clean", "error": str(e)}), 200
 
-
 @app.route("/api/approve_payment", methods=["POST"])
 def approve_payment():
     try:
@@ -147,6 +146,8 @@ def approve_payment():
         if not payment_id:
             return jsonify({"status": "ignored_no_id"}), 200
 
+        is_sandbox = data.get("sandbox", True)
+        active_key = get_pi_key(is_sandbox)
         user_id = data.get("userId", "unknown")
         kyc_status = data.get("kyc_verified", True)
         asset_value = data.get("asset_value", 1.0)
@@ -163,7 +164,7 @@ def approve_payment():
             )
 
         headers = {
-            "Authorization": f"Key {PI_API_KEY}",
+            "Authorization": f"Key {active_key}",
             "Content-Type": "application/json",
         }
         requests.post(
@@ -187,19 +188,20 @@ def approve_payment():
     except Exception as e:
         return jsonify({"status": "recovered", "error": str(e)}), 200
 
-
 @app.route("/api/complete_payment", methods=["POST"])
 def complete_payment():
     try:
         data = request.get_json() or {}
         payment_id = data.get("paymentId") or data.get("identifier")
         txid = data.get("txid")
+        is_sandbox = data.get("sandbox", True)
+        active_key = get_pi_key(is_sandbox)
 
         if not payment_id or not txid:
             return jsonify({"error": "Missing required fields"}), 400
 
         headers = {
-            "Authorization": f"Key {PI_API_KEY}",
+            "Authorization": f"Key {active_key}",
             "Content-Type": "application/json",
         }
         resp = requests.post(
@@ -230,18 +232,14 @@ def complete_payment():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/pi-webhook", methods=["POST"])
 def pi_webhook():
     try:
         data = request.get_json() or {}
         payment_id = data.get("paymentId") or data.get("payment_id") or "unknown_tx"
-        status = data.get("status", "COMPLETED")
-
         audit_result = compliance_engine.audit_transaction(
             str(payment_id), True, 1.0
         )
-
         return (
             jsonify({
                 "status": "success",
@@ -252,7 +250,6 @@ def pi_webhook():
         )
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
