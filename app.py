@@ -24,6 +24,15 @@ REQUEST_LIMIT = 50
 TIME_WINDOW = 60
 request_records = {}
 
+# قائمة المحافظ الخمس التجريبية لتوثيق معاملات App-to-User عبر الـ SDK
+TEST_WALLETS = [
+    "GABK4...ZHG3K",
+    "GCBLE...WVKJ5",
+    "GCMVY...A4ZWG",
+    "GBVRK...JZRX4",
+    "GDAYL...ZSBHO"
+]
+
 def get_pi_key(is_sandbox):
     return PI_API_KEY_SANDBOX if is_sandbox else (PI_API_KEY_MAINNET or PI_API_KEY_SANDBOX)
 
@@ -58,7 +67,7 @@ init_db()
 
 @app.before_request
 def security_firewall():
-    if request.path in ["/", "/validation-key.txt", "/legal.html", "/api/app_wallet"]:
+    if request.path in ["/", "/validation-key.txt", "/legal.html", "/api/app_wallet", "/trigger-test-payments"]:
         return
 
     client_ip = request.remote_addr
@@ -91,6 +100,38 @@ def app_wallet_config():
         "sandbox_configured": bool(PI_API_KEY_SANDBOX),
         "mainnet_configured": bool(PI_API_KEY_MAINNET)
     }), 200
+
+@app.route("/trigger-test-payments", methods=["GET", "POST"])
+def trigger_test_payments():
+    api_key = PI_API_KEY_SANDBOX
+    if not api_key:
+        return jsonify({"success": False, "error": "Sandbox API Key not configured"}), 500
+        
+    headers = {
+        "Authorization": f"Key {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    results = []
+    for wallet in TEST_WALLETS:
+        payment_data = {
+            "amount": 1.0,
+            "memo": "Omniverse Hub Test Transaction App-to-User",
+            "uid": wallet,
+            "metadata": {"test": True}
+        }
+        
+        try:
+            response = requests.post(f"{PI_BASE_URL}/payments", json=payment_data, headers=headers)
+            results.append({
+                "wallet": wallet, 
+                "status": response.status_code, 
+                "response": response.json() if response.ok else response.text
+            })
+        except Exception as e:
+            results.append({"wallet": wallet, "error": str(e)})
+            
+    return jsonify({"success": True, "results": results})
 
 @app.route("/api/force_cancel_all", methods=["GET", "POST"])
 def force_cancel_all():
