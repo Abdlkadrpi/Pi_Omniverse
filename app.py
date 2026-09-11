@@ -95,6 +95,20 @@ def app_wallet_config():
 @app.route("/check-db", methods=["GET"])
 def check_database():
     try:
+        all_files = os.listdir(BASE_DIR)
+        db_files = []
+        
+        for file in all_files:
+            file_path = os.path.join(BASE_DIR, file)
+            if os.path.isfile(file_path):
+                try:
+                    with open(file_path, "rb") as f:
+                        header = f.read(16)
+                        if header.startswith(b"SQLite format 3"):
+                            db_files.append(file)
+                except Exception:
+                    pass
+
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         
@@ -103,11 +117,17 @@ def check_database():
         
         table_contents = {}
         for table in tables:
-            cursor.execute(f"SELECT * FROM {table} LIMIT 10")
+            cursor.execute(f"SELECT * FROM {table}")
             table_contents[table] = cursor.fetchall()
             
         conn.close()
-        return jsonify({"tables": tables, "contents": table_contents}), 200
+        
+        return jsonify({
+            "active_db_path": DB_PATH,
+            "detected_sqlite_files": db_files,
+            "tables": tables,
+            "contents": table_contents
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -307,7 +327,7 @@ def complete_payment():
 @app.route("/pi-webhook", methods=["POST"])
 def pi_webhook():
     try:
-        data = request.get_json()or {}
+        data = request.get_json() or {}
         payment_id = data.get("paymentId") or data.get("payment_id") or "unknown_tx"
         audit_result = compliance_engine.audit_transaction(
             str(payment_id), True, 1.0
