@@ -325,45 +325,66 @@ def approve_payment():
 def complete_payment():
     try:
         data = request.get_json() or {}
-        payment_id = data.get("paymentId") or data.get("identifier")
-        txid = data.get("txid")
+        payment_id = (
+            data.get("paymentId") 
+            or data.get("identifier") 
+            or data.get("payment_id")
+        )
+        txid = data.get("txid") or data.get("transaction_id")
         is_sandbox = data.get("sandbox", True)
         active_key = get_pi_key(is_sandbox)
 
         if not payment_id or not txid:
-            return jsonify({"error": "Missing required fields"}), 400
+            return jsonify({
+                "status": "error",
+                "error": "Missing required fields: paymentId or txid"
+            }), 400
 
         headers = {
             "Authorization": f"Key {active_key}",
             "Content-Type": "application/json",
         }
+        
         resp = requests.post(
             f"{PI_BASE_URL}/payments/{payment_id}/complete",
             headers=headers,
             json={"txid": txid},
+            timeout=15
         )
 
-        if resp.status_code in [200, 201]:
+        if resp.status_code in [200, 201] or "already" in resp.text.lower():
             with sqlite3.connect(DB_PATH) as conn:
                 conn.execute(
-                    "INSERT INTO assets (asset_name, asset_value, owner_id,"
-                    " payment_tx, timestamp) VALUES (?, ?, ?, ?, ?)",
+                    """
+                    INSERT INTO assets (asset_name, asset_value, owner_id, payment_tx, timestamp) 
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
                     (
-                        data.get("asset_name", "Omniverse Asset"),
-                        data.get("asset_value", 0.0),
-                        data.get("owner", "unknown"),
-                        txid,
+                        data.get("asset_name", "Omniverse Digital Asset"),
+                        float(data.get("asset_value", 1.0)),
+                        str(data.get("owner", data.get("uid", "unknown"))),
+                        str(txid),
                         datetime.now(timezone.utc).isoformat(),
                     ),
                 )
                 conn.execute(
-                    "DELETE FROM pending_payments WHERE payment_id = ?", (payment_id,)
+                    "DELETE FROM pending_payments WHERE payment_id = ?", (str(payment_id),)
                 )
-            return jsonify({"status": "completed"}), 200
+                conn.commit()
+            
+            return jsonify({"status": "completed", "message": "Payment completed and asset registered successfully"}), 200
 
-        return jsonify({"error": "Completion failed", "details": resp.text}), 500
+        return jsonify({
+            "status": "error",
+            "error": "Pi Network API completion failed",
+            "details": resp.text
+        }), 500
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "status": "error",
+            "error": f"Server exception during completion: {str(e)}"
+        }), 500
 
 @app.route("/pi-webhook", methods=["POST"])
 def pi_webhook():
