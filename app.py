@@ -406,4 +406,4 @@ def pi_webhook():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    app.run(host="0.0.0.0", port=int(os.environ.com("PORT", 10000) if hasattr(os, "environ") else 10000))
