@@ -43,6 +43,7 @@ def check_rate_limit(client_ip):
     return True
 
 def init_db():
+    # 1. إنشاء الجداول الأساسية في قاعدة البيانات الرئيسية الموحدة
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             "CREATE TABLE IF NOT EXISTS assets (id INTEGER PRIMARY KEY, asset_name"
@@ -53,6 +54,44 @@ def init_db():
             "CREATE TABLE IF NOT EXISTS pending_payments (payment_id TEXT PRIMARY"
             " KEY, user_id TEXT, status TEXT)"
         )
+
+    # 2. البحث عن أي ملفات قواعد بيانات أخرى في المجلد ودمج محتواها تلقائياً
+    try:
+        all_files = os.listdir(BASE_DIR)
+        other_dbs = [f for f in all_files if f.endswith('.db') and f != "assets.db"]
+
+        for db_file in other_dbs:
+            other_path = os.path.join(BASE_DIR, db_file)
+            try:
+                with sqlite3.connect(other_path) as other_conn:
+                    other_cursor = other_conn.cursor()
+                    other_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                    tables = [row[0] for row in other_cursor.fetchall()]
+
+                    with sqlite3.connect(DB_PATH) as main_conn:
+                        for table in tables:
+                            if table in ["assets", "pending_payments"]:
+                                other_cursor.execute(f"SELECT * FROM {table}")
+                                rows = other_cursor.fetchall()
+                                for row in rows:
+                                    try:
+                                        if table == "assets":
+                                            main_conn.execute(
+                                                "INSERT OR IGNORE INTO assets (id, asset_name, asset_value, owner_id, payment_tx, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+                                                row
+                                            )
+                                        elif table == "pending_payments":
+                                            main_conn.execute(
+                                                "INSERT OR IGNORE INTO pending_payments (payment_id, user_id, status) VALUES (?, ?, ?)",
+                                                row
+                                            )
+                                    except Exception:
+                                        pass
+                        main_conn.commit()
+            except Exception:
+                pass
+    except Exception:
+        pass
 
 init_db()
 
