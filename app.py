@@ -24,15 +24,6 @@ REQUEST_LIMIT = 50
 TIME_WINDOW = 60
 request_records = {}
 
-# قائمة المحافظ الخمس التجريبية لتوثيق معاملات App-to-User عبر الـ SDK
-TEST_WALLETS = [
-    "GABK4...ZHG3K",
-    "GCBLE...WVKJ5",
-    "GCMVY...A4ZWG",
-    "GBVRK...JZRX4",
-    "GDAYL...ZSBHO"
-]
-
 def get_pi_key(is_sandbox):
     return PI_API_KEY_SANDBOX if is_sandbox else (PI_API_KEY_MAINNET or PI_API_KEY_SANDBOX)
 
@@ -67,7 +58,7 @@ init_db()
 
 @app.before_request
 def security_firewall():
-    if request.path in ["/", "/validation-key.txt", "/legal.html", "/api/app_wallet", "/trigger-test-payments"]:
+    if request.path in ["/", "/validation-key.txt", "/legal.html", "/api/app_wallet", "/trigger-test-payments", "/check-db"]:
         return
 
     client_ip = request.remote_addr
@@ -101,35 +92,75 @@ def app_wallet_config():
         "mainnet_configured": bool(PI_API_KEY_MAINNET)
     }), 200
 
+@app.route("/check-db", methods=["GET"])
+def check_database():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        table_contents = {}
+        for table in tables:
+            cursor.execute(f"SELECT * FROM {table} LIMIT 10")
+            table_contents[table] = cursor.fetchall()
+            
+        conn.close()
+        return jsonify({"tables": tables, "contents": table_contents}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/trigger-test-payments", methods=["GET", "POST"])
 def trigger_test_payments():
     api_key = PI_API_KEY_SANDBOX
     if not api_key:
         return jsonify({"success": False, "error": "Sandbox API Key not configured"}), 500
         
+    uids = []
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        if 'assets' in tables:
+            cursor.execute("SELECT DISTINCT owner_id FROM assets WHERE owner_id IS NOT NULL AND owner_id != 'unknown' LIMIT 5")
+            uids = [row[0] for row in cursor.fetchall()]
+            
+        conn.close()
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Database read error: {str(e)}"}), 500
+
+    if not uids:
+        return jsonify({
+            "success": False, 
+            "error": "No valid user UIDs found in assets table. Please ensure users have interacted with the app first or check /check-db."
+        }), 400
+
     headers = {
         "Authorization": f"Key {api_key}",
         "Content-Type": "application/json"
     }
     
     results = []
-    for wallet in TEST_WALLETS:
+    for uid in uids:
         payment_data = {
             "amount": 1.0,
-            "memo": "Omniverse Hub Test Transaction App-to-User",
-            "uid": wallet,
+            "memo": "Omniverse Hub Automated Test App-to-User",
+            "uid": uid,
             "metadata": {"test": True}
         }
         
         try:
             response = requests.post(f"{PI_BASE_URL}/payments", json=payment_data, headers=headers)
             results.append({
-                "wallet": wallet, 
+                "uid": uid, 
                 "status": response.status_code, 
                 "response": response.json() if response.ok else response.text
             })
         except Exception as e:
-            results.append({"wallet": wallet, "error": str(e)})
+            results.append({"uid": uid, "error": str(e)})
             
     return jsonify({"success": True, "results": results})
 
@@ -276,7 +307,7 @@ def complete_payment():
 @app.route("/pi-webhook", methods=["POST"])
 def pi_webhook():
     try:
-        data = request.get_json() or {}
+        data = request.get_json()or {}
         payment_id = data.get("paymentId") or data.get("payment_id") or "unknown_tx"
         audit_result = compliance_engine.audit_transaction(
             str(payment_id), True, 1.0
