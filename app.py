@@ -55,7 +55,7 @@ def init_db():
             " KEY, user_id TEXT, status TEXT)"
         )
 
-    # 2. البحث عن أي ملفات قواعد بيانات أخرى في المجلد ودمج محتواها تلقائياً
+    # 2. البحث عن أي ملفات قواعد بيانات أخرى في المجلد ودمج محتواها تلقائياً بشمولية تامة
     try:
         all_files = os.listdir(BASE_DIR)
         other_dbs = [f for f in all_files if f.endswith('.db') and f != "assets.db"]
@@ -70,23 +70,25 @@ def init_db():
 
                     with sqlite3.connect(DB_PATH) as main_conn:
                         for table in tables:
-                            if table in ["assets", "pending_payments"]:
-                                other_cursor.execute(f"SELECT * FROM {table}")
-                                rows = other_cursor.fetchall()
-                                for row in rows:
-                                    try:
-                                        if table == "assets":
-                                            main_conn.execute(
-                                                "INSERT OR IGNORE INTO assets (id, asset_name, asset_value, owner_id, payment_tx, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-                                                row
-                                            )
-                                        elif table == "pending_payments":
-                                            main_conn.execute(
-                                                "INSERT OR IGNORE INTO pending_payments (payment_id, user_id, status) VALUES (?, ?, ?)",
-                                                row
-                                            )
-                                    except Exception:
-                                        pass
+                            if table in ["sqlite_sequence"]:
+                                continue
+                            
+                            other_cursor.execute(f"PRAGMA table_info({table})")
+                            columns_info = other_cursor.fetchall()
+                            if not columns_info:
+                                continue
+                            
+                            col_defs = ", ".join([f'"{col[1]}" {col[2]}' for col in columns_info])
+                            main_conn.execute(f"CREATE TABLE IF NOT EXISTS {table} ({col_defs})")
+                            
+                            other_cursor.execute(f"SELECT * FROM {table}")
+                            rows = other_cursor.fetchall()
+                            for row in rows:
+                                placeholders = ", ".join(["?" for _ in row])
+                                try:
+                                    main_conn.execute(f"INSERT OR IGNORE INTO {table} VALUES ({placeholders})", row)
+                                except Exception:
+                                    pass
                         main_conn.commit()
             except Exception:
                 pass
