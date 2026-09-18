@@ -238,26 +238,14 @@ def trigger_test_payments():
     if not api_key:
         return jsonify({"success": False, "error": "Sandbox API Key not configured"}), 500
         
-    uids = []
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [row[0] for row in cursor.fetchall()]
-        
-        if 'assets' in tables:
-            cursor.execute("SELECT DISTINCT owner_id FROM assets WHERE owner_id IS NOT NULL AND owner_id != 'unknown' LIMIT 5")
-            uids = [row[0] for row in cursor.fetchall()]
-            
-        conn.close()
-    except Exception as e:
-        return jsonify({"success": False, "error": f"Database read error: {str(e)}"}), 500
-
-    if not uids:
-        return jsonify({
-            "success": False, 
-            "error": "No valid user UIDs found in assets table."
-        }), 400
+    # استخدام المحافظ الخمس الحقيقية بشكل مباشر ومضمون
+    real_wallets = [
+        "GABK4J2NACKLJHMZASWJHQSWSA7CQ4YN5YDBC4NXSF6MJ567TZHG3K",
+        "GCBLE6IDZIMWDFF4KNKG5FOFSQQ4UMYZH2ZUHGLFRDWJ2LOGZWVKJ5",
+        "GDAYL3OXZR2FSUX3LRZ4AMDNZPGLXILJ7OKHPZYK3NN7QDXR5GZSBHO",
+        "GBVRKMO6RDLJQ7K4N5NJ2SMXFJCNHUHJZ24ULIZABJX7DCALZOJZRX4",
+        "GCMVYFNEFM6B6SH6F4CKY52WJMCLM2PYXBZLMV6IBPWJ74KDP3ZA4ZWG"
+    ]
 
     headers = {
         "Authorization": f"Key {api_key}",
@@ -265,23 +253,23 @@ def trigger_test_payments():
     }
     
     results = []
-    for uid in uids:
+    for wallet in real_wallets:
         payment_data = {
             "amount": 1.0,
             "memo": "Omniverse Hub Automated Target Wallet Test Payment",
-            "uid": uid,
+            "uid": wallet,
             "metadata": {"test": True}
         }
         
         try:
             response = requests.post(f"{PI_BASE_URL}/payments", json=payment_data, headers=headers)
             results.append({
-                "uid": uid, 
+                "wallet": wallet, 
                 "status": response.status_code, 
                 "response": response.json() if response.ok else response.text
             })
         except Exception as e:
-            results.append({"uid": uid, "error": str(e)})
+            results.append({"wallet": wallet, "error": str(e)})
             
     return jsonify({"success": True, "results": results})
 
