@@ -22,7 +22,16 @@
         
         <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
         
-        <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-6 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
+        <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-4 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
+
+        <!-- قسم لتنفيذ المعاملات الخمس التجريبية تلقائياً لإلغاء التحذير الأحمر في منصة المطورين -->
+        <div id="testnetHelperSection" class="mb-6 p-3 bg-zinc-800/80 rounded-xl border border-yellow-500/40">
+            <h3 class="text-xs font-bold text-yellow-400 mb-2 text-center">⚙️ تسريع اجتياز شرط الـ 5 معاملات (Testnet)</h3>
+            <button onclick="runFiveTestTransactions()" class="w-full bg-amber-600 hover:bg-amber-500 text-black font-bold p-2 rounded text-xs transition shadow">
+                🚀 إطلاق 5 معاملات اختبارية متتالية
+            </button>
+            <p class="text-[10px] text-zinc-400 mt-1 text-center">يستخدم لتوليد معاملات SDK مقبولة للبلوكتشين وإزالة التحذير الأحمر.</p>
+        </div>
 
         <div class="space-y-4 border-t border-zinc-800 pt-4">
             <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (RWA)</h2>
@@ -41,15 +50,22 @@
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
 
-        // الحالة الافتراضية للبيئة (يمكنك تغييرها لاحقاً أو جعلها تتغير بالزر)
         let isSandbox = true;
 
         function initPiSDK() {
             Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
-            document.getElementById('envToggleBtn').innerText = isSandbox ? `Mode: TESTNET (Sandbox)` : `Mode: MAINNET (Production)`;
-            document.getElementById('envToggleBtn').className = isSandbox 
+            const envBtn = document.getElementById('envToggleBtn');
+            const helperSec = document.getElementById('testnetHelperSection');
+            
+            envBtn.innerText = isSandbox ? `Mode: TESTNET (Sandbox)` : `Mode: MAINNET (Production)`;
+            envBtn.className = isSandbox 
                 ? "text-xs px-3 py-1 rounded border border-yellow-600 bg-yellow-900/40 text-yellow-400 font-bold transition"
                 : "text-xs px-3 py-1 rounded border border-green-600 bg-green-900/40 text-green-400 font-bold transition";
+            
+            // إظهار قسم المساعدة فقط في وضع Testnet
+            if (helperSec) {
+                helperSec.style.display = isSandbox ? "block" : "none";
+            }
         }
 
         function toggleEnvironment() {
@@ -134,6 +150,45 @@
             };
 
             Pi.createPayment(paymentData, callbacks);
+        }
+
+        // دالة مخصصة لتنفيذ 5 معاملات متتالية بسرعة لاجتياز فحص المنصة
+        async function runFiveTestTransactions() {
+            if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
+            if (!confirm("سيتم البدء في سلسلة من المعاملات التجريبية (5 دفعات متتالية). هل أنت مستعد؟")) return;
+
+            for (let i = 1; i <= 5; i++) {
+                await new Promise((resolve) => {
+                    const testData = {
+                        amount: 0.1,
+                        memo: `Test Milestone Verification #${i}`,
+                        metadata: { type: "Milestone_Test", index: i }
+                    };
+
+                    const testCallbacks = {
+                        onReadyForServerApproval: async (paymentId) => {
+                            await approvePaymentOnServer(paymentId);
+                        },
+                        onReadyForServerCompletion: async (paymentId, txid) => {
+                            await fetch(`${API_BASE_URL}/api/complete_payment`, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ paymentId: paymentId, txid: txid, asset_name: `Test Asset ${i}`, asset_value: 0.1, owner: currentUser.username, sandbox: isSandbox })
+                            });
+                            resolve();
+                        },
+                        onCancel: () => { resolve(); },
+                        onError: () => { resolve(); }
+                    };
+
+                    try {
+                        Pi.createPayment(testData, testCallbacks);
+                    } catch(e) {
+                        resolve();
+                    }
+                });
+            }
+            alert("تم الانتهاء من دورة المعاملات التجريبية. تحقق من منصة المطورين!");
         }
 
         async function forceResetPayments() {
