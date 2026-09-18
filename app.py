@@ -99,7 +99,7 @@ init_db()
 
 @app.before_request
 def security_firewall():
-    if request.path in ["/", "/validation-key.txt", "/legal.html", "/api/app_wallet", "/trigger-test-payments", "/check-db"]:
+    if request.path in ["/", "/validation-key.txt", "/legal.html", "/api/app_wallet", "/trigger-test-payments", "/check-db", "/api/check-transactions"]:
         return
 
     client_ip = request.remote_addr
@@ -168,6 +168,38 @@ def check_database():
             "detected_sqlite_files": db_files,
             "tables": tables,
             "contents": table_contents
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/check-transactions", methods=["GET"])
+def check_transactions():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        tx_list = []
+        if 'assets' in tables:
+            cursor.execute("SELECT asset_name, asset_value, owner_id, payment_tx, timestamp FROM assets ORDER BY id DESC LIMIT 20")
+            rows = cursor.fetchall()
+            for row in rows:
+                tx_list.append({
+                    "asset_name": row[0],
+                    "asset_value": row[1],
+                    "owner_id": row[2],
+                    "payment_tx": row[3],
+                    "timestamp": row[4]
+                })
+                
+        conn.close()
+        
+        return jsonify({
+            "total_recorded_assets": len(tx_list),
+            "transactions": tx_list,
+            "message": "تم جلب سجل المعاملات والأصول المحلية بنجاح"
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -406,4 +438,4 @@ def pi_webhook():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.com("PORT", 10000) if hasattr(os, "environ") else 10000))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
