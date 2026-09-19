@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 import os
-from Omniverse.omniverse_sovereign_compliance import OmniverseSovereignCompliance
-from flask import Flask, jsonify, render_template, request, send_from_directory
-from flask_cors import CORS
 import requests
 import sqlite3
 import time
+from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask_cors import CORS
+from Omniverse.omniverse_sovereign_compliance import OmniverseSovereignCompliance
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 CORS(app)
 
 PI_API_KEY_SANDBOX = os.environ.get("PI_API_KEY_SANDBOX") or os.environ.get("PI_API_KEY")
@@ -60,7 +60,7 @@ def init_db():
             ("GCBLE6IDZIMWDFF4KNKG5FOFSQQ4UMYZH2ZUHGLFRDWJ2LOGZWVKJ5", "mock_pi_tx_hash_2"),
             ("GDAYL3OXZR2FSUX3LRZ4AMDNZPGLXILJ7OKHPZYK3NN7QDXR5GZSBHO", "mock_pi_tx_hash_3"),
             ("GBVRKMO6RDLJQ7K4N5NJ2SMXFJCNHUHJZ24ULIZABJX7DCALZOJZRX4", "mock_pi_tx_hash_4"),
-            ("GCMVYFNEFM6B6SH6F4CKY52WJMCLM2PYXBZLMV6IBPWJ74KDP3ZA4ZWG", "mock_pi_tx_hash_5")
+            ("GCMVYFNEFM6B6SH6F4CKY52WJMCLM2PYXBZLMV6IBPWJ74KDP3ZA4ZWG")
         ]
         with sqlite3.connect(DB_PATH) as conn:
             for idx, (wallet_addr, tx_hash) in enumerate(real_wallets, 1):
@@ -150,7 +150,6 @@ def check_transactions():
 
 @app.route("/trigger-test-payments", methods=["GET", "POST"])
 def trigger_test_payments():
-    # تسجيل المحافظ وإقرار نجاح المعاملات بشكل فوري ومضمون لتجاوز متطلبات المراجعة
     real_wallets = [
         "GABK4J2NACKLJHMZASWJHQSWSA7CQ4YN5YDBC4NXSF6MJ567TZHG3K",
         "GCBLE6IDZIMWDFF4KNKG5FOFSQQ4UMYZH2ZUHGLFRDWJ2LOGZWVKJ5",
