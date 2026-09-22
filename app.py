@@ -46,13 +46,31 @@ def check_rate_limit(client_ip):
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
-            "CREATE TABLE IF NOT EXISTS assets (id INTEGER PRIMARY KEY, asset_name"
-            " TEXT, asset_value REAL, owner_id TEXT, payment_tx TEXT, timestamp"
-            " TEXT)"
+            """CREATE TABLE IF NOT EXISTS assets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                asset_name TEXT, 
+                asset_value REAL, 
+                owner_id TEXT, 
+                payment_tx TEXT, 
+                timestamp TEXT
+            )"""
         )
         conn.execute(
-            "CREATE TABLE IF NOT EXISTS pending_payments (payment_id TEXT PRIMARY"
-            " KEY, user_id TEXT, status TEXT)"
+            """CREATE TABLE IF NOT EXISTS pending_payments (
+                payment_id TEXT PRIMARY KEY,
+                user_id TEXT,
+                amount REAL,
+                status TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )"""
+        )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS audit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_action TEXT,
+                details TEXT,
+                timestamp TEXT
+            )"""
         )
 
     # حقن المحافظ والمعاملات بأمان ودون ترك ثغرات
@@ -95,7 +113,10 @@ def security_firewall():
         "/api/app_wallet", 
         "/trigger-test-payments", 
         "/check-db", 
-        "/api/check-transactions"
+        "/api/check-transactions",
+        "/api/approve_payment",
+        "/api/complete_payment",
+        "/api/agent/audit-trail"
     ]
     if request.path in allowed_paths:
         return
@@ -198,17 +219,105 @@ def force_cancel_all():
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute("DELETE FROM pending_payments")
+            conn.commit()
         return jsonify({"status": "forced_cleaned_all", "message": "Cleared successfully"}), 200
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 200
 
+# مسار اعتماد الدفع من Pi SDK v2.0 (Server-to-Server Approval)
 @app.route("/api/approve_payment", methods=["POST"])
 def approve_payment():
-    return jsonify({"status": "approved", "compliance_seal": "Omniverse-Sovereign-Verified"}), 200
+    data = request.json or {}
+    payment_id = data.get('paymentId')
+    user_uid = data.get('uid')
+    
+    if not payment_id:
+        return jsonify({"error": "Missing paymentId"}), 400
 
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute(
+                """INSERT OR REPLACE INTO pending_payments (payment_id, user_id, amount, status)
+                   VALUES (?, ?, ?, ?)""",
+                (payment_id, user_uid, data.get('amount', 0.0), 'APPROVED')
+            )
+            conn.execute(
+                "INSERT INTO audit_logs (agent_action, details, timestamp) VALUES (?, ?, ?)",
+                ("PAYMENT_APPROVE", f"Payment ID {payment_id} approved securely.", datetime.now(timezone.utc).isoformat())
+            )
+            conn.commit()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({
+        "status": "approved", 
+        "compliance_seal": "Omniverse-Sovereign-Verified",
+        "paymentId": payment_id
+    }), 200
+
+# مسار إتمام الدفع (Completion Callback) مع معايير الأمان Idempotency وتحديث الأصول
 @app.route("/api/complete_payment", methods=["POST"])
 def complete_payment():
-    return jsonify({"status": "completed", "message": "Payment completed successfully"}), 200
+    data = request.json or {}
+    payment_id = data.get('paymentId')
+    txid = data.get('txid')
+    user_uid = data.get('uid')
+    amount = data.get('amount', 1.0)
+
+    if not payment_id or not txid:
+        return jsonify({"error": "Invalid payment data: missing paymentId or txid"}), 400
+
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            
+            # التحقق من عدم تكرار المعاملة (Idempotency Check)
+            cursor.execute("SELECT status FROM pending_payments WHERE payment_id = ?", (payment_id,))
+            row = cursor.fetchone()
+            
+            if row and row[0] == 'COMPLETED':
+                return jsonify({"message": "Payment already processed and recorded."}), 200
+
+            # تسجيل الأصل المالي الموثق في جدول assets
+            cursor.execute(
+                """INSERT INTO assets (asset_name, asset_value, owner_id, payment_tx, timestamp)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (f"Omniverse LYO Asset - {payment_id[:6]}", amount, user_uid or "Anonymous_User", txid, datetime.now(timezone.utc).isoformat())
+            )
+            
+            # تحديث حالة الدفع المعلق
+            cursor.execute(
+                """INSERT OR REPLACE INTO pending_payments (payment_id, user_id, amount, status)
+                   VALUES (?, ?, ?, ?)""",
+                (payment_id, user_uid, amount, 'COMPLETED')
+            )
+
+            # تسجيل الحدث في سجلات التدقيق للوكيل الذكي
+            cursor.execute(
+                "INSERT INTO audit_logs (agent_action, details, timestamp) VALUES (?, ?, ?)",
+                ("PAYMENT_COMPLETED", f"Completed payment {payment_id} with TxID {txid}", datetime.now(timezone.utc).isoformat())
+            )
+            conn.commit()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({
+        "status": "completed", 
+        "message": "Payment completed successfully and asset registered in Tripoli Node.",
+        "txid": txid
+    }), 200
+
+# مسار الوكيل الذكي لجلب سجلات التدقيق
+@app.route("/api/agent/audit-trail", methods=["GET"])
+def get_audit_trail():
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT agent_action, details, timestamp FROM audit_logs ORDER BY id DESC LIMIT 50")
+            logs = [{"action": r[0], "details": r[1], "timestamp": r[2]} for r in cursor.fetchall()]
+        return jsonify({"status": "success", "audit_logs": logs}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/pi-webhook", methods=["POST"])
 def pi_webhook():
