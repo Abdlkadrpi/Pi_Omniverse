@@ -6,6 +6,7 @@ import time
 from flask import Flask, jsonify, render_template, request, send_from_directory
 from flask_cors import CORS
 from Omniverse.omniverse_sovereign_compliance import OmniverseSovereignCompliance
+from agent_engine import OmniverseAgentEngine
 
 app = Flask(__name__, template_folder='templates')
 CORS(app)
@@ -19,6 +20,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "assets.db")
 
 compliance_engine = OmniverseSovereignCompliance()
+agent_system = OmniverseAgentEngine()
 
 # إعدادات حماية المعدل (Rate Limiting) لتجنب الهجمات العشوائية
 REQUEST_LIMIT = 50
@@ -116,7 +118,8 @@ def security_firewall():
         "/api/check-transactions",
         "/api/approve_payment",
         "/api/complete_payment",
-        "/api/agent/audit-trail"
+        "/api/agent/audit-trail",
+        "/api/agent/execute"
     ]
     if request.path in allowed_paths:
         return
@@ -238,7 +241,7 @@ def approve_payment():
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute(
                 """INSERT OR REPLACE INTO pending_payments (payment_id, user_id, amount, status)
-                   VALUES (?, ?, ?, ?)""",
+                    VALUES (?, ?, ?, ?)""",
                 (payment_id, user_uid, data.get('amount', 0.0), 'APPROVED')
             )
             conn.execute(
@@ -281,14 +284,14 @@ def complete_payment():
             # تسجيل الأصل المالي الموثق في جدول assets
             cursor.execute(
                 """INSERT INTO assets (asset_name, asset_value, owner_id, payment_tx, timestamp)
-                   VALUES (?, ?, ?, ?, ?)""",
+                    VALUES (?, ?, ?, ?, ?)""",
                 (f"Omniverse LYO Asset - {payment_id[:6]}", amount, user_uid or "Anonymous_User", txid, datetime.now(timezone.utc).isoformat())
             )
             
             # تحديث حالة الدفع المعلق
             cursor.execute(
                 """INSERT OR REPLACE INTO pending_payments (payment_id, user_id, amount, status)
-                   VALUES (?, ?, ?, ?)""",
+                    VALUES (?, ?, ?, ?)""",
                 (payment_id, user_uid, amount, 'COMPLETED')
             )
 
@@ -306,6 +309,17 @@ def complete_payment():
         "message": "Payment completed successfully and asset registered in Tripoli Node.",
         "txid": txid
     }), 200
+
+# مسار تشغيل وتدقيق الوكيل الذكي (AI Agent Execution Endpoint)
+@app.route("/api/agent/execute", methods=["POST"])
+def execute_agent_task():
+    data = request.json or {}
+    agent_name = data.get("agent_name", "Tripoli_SuperAgent")
+    action_type = data.get("action_type", "AUDIT_ASSET")
+    payload = data.get("payload", {})
+
+    result = agent_system.audit_and_execute(agent_name, action_type, payload)
+    return jsonify(result), 200
 
 # مسار الوكيل الذكي لجلب سجلات التدقيق
 @app.route("/api/agent/audit-trail", methods=["GET"])
