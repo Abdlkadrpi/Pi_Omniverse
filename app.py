@@ -90,6 +90,19 @@ def init_db():
                 timestamp TEXT
             )"""
         )
+        # جدول خاص بتسجيل معاملات وحركات الربط العابر (Cross-Chain Settlement)
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS crosschain_settlements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                transaction_id TEXT UNIQUE,
+                source_chain TEXT,
+                target_asset TEXT,
+                amount REAL,
+                node_validator TEXT,
+                timestamp REAL,
+                status TEXT
+            )"""
+        )
 
     # حقن المحافظ والمعاملات بأمان ودون ترك ثغرات
     try:
@@ -138,7 +151,8 @@ def security_firewall():
         "/api/agent/execute",
         "/api/node/status",
         "/api/crosschain/verify-settlement",
-        "/api/agent/autonomous-audit"
+        "/api/agent/autonomous-audit",
+        "/api/crosschain/history"
     ]
     if request.path in allowed_paths:
         return
@@ -176,8 +190,8 @@ def get_node_status():
 @app.route('/api/crosschain/verify-settlement', methods=['POST'])
 def verify_crosschain_settlement():
     """
-    محاكاة استقبال طلب تسوية عابر للحدود (Cross-Chain Settlement) 
-    وقيامه بالتحقق عبر الوكيل الذكي وقواعد عملة LYO.
+    استقبال طلب تسوية عابر للحدود (Cross-Chain Settlement)، 
+    التدقيق عليه عبر الوكيل الذكي، وحفظ السجل مباشرة في قاعدة بيانات SQLite.
     """
     req_data = request.get_json() or {}
     source_chain = req_data.get("source_chain", "External-TradFi-Swift")
@@ -190,22 +204,61 @@ def verify_crosschain_settlement():
 
     # توليد بصمة توقيع رقمي سيادي (Self-Signing Simulation)
     signature_hash = generate_secure_hash(f"{source_chain}-{target_asset}-{amount}")
+    tx_id = signature_hash[:16]
+    current_time = time.time()
 
     settlement_record = {
-        "transaction_id": signature_hash[:16],
+        "transaction_id": tx_id,
         "source_chain": source_chain,
         "target_asset": target_asset,
         "amount": amount,
         "node_validator": node_state["node_name"],
-        "timestamp": time.time(),
+        "timestamp": current_time,
         "status": "Verified & Executed by AI Agent"
     }
 
+    # حفظ السجل في قاعدة بيانات SQLite المحلية
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT OR IGNORE INTO crosschain_settlements 
+                (transaction_id, source_chain, target_asset, amount, node_validator, timestamp, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (tx_id, source_chain, target_asset, amount, node_state["node_name"], current_time, "Verified"))
+            
+            # تسجيل الحدث أيضاً في سجلات التدقيق العام للوكيل
+            cursor.execute(
+                "INSERT INTO audit_logs (agent_action, details, timestamp) VALUES (?, ?, ?)",
+                ("CROSSCHAIN_SETTLEMENT", f"Verified cross-chain transaction ID {tx_id} from {source_chain}", datetime.now(timezone.utc).isoformat())
+            )
+            conn.commit()
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Database error: {str(e)}"}), 500
+
     return jsonify({
         "status": "success",
-        "message": "Cross-chain transaction successfully audited and authorized by Tripoli Node AI Agent.",
+        "message": "Cross-chain transaction successfully audited, authorized, and stored in Tripoli Node DB.",
         "settlement": settlement_record
     }), 200
+
+@app.route('/api/crosschain/history', methods=['GET'])
+def get_crosschain_history():
+    """استعراض سجلات المعاملات العابرة للسلاسل المحفوظة في قاعدة البيانات"""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM crosschain_settlements ORDER BY timestamp DESC LIMIT 50')
+            rows = cursor.fetchall()
+            settlements = [dict(row) for row in rows]
+        return jsonify({
+            "status": "success",
+            "total_settlements": len(settlements),
+            "settlements": settlements
+        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/agent/autonomous-audit', methods=['POST'])
 def autonomous_audit():
@@ -415,6 +468,6 @@ def pi_webhook():
     return jsonify({"status": "success", "message": "Webhook processed"}), 200
 
 if __name__ == "__main__":
-    print("[*] Initializing Omniverse Cross-Chain & AI Agent Engine...")
+    print("[*] Initializing Omniverse Cross-Chain & AI Agent Engine with SQLite DB...")
     print(f"[*] Connected to {node_state['node_name']} infrastructure.")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
