@@ -3,46 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omniverse Hub - Sovereign Gateway</title>
+    <title>Omniverse Hub - Sovereign Gateway & Tripoli Node</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-white p-4">
-    <div class="max-w-md mx-auto bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
-        <h1 class="text-2xl text-yellow-500 font-bold mb-2 text-center">OMNIVERSE HUB</h1>
+    <div class="max-w-4xl mx-auto space-y-6">
         
-        <!-- زر تبديل البيئة بين Testnet و Mainnet -->
-        <div class="flex justify-center items-center gap-2 mb-4">
-            <button id="envToggleBtn" onclick="toggleEnvironment()" class="text-xs px-3 py-1 rounded border border-yellow-600 bg-yellow-900/40 text-yellow-400 font-bold transition">
-                Mode: TESTNET (Sandbox)
-            </button>
+        <!-- البطاقة الرئيسية لتطبيق Omniverse -->
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
+            <h1 class="text-2xl text-yellow-500 font-bold mb-2 text-center">OMNIVERSE HUB</h1>
+            
+            <!-- زر تبديل البيئة بين Testnet و Mainnet -->
+            <div class="flex justify-center items-center gap-2 mb-4">
+                <button id="envToggleBtn" onclick="toggleEnvironment()" class="text-xs px-3 py-1 rounded border border-yellow-600 bg-yellow-900/40 text-yellow-400 font-bold transition">
+                    Mode: TESTNET (Sandbox)
+                </button>
+            </div>
+
+            <p class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - عقدة طرابلس (Tripoli-Node-v0.6.3)</p>
+            
+            <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
+            
+            <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-4 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
+
+            <!-- قسم لتنفيذ المعاملات الخمس التجريبية تلقائياً -->
+            <div id="testnetHelperSection" class="mb-6 p-3 bg-zinc-800/80 rounded-xl border border-yellow-500/40">
+                <h3 class="text-xs font-bold text-yellow-400 mb-2 text-center">⚙️ تسريع اجتياز شرط الـ 5 معاملات (Testnet)</h3>
+                <button onclick="runFiveTestTransactions()" class="w-full bg-amber-600 hover:bg-amber-500 text-black font-bold p-2 rounded text-xs transition shadow">
+                    🚀 إطلاق 5 معاملات اختبارية متتالية
+                </button>
+                <p class="text-[10px] text-zinc-400 mt-1 text-center">يستخدم لتوليد معاملات SDK مقبولة للبلوكتشين وإزالة التحذير الأحمر.</p>
+            </div>
+
+            <div class="space-y-4 border-t border-zinc-800 pt-4">
+                <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (RWA)</h2>
+                <input id="assetName" placeholder="اسم الأصل (مثال: عقار ذكي رقم 01)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+                <input id="assetVal" type="number" step="0.01" placeholder="القيمة بـ Pi" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+                <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg">PAY & REGISTER</button>
+            </div>
+
+            <div class="mt-6 text-center">
+                <p id="statusMsg" class="text-xs text-zinc-500"></p>
+            </div>
         </div>
 
-        <p class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - عقدة طرابلس</p>
-        
-        <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
-        
-        <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-4 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
+        <!-- لوحة مراقبة عقدة طرابلس والربط العابر (Cross-Chain Dashboard) -->
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-cyan-600 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-cyan-400">🌐 لوحة تحكم عقدة طرابلس والربط العابر</h2>
+                <button onclick="loadDashboardData()" class="bg-cyan-700 hover:bg-cyan-600 text-xs px-3 py-1.5 rounded font-bold transition">تحديث البيانات 🔄</button>
+            </div>
 
-        <!-- قسم لتنفيذ المعاملات الخمس التجريبية تلقائياً -->
-        <div id="testnetHelperSection" class="mb-6 p-3 bg-zinc-800/80 rounded-xl border border-yellow-500/40">
-            <h3 class="text-xs font-bold text-yellow-400 mb-2 text-center">⚙️ تسريع اجتياز شرط الـ 5 معاملات (Testnet)</h3>
-            <button onclick="runFiveTestTransactions()" class="w-full bg-amber-600 hover:bg-amber-500 text-black font-bold p-2 rounded text-xs transition shadow">
-                🚀 إطلاق 5 معاملات اختبارية متتالية
-            </button>
-            <p class="text-[10px] text-zinc-400 mt-1 text-center">يستخدم لتوليد معاملات SDK مقبولة للبلوكتشين وإزالة التحذير الأحمر.</p>
+            <!-- بطاقات الحالة المصغرة -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
+                    <span class="text-xs text-zinc-400 block">حالة العقدة</span>
+                    <span id="nodeNameDisplay" class="text-sm font-bold text-cyan-300">Tripoli-Node-v0.6.3</span>
+                </div>
+                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
+                    <span class="text-xs text-zinc-400 block">شبكة التوجيه</span>
+                    <span id="nodeNetworkDisplay" class="text-sm font-bold text-yellow-300">Pi-Soroban-Bridge</span>
+                </div>
+                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
+                    <span class="text-xs text-zinc-400 block">الوكلاء النشطون</span>
+                    <span id="activeAgentsDisplay" class="text-sm font-bold text-green-400">4</span>
+                </div>
+            </div>
+
+            <!-- جدول سجلات المعاملات العابرة -->
+            <h3 class="text-xs font-bold text-zinc-300 mb-2">سجلات المعاملات العابرة للسلاسل (Cross-Chain History)</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-zinc-800 text-cyan-400 border-b border-zinc-700">
+                            <th class="p-2">معرف المعاملة (TxID)</th>
+                            <th class="p-2">المصدر</th>
+                            <th class="p-2">العملة</th>
+                            <th class="p-2">المبلغ</th>
+                            <th class="p-2">الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crosschainTableBody" class="divide-y divide-zinc-800 text-zinc-300">
+                        <tr>
+                            <td colspan="5" class="p-3 text-center text-zinc-500">جاري جلب السجلات...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="space-y-4 border-t border-zinc-800 pt-4">
-            <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (RWA)</h2>
-            <input id="assetName" placeholder="اسم الأصل (مثال: عقار ذكي رقم 01)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
-            <input id="assetVal" type="number" step="0.01" placeholder="القيمة بـ Pi" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
-            <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg">PAY & REGISTER</button>
-        </div>
-
-        <div class="mt-6 text-center">
-            <p id="statusMsg" class="text-xs text-zinc-500"></p>
-        </div>
     </div>
 
     <script>
@@ -145,6 +195,7 @@
                         if (res.ok) {
                             alert("تمت المعاملة وتوثيق الأصل بنجاح!");
                             document.getElementById('statusMsg').innerText = "تم تسجيل الأصل السيادي بنجاح.";
+                            loadDashboardData();
                         } else {
                             alert("خطأ في إتمام المعاملة على السيرفر.");
                         }
@@ -207,6 +258,7 @@
                 });
             }
             alert("تم الانتهاء من دورة المعاملات التجريبية. تحقق من منصة المطورين!");
+            loadDashboardData();
         }
 
         async function forceResetPayments() {
@@ -219,10 +271,51 @@
                 });
                 localStorage.clear();
                 alert("تمت عملية التطهير بنجاح.");
+                loadDashboardData();
             } catch(e) {
                 alert("خطأ: " + e.message);
             }
         }
+
+        // جلب بيانات لوحة التحكم وعقدة طرابلس وسجلات الربط العابر
+        async function loadDashboardData() {
+            try {
+                let statusRes = await fetch(`${API_BASE_URL}/api/node/status`);
+                let statusData = await statusRes.json();
+                if (statusData.status === 'success') {
+                    document.getElementById('nodeNameDisplay').innerText = statusData.data.node_name;
+                    document.getElementById('nodeNetworkDisplay').innerText = statusData.data.network;
+                    document.getElementById('activeAgentsDisplay').innerText = statusData.data.active_agents;
+                }
+
+                let historyRes = await fetch(`${API_BASE_URL}/api/crosschain/history`);
+                let historyData = await historyRes.json();
+                let tbody = document.getElementById('crosschainTableBody');
+                tbody.innerHTML = '';
+
+                if (historyData.status === 'success' && historyData.settlements.length > 0) {
+                    historyData.settlements.forEach(item => {
+                        let row = `<tr class="hover:bg-zinc-800/50">
+                            <td class="p-2 font-mono text-[11px] text-cyan-300">${item.transaction_id}</td>
+                            <td class="p-2">${item.source_chain}</td>
+                            <td class="p-2 font-bold text-yellow-400">${item.target_asset}</td>
+                            <td class="p-2">${item.amount}</td>
+                            <td class="p-2 text-green-400">${item.status}</td>
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-zinc-500">لا توجد سجلات معاملة حتى الآن.</td></tr>`;
+                }
+            } catch (err) {
+                console.error("Error loading dashboard data:", err);
+            }
+        }
+
+        // تحميل البيانات فور فتح الصفحة
+        window.onload = function() {
+            loadDashboardData();
+        };
     </script>
 </body>
 </html>
