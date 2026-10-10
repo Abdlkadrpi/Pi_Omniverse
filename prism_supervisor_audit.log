@@ -184,3 +184,15 @@
  * Running on http://192.168.0.100:10000
 2026-10-09 18:02:20,132 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
 2026-10-09 18:02:20,139 [INFO] werkzeug:  * Restarting with stat
+2026-10-10 15:39:43,150 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-10 15:39:43,153 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-10 15:39:43,168 [INFO] werkzeug:  * Restarting with stat
+2026-10-10 15:40:14,466 [WARNING] werkzeug:  * Debugger is active!
+2026-10-10 15:40:14,480 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-10 15:45:09,503 [INFO] werkzeug: 192.168.0.102 - - [10/Oct/2026 15:45:09] "GET / HTTP/1.1" 200 -
+2026-10-10 15:45:29,664 [INFO] werkzeug: 192.168.0.102 - - [10/Oct/2026 15:45:29] "GET / HTTP/1.1" 200 -
+2026-10-10 15:46:22,339 [INFO] werkzeug: 192.168.0.102 - - [10/Oct/2026 15:46:22] "GET / HTTP/1.1" 200 -
+2026-10-10 15:46:26,883 [INFO] werkzeug: 192.168.0.102 - - [10/Oct/2026 15:46:26] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
