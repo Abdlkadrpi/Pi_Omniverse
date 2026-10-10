@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <title>OMNIVERSE HUB | LYO ECONOMY</title>
+</head>
+<body class="bg-black text-white font-sans">
+    <div class="max-w-4xl mx-auto p-6">
+        <header class="flex justify-between items-center py-6 border-b border-zinc-800">
+            <h1 class="text-2xl font-bold text-yellow-500">OMNIVERSE HUB</h1>
+            <button id="authBtn" onclick="connectPi()" class="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold">CONNECT PI</button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                <h2 class="text-sm text-yellow-500 mb-4 uppercase">Asset Tokenization (LYO Powered)</h2>
+                <input id="assetName" placeholder="Asset Name" class="w-full bg-black p-2 mb-2 border border-zinc-700 rounded text-white">
+                <input id="assetVal" placeholder="Value (Pi)" class="w-full bg-black p-2 mb-2 border border-zinc-700 rounded text-white">
+                <input id="payTx" placeholder="LYO Transaction ID" class="w-full bg-black p-2 mb-2 border border-purple-700 rounded text-purple-300">
+                <button id="regBtn" onclick="registerAsset()" class="w-full bg-blue-600 p-2 rounded font-bold hover:bg-blue-700 transition">REGISTER ASSET</button>
+            </div>
+            
+            <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                <h2 class="text-sm text-zinc-400 mb-4 uppercase">AI Governance</h2>
+                <textarea id="aiInput" class="w-full bg-black p-2 mb-2 border border-zinc-700 rounded text-white" placeholder="Consult the Agent..."></textarea>
+                <button id="aiBtn" onclick="askAI()" class="w-full bg-green-600 p-2 rounded font-bold hover:bg-green-700 transition">SEND QUERY</button>
+                <div id="aiResponse" class="mt-4 text-xs text-zinc-400 italic">Waiting for query...</div>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+            <h2 class="text-sm text-zinc-400 mb-4 uppercase">Asset Retrieval (Verify Status)</h2>
+            <div class="flex gap-2">
+                <input id="refInput" placeholder="Enter Ref ID (e.g. LYO-XXXX)" class="flex-1 bg-black p-2 border border-zinc-700 rounded text-white">
+                <button id="verBtn" onclick="verifyAsset()" class="bg-purple-600 px-4 py-2 rounded font-bold hover:bg-purple-700 transition">VERIFY</button>
+            </div>
+            <div id="verificationResult" class="mt-4 text-sm text-yellow-500 font-mono"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = "https://pi-omniverse-1.onrender.com";
+        Pi.init({ version: "2.0", sandbox: true, appId: "BhuDGK3HBFirMFg2AJgp72bToQ-waMTg645wOBENDyo" });
+        let currentUser = null;
+
+        async function connectPi() {
+            try {
+                const auth = await Pi.authenticate(['username']);
+                currentUser = auth.user.username;
+                document.getElementById('authBtn').innerText = "LINKED: " + currentUser;
+            } catch (e) { alert("Auth failed"); }
+        }
+
+        async function registerAsset() {
+            const name = document.getElementById('assetName').value;
+            const value = document.getElementById('assetVal').value;
+            const payment_tx_id = document.getElementById('payTx').value;
+            if(!currentUser) return alert("Connect Pi first.");
+            
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/register_asset`, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ name, value, owner: currentUser, payment_tx_id }) 
+                });
+                const data = await res.json();
+                if(data.status === 'success') alert(`Success! Ref: ${data.referenceId}`);
+                else alert("Error: " + data.message);
+            } catch (e) { alert("Server error."); }
+        }
+
+        async function verifyAsset() {
+            const refId = document.getElementById('refInput').value;
+            const res = await fetch(`${API_BASE_URL}/api/verify_asset`, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ refId }) 
+            });
+            const data = await res.json();
+            const resDiv = document.getElementById('verificationResult');
+            resDiv.innerText = data.found ? `✅ Asset: ${data.assetName} | Owner: ${data.owner} | LYO Tx: ${data.tx_id}` : `❌ Not found.`;
+        }
+
+        async function askAI() {
+            const message = document.getElementById('aiInput').value;
+            const res = await fetch(`${API_BASE_URL}/api/ai_chat`, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ message }) 
+            });
+            const data = await res.json();
+            document.getElementById('aiResponse').innerText = data.message;
+        }
+    </script>
+</body>
+</html>

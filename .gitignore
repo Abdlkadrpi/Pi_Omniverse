@@ -1,0 +1,6 @@
+node_modules
+assets.db-journal
+prism_supervisor_audit.log
+
+test_claude.py
+prism_supervisor_audit.log

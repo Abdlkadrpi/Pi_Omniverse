@@ -1,0 +1,7 @@
+{
+    "SoloHost_Mode": "Enabled",
+    "Identity_Provider": "Pi_Sign_in",
+    "Verification_Service": "PiVerify_API",
+    "Token_Integration": "LYO_Utility_Protocol",
+    "status": "Ready for 60M Pioneers"
+}

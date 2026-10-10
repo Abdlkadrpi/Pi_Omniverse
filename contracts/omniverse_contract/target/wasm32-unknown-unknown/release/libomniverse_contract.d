@@ -1,0 +1,1 @@
+C:\Users\الريادة\ للحاسبات\Desktop\Pi_Omniverse\Omniverse\omniverse_contract\target\wasm32-unknown-unknown\release\libomniverse_contract.rlib: C:\Users\الريادة\ للحاسبات\Desktop\Pi_Omniverse\Omniverse\omniverse_contract\src\lib.rs

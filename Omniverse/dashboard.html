@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omniverse Sovereign Dashboard - Web3</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0a0b10;
+            --panel-dark: #121420;
+            --neon-cyan: #00f5ff;
+            --neon-purple: #9400d3;
+            --pi-gold: #ffd366;
+            --text-main: #ffffff;
+            --text-muted: #8b9bb4;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-section {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--panel-dark) 0%, #1a1d36 100%);
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .header-title {
+            color: var(--pi-gold);
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .node-badge {
+            display: inline-block;
+            background: rgba(0, 255, 170, 0.1);
+            color: #00ffaa;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid #00ffaa;
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.2);
+        }
+
+        .actions-section {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 25px 0;
+        }
+
+        .btn-pi-sdk {
+            background: linear-gradient(90deg, var(--pi-gold) 0%, #e5a93b 100%);
+            color: #000000;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 211, 102, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-pi-sdk:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(255, 211, 102, 0.6);
+        }
+
+        .btn-nft {
+            background: linear-gradient(90deg, #8a2be2 0%, var(--neon-purple) 100%);
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-nft:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(138, 43, 226, 0.7);
+        }
+
+        .ledger-section {
+            background: var(--panel-dark);
+            border: 1px solid rgba(148, 0, 211, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 25px;
+            box-shadow: 0 0 20px rgba(148, 0, 211, 0.05);
+        }
+
+        .ledger-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .ledger-header h2 {
+            font-size: 18px;
+            margin: 0;
+            color: var(--neon-cyan);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pulse-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 4px solid var(--neon-cyan);
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #ffffff;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 15px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header-section">
+        <h1 class="header-title">🏛️ OMNIVERSE SOVEREIGN NODE MANAGEMENT</h1>
+        <div class="node-badge"><i class="fas fa-bolt animate-pulse"></i> عقدة طرابلس السيادية: نشطة حياً ⚡</div>
+    </div>
+
+    <div class="actions-section">
+        <button class="btn-pi-sdk" onclick="simulatePiPayment()">
+            <i class="fab fa-pi"></i> محاكاة تدفق مالي عبر Pi SDK الرسمية
+        </button>
+        
+        <button class="btn-nft" onclick="mintSovereignNFT()">
+            <i class="fas fa-stamp"></i> صك الختم السيادي وشهادة الـ NFT العقارية
+        </button>
+    </div>
+    
+    <p class="footer-note">الأنظمة ممتثلة بالكامل للتشريعات المالية لعام 2026 وسياسات الـ Core Team لشبكة Pi لضمان فائدة المعاملات (Utility Value) 🛡️</p>
+
+    <div id="nftDisplaySection" class="ledger-section" style="display: none; border-color: var(--neon-cyan); box-shadow: 0 0 20px rgba(0, 245, 255, 0.15);">
+        <div class="ledger-header">
+            <h2><i class="fas fa-certificate animate-pulse"></i> مستند الـ NFT العقاري الموثق قانونياً</h2>
+            <span style="color: var(--neon-cyan); font-weight: bold; font-size: 13px;"><i class="fas fa-shield-alt"></i> SEC & MiCA Compliant (RWA)</span>
+        </div>
+        <div class="pulse-box" id="nftMetadataBox" style="border-right-color: var(--neon-cyan); background: rgba(0, 245, 255, 0.02);">
+            </div>
+    </div>
+
+    <div class="ledger-section">
+        <div class="ledger-header">
+            <h2><i class="fas fa-database"></i> تتبع آخر كتلة مشفرة في السجل</h2>
+            <span style="color: var(--pi-gold); font-size: 13px;"><i class="fas fa-link"></i> Chain-Linked Ready</span>
+        </div>
+        <div class="pulse-box" id="ledgerStatusBox">
+            جاري فحص النبضات المتزامنة من السيرفر...
+        </div>
+    </div>
+</div>
+
+<script>
+    function simulatePiPayment() {
+        const randId = "pi_pay_" + Math.random().toString(36).substring(2, 15);
+        fetch('/api/approve_payment?paymentId=' + randId)
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === "approved") {
+                    alert("🏛️ تم قبول المعاملة عبر Pi SDK بنجاح!\n\nالهاش المشفر التوافقي للموجة:\n" + data.tx_hash);
+                    updateLedgerStatus();
+                } else {
+                    alert("❌ خطأ: " + data.message);
+                }
+            })
+            .catch(err => alert("❌ فشل الاتصال بالسيرفر الخلفي. تأكد من تشغيل السيرفر أولاً."));
+    }
+
+    function mintSovereignNFT() {
+        fetch('/api/mint_seal')
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === "success") {
+                    document.getElementById('nftDisplaySection').style.display = 'block';
+                    const box = document.getElementById('nftMetadataBox');
+                    
+                    box.innerHTML = `
+                        <b style="color: var(--pi-gold);">📜 اسم الأصل الرقمي:</b> ${data.nft.name}<br>
+                        <b>📝 الوصف السيادي:</b> ${data.nft.description}<br>
+                        <b style="color: #00ffaa; display:block; margin-top:10px;">⚙️ الميزات الممتثلة (Attributes):</b>
+                        &nbsp;&nbsp;&bull; البروتوكول: ${data.nft.attributes.Protocol}<br>
+                        &nbsp;&nbsp;&bull; موقع العقدة الحية: ${data.nft.attributes.Node_Location}<br>
+                        &nbsp;&nbsp;&bull; شبكة الحماية: ${data.nft.attributes.Sovereign_Network}<br>
+                        &nbsp;&nbsp;&bull; سقف المعروض الاستراتيجي: ${data.nft.attributes.Total_Supply_Cap}<br>
+                        &nbsp;&nbsp;&bull; العملات الموزعة للكتلة: ${data.nft.attributes.Minted_LYO}<br>
+                        &nbsp;&nbsp;&bull; العملات المحروقة انكماشياً: ${data.nft.attributes.Burned_LYO}<br>
+                        <b style="color: #ffd366; display:block; margin-top:10px;">🔒 البصمة والتوقيع التشفيري العابر للقارات:</b>
+                        &nbsp;&nbsp;&bull; الهاش المرجعي للكتلة: <span style="word-break:break-all; color:#ffffff;">${data.nft.cryptographic_proof.genesis_anchor_hash}</span><br>
+                        &nbsp;&nbsp;&bull; توقيع عقدة طرابلس المعتمد: <span style="word-break:break-all; color:var(--neon-cyan); font-weight:bold;">${data.nft.cryptographic_proof.validator_signature}</span>
+                    `;
+                    alert("🏛️ تم صك الختم العقاري وتوليد شهادة الـ NFT بنجاح مذهل وصفر خطأ! تفقد التلجرام الآن.");
+                } else {
+                    alert("❌ تنبيه: " + data.message);
+                }
+            })
+            .catch(err => alert("❌ فشل الاتصال بخدمة الصك الذكية."));
+    }
+
+    function updateLedgerStatus() {
+        fetch('/api/ledger_status')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('ledgerStatusBox').innerText = data.latest_entry;
+            })
+            .catch(() => {});
+    }
+
+    setInterval(updateLedgerStatus, 3000);
+    window.onload = updateLedgerStatus;
+</script>
+
+</body>
+</html>

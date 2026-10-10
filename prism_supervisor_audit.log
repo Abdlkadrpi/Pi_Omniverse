@@ -1,0 +1,186 @@
+2026-10-04 16:08:24,171 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.103:10000
+2026-10-04 16:08:24,171 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-04 16:08:24,176 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 16:08:31,052 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 16:08:31,065 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 16:12:30,963 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.103:10000
+2026-10-04 16:12:30,965 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-04 16:12:30,970 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 16:12:38,140 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 16:12:38,157 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 16:17:58,441 [INFO] werkzeug:  * Detected change in 'C:\\Users\\«·—Ì«œ… ··Õ«”»« \\Desktop\\Pi_Omniverse\\app.py', reloading
+2026-10-04 16:18:05,222 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 16:18:22,208 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 16:18:22,219 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 16:20:33,933 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.103:10000
+2026-10-04 16:20:33,942 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-04 16:20:33,959 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 16:21:14,007 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 16:21:14,020 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 16:24:19,780 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.103:10000
+2026-10-04 16:24:19,781 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-04 16:24:19,803 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 16:24:26,239 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 16:24:26,253 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 17:50:03,880 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.103:10000
+2026-10-04 17:50:03,881 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-04 17:50:03,894 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 17:50:09,500 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 17:50:09,522 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 18:12:34,895 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.103:10000
+2026-10-04 18:12:34,896 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-04 18:12:34,902 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 18:12:49,139 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 18:12:49,157 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 18:19:53,249 [INFO] PRISM_Supervisor: Audit executed. State: STABLE, Score: 92.0
+2026-10-04 18:19:53,250 [INFO] werkzeug: 127.0.0.1 - - [04/Oct/2026 18:19:53] "POST /api/prism/audit HTTP/1.1" 200 -
+2026-10-04 21:09:14,159 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.105:10000
+2026-10-04 21:09:14,163 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-04 21:09:14,170 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 21:09:45,394 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 21:09:45,419 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 21:33:19,365 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.105:10000
+2026-10-04 21:33:19,366 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-04 21:33:19,372 [INFO] werkzeug:  * Restarting with stat
+2026-10-04 21:33:56,154 [WARNING] werkzeug:  * Debugger is active!
+2026-10-04 21:33:56,167 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-04 22:02:33,179 [INFO] werkzeug: 127.0.0.1 - - [04/Oct/2026 22:02:33] "GET /api/node/status HTTP/1.1" 200 -
+2026-10-04 22:05:21,480 [INFO] werkzeug: 127.0.0.1 - - [04/Oct/2026 22:05:21] "GET /api/crosschain/history HTTP/1.1" 200 -
+2026-10-05 16:05:30,565 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-05 16:05:30,566 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-05 16:05:30,576 [INFO] werkzeug:  * Restarting with stat
+2026-10-05 16:05:41,434 [WARNING] werkzeug:  * Debugger is active!
+2026-10-05 16:05:41,448 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-05 20:17:04,675 [INFO] werkzeug:  * Detected change in 'C:\\Users\\«·—Ì«œ… ··Õ«”»« \\Desktop\\Pi_Omniverse\\app.py', reloading
+2026-10-05 20:17:07,626 [INFO] werkzeug:  * Restarting with stat
+2026-10-05 20:17:45,387 [WARNING] werkzeug:  * Debugger is active!
+2026-10-05 20:17:45,400 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-05 20:19:59,949 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-05 20:19:59,950 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-05 20:19:59,954 [INFO] werkzeug:  * Restarting with stat
+2026-10-05 20:20:29,425 [WARNING] werkzeug:  * Debugger is active!
+2026-10-05 20:20:29,436 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-05 20:23:01,319 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-05 20:23:01,319 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-05 20:23:01,326 [INFO] werkzeug:  * Restarting with stat
+2026-10-05 20:23:46,711 [WARNING] werkzeug:  * Debugger is active!
+2026-10-05 20:23:46,722 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-05 20:57:20,370 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-05 20:57:20,370 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-05 20:57:20,375 [INFO] werkzeug:  * Restarting with stat
+2026-10-05 20:57:40,865 [WARNING] werkzeug:  * Debugger is active!
+2026-10-05 20:57:40,880 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-05 21:36:01,034 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-05 21:36:01,035 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-05 21:36:01,042 [INFO] werkzeug:  * Restarting with stat
+2026-10-05 21:36:05,491 [WARNING] werkzeug:  * Debugger is active!
+2026-10-05 21:36:05,505 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-05 21:38:48,962 [INFO] werkzeug: 127.0.0.1 - - [05/Oct/2026 21:38:48] "GET /api/node/status HTTP/1.1" 200 -
+2026-10-05 21:38:49,213 [INFO] werkzeug: 127.0.0.1 - - [05/Oct/2026 21:38:49] "GET /trigger-test-payments HTTP/1.1" 200 -
+2026-10-05 21:38:49,572 [INFO] werkzeug: 127.0.0.1 - - [05/Oct/2026 21:38:49] "GET /api/check-transactions HTTP/1.1" 200 -
+2026-10-05 21:43:52,182 [INFO] werkzeug: 127.0.0.1 - - [05/Oct/2026 21:43:52] "GET /trigger-test-payments HTTP/1.1" 200 -
+2026-10-05 21:44:22,638 [INFO] werkzeug: 127.0.0.1 - - [05/Oct/2026 21:44:22] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-10-07 21:00:24,676 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.101:10000
+2026-10-07 21:00:24,677 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-07 21:00:24,683 [INFO] werkzeug:  * Restarting with stat
+2026-10-07 21:00:30,651 [WARNING] werkzeug:  * Debugger is active!
+2026-10-07 21:00:30,661 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-07 21:03:33,877 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 21:03:33] "GET /api/node/status HTTP/1.1" 200 -
+2026-10-07 21:04:15,675 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 21:04:15] "GET /check-db HTTP/1.1" 200 -
+2026-10-07 21:04:36,708 [INFO] PRISM_Supervisor: Audit executed. State: STABLE, Score: 95.5
+2026-10-07 21:04:36,773 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 21:04:36] "POST /api/prism/audit HTTP/1.1" 200 -
+2026-10-07 21:05:05,732 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 21:05:05] "GET /api/agent/audit-trail HTTP/1.1" 200 -
+2026-10-07 21:20:44,404 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.102:10000
+2026-10-07 21:20:44,405 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-07 21:20:44,412 [INFO] werkzeug:  * Restarting with stat
+2026-10-07 21:20:50,171 [WARNING] werkzeug:  * Debugger is active!
+2026-10-07 21:20:50,184 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-07 21:21:28,908 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 21:21:28] "GET /api/node/status HTTP/1.1" 200 -
+2026-10-07 21:30:08,424 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 21:30:08] "GET /api/node/status HTTP/1.1" 200 -
+2026-10-07 21:48:40,822 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 21:48:40] "GET /api/node/status HTTP/1.1" 200 -
+2026-10-07 22:04:46,645 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:04:46] "GET / HTTP/1.1" 200 -
+2026-10-07 22:05:04,107 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:05:04] "[33mGET /api/agent/status HTTP/1.1[0m" 404 -
+2026-10-07 22:05:04,303 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:05:04] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-10-07 22:09:09,000 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:09:08] "[33mPOST /api/agent/propose-update HTTP/1.1[0m" 404 -
+2026-10-07 22:09:21,583 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:09:21] "[33mPOST /api/agent/propose-update HTTP/1.1[0m" 404 -
+2026-10-07 22:09:40,468 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:09:40] "[33mPOST /api/agent/propose-update HTTP/1.1[0m" 404 -
+2026-10-07 22:09:43,612 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:09:43] "[33mPOST /api/agent/propose-update HTTP/1.1[0m" 404 -
+2026-10-07 22:17:00,628 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:17:00] "GET / HTTP/1.1" 200 -
+2026-10-07 22:32:42,814 [INFO] werkzeug: 127.0.0.1 - - [07/Oct/2026 22:32:42] "GET / HTTP/1.1" 200 -
+2026-10-08 16:00:10,175 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-08 16:00:10,216 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-08 16:00:10,226 [INFO] werkzeug:  * Restarting with stat
+2026-10-08 16:00:16,342 [WARNING] werkzeug:  * Debugger is active!
+2026-10-08 16:00:16,357 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-08 16:03:21,635 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:03:21] "GET /trigger-test-payments HTTP/1.1" 200 -
+2026-10-08 16:03:21,960 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:03:21] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-10-08 16:05:43,842 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:05:43] "GET /api/check-transactions HTTP/1.1" 200 -
+2026-10-08 16:06:57,336 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:06:57] "GET /api/agent/audit-trail HTTP/1.1" 200 -
+2026-10-08 16:08:59,174 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:08:59] "[31m[1mPOST /api/approve_payment HTTP/1.1[0m" 415 -
+2026-10-08 16:09:18,046 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:09:18] "[31m[1mPOST /api/complete_payment HTTP/1.1[0m" 415 -
+2026-10-08 16:13:23,422 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:13:23] "[35m[1mPOST /api/approve_payment HTTP/1.1[0m" 500 -
+2026-10-08 16:13:50,134 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:13:50] "[35m[1mPOST /api/complete_payment HTTP/1.1[0m" 500 -
+2026-10-08 16:17:41,165 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-08 16:17:41,166 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-08 16:17:41,170 [INFO] werkzeug:  * Restarting with stat
+2026-10-08 16:17:48,885 [WARNING] werkzeug:  * Debugger is active!
+2026-10-08 16:17:48,897 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-08 16:19:07,914 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:19:07] "POST /api/approve_payment HTTP/1.1" 200 -
+2026-10-08 16:21:09,594 [INFO] werkzeug: 127.0.0.1 - - [08/Oct/2026 16:21:09] "POST /api/complete_payment HTTP/1.1" 200 -
+2026-10-09 18:02:20,130 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.100:10000
+2026-10-09 18:02:20,132 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-09 18:02:20,139 [INFO] werkzeug:  * Restarting with stat
