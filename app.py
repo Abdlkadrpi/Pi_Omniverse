@@ -5,6 +5,7 @@ import requests
 import sqlite3
 import time
 import logging
+import re
 from flask import Flask, jsonify, render_template, request, send_from_directory
 from flask_cors import CORS
 from Omniverse.omniverse_sovereign_compliance import OmniverseSovereignCompliance
@@ -29,13 +30,12 @@ node_state = {
     "network": "Pi-Soroban-CrossChain-Bridge",
     "circulating_lyo": 250_000_000,  # الوقود التشغيلي المستخدم حالياً
     "active_agents": 4,
-    "tripoli_node_bridge": "http://127.0.0.1:5000"  # رابط الربط المباشر مع عقدة طرابلس (المنفذ 5000)
+    "tripoli_node_bridge": "http://127.0.0.1:10000"  # تحديث ليتطابق مع المنفذ المحلي النشط
 }
 
 # 1. حماية مفاتيح API وجعلها مخفية حصرياً عبر متغيرات البيئة (.env)
 PI_API_KEY_SANDBOX = os.environ.get("PI_API_KEY_SANDBOX")
 PI_API_KEY_MAINNET = os.environ.get("PI_API_KEY_MAINNET")
-# تحديد بيئة التشغيل افتراضياً للوضع التجريبي Sandbox ويمكن تبديلها إلى mainnet عند الإطلاق
 PI_NETWORK_ENV = os.environ.get("PI_NETWORK_ENV", "sandbox") 
 PI_BASE_URL = "https://api.minepi.com/v2"
 
@@ -49,6 +49,28 @@ agent_system = OmniverseAgentEngine()
 REQUEST_LIMIT = 50
 TIME_WINDOW = 60
 request_records = {}
+
+# ==========================================
+# طبقة الحماية الحتمية لوكلاء الذكاء الاصطناعي (Deterministic Guardrails)
+# ==========================================
+FORBIDDEN_PATTERNS = [
+    r"http[s]?://",                # منع أي روابط خارجية غير مصرح بها للوكلاء
+    r"submit.*form",             # منع تفاعلات ملء الاستمارات التلقائية
+    r"api/v1/external",          # تقييد مسارات الـ API الخارجية
+]
+
+def enforce_guardrails(payload_text):
+    """
+    طبقة حماية تفحص استجابة أو نية الوكيل قبل التنفيذ الحقيقي لمنع الاجتهاد الزائد.
+    """
+    if not isinstance(payload_text, str):
+        payload_text = str(payload_text)
+        
+    for pattern in FORBIDDEN_PATTERNS:
+        if re.search(pattern, payload_text, re.IGNORECASE):
+            return False, f"تم حظر الإجراء بواسطة نظام الأمان الحتمي: تطابق مع النمط الممنوع ({pattern})"
+    return True, "البيانات سليمة ومطابقة لمعايير الأمان."
+
 
 class OmniversePrismSupervisor:
     """
@@ -101,7 +123,7 @@ def check_rate_limit(client_ip):
     return True
 
 def generate_secure_hash(payload):
-    """محاكاة نموذج التوقيع الذاتي (Self-Signing Mechanism) وحساب البصمة الرقمية للمعاملة"""
+    """محاكاة نموذج التوقيع الذاتي وحساب البصمة الرقمية للمعاملة"""
     raw_data = f"{payload}{time.time()}"
     return hashlib.sha256(raw_data.encode()).hexdigest()
 
@@ -146,7 +168,6 @@ def init_db():
                 status TEXT
             )"""
         )
-        # جدول حالات نظام الأمان PRISM Supervisor
         conn.execute(
             """CREATE TABLE IF NOT EXISTS system_states (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,6 +176,17 @@ def init_db():
                 pending_transactions INTEGER,
                 safety_score REAL,
                 timestamp TEXT
+            )"""
+        )
+        # جدول نظام التحقق البشري (Human-in-the-Loop) للمعاملات الكبرى لعملة LYO ووكلاء AI
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS high_value_approvals (
+                approval_id TEXT PRIMARY KEY,
+                agent_name TEXT,
+                action_type TEXT,
+                payload TEXT,
+                status TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )"""
         )
 
@@ -201,11 +233,13 @@ def security_firewall():
         "/api/complete_payment",
         "/api/agent/audit-trail",
         "/api/agent/execute",
+        "/api/agent/high-value-action", # مسار التحقق البشري مسموح تماماً للوصول
+        "/api/agent/human-decision",     # مسار القرار البشري مسموح
         "/api/node/status",
         "/api/crosschain/verify-settlement",
         "/api/agent/autonomous-audit",
         "/api/crosschain/history",
-        "/api/prism/audit"  # مسار حارس الأمان مستثنى بسلامة من جدار الحماية
+        "/api/prism/audit"
     ]
     if request.path in allowed_paths:
         return
@@ -226,7 +260,6 @@ def pi_validation():
 
 @app.route("/")
 def index():
-    # تمرير بيئة التشغيل للواجهة الأمامية لضبط Pi.init بنجاح
     return render_template("index.html", env=PI_NETWORK_ENV)
 
 @app.route("/legal.html")
@@ -238,7 +271,7 @@ def get_node_status():
     try:
         response = requests.get(f"{node_state['tripoli_node_bridge']}/api/node/status", timeout=2)
         if response.status_code == 200:
-            node_state["tripoli_sync"] = "Connected to Tripoli Node (Port 5000)"
+            node_state["tripoli_sync"] = "Connected to Tripoli Node (Port 10000)"
         else:
             node_state["tripoli_sync"] = "Offline / Standalone mode"
     except Exception:
@@ -250,7 +283,6 @@ def get_node_status():
         "environment": PI_NETWORK_ENV
     }), 200
 
-# مسار حارس الأمان المستوحى من PRISM مع إرسال نسخة من التقرير لعقدة طرابلس
 @app.route('/api/prism/audit', methods=['POST'])
 def audit_node_state():
     try:
@@ -382,6 +414,90 @@ def autonomous_audit():
         }
     }), 200
 
+# ==========================================
+# نظام التحقق البشري (Human-in-the-Loop) للمعاملات الكبرى
+# ==========================================
+@app.route("/api/agent/high-value-action", methods=["POST"])
+def agent_high_value_action():
+    """
+    تعتمد هذه النقطة لتلقي المهام الكبرى أو تحويلات LYO العالية من قبل الوكلاء الذكاء الاصطناعي،
+    وتعمد إيقافها مؤقتاً لتتطلب موافقة المدير العام البشري (عبد القادر مختار).
+    """
+    data = request.json or {}
+    agent_name = data.get("agent_name", "Tripoli_SuperAgent")
+    action_type = data.get("action_type", "HIGH_VALUE_LYO_TRANSFER")
+    payload = data.get("payload", {})
+
+    # فحص الأمان الحتمي أولاً
+    is_safe, msg = enforce_guardrails(str(payload))
+    if not is_safe:
+        return jsonify({"status": "blocked_by_guardrail", "error": msg}), 403
+
+    approval_id = generate_secure_hash(f"{agent_name}-{action_type}-{time.time()}")[:16]
+
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute(
+                """INSERT INTO high_value_approvals (approval_id, agent_name, action_type, payload, status)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (approval_id, agent_name, action_type, str(payload), "PENDING_HUMAN_APPROVAL")
+            )
+            conn.execute(
+                "INSERT INTO audit_logs (agent_action, details, timestamp) VALUES (?, ?, ?)",
+                ("HIGH_VALUE_PENDING", f"Agent {agent_name} requested high-value action {action_type}. Approval ID: {approval_id}", datetime.now(timezone.utc).isoformat())
+            )
+            conn.commit()
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+    return jsonify({
+        "status": "paused_for_human_review",
+        "approval_id": approval_id,
+        "message": "تم إيقاف الإجراء مؤقتاً لحين مراجعته واعتماده بشرياً بواسطة المدير العام (Human-in-the-Loop)."
+    }), 200
+
+@app.route("/api/agent/human-decision", methods=["POST"])
+def human_decision():
+    """
+    نقطة يتفاعل من خلالها المدير العام البشري للموافقة أو الرفض على العمليات الكبرى المعلقة للوكلاء.
+    """
+    data = request.json or {}
+    approval_id = data.get("approval_id")
+    decision = data.get("decision")  # 'APPROVE' أو 'REJECT'
+    manager_id = data.get("manager_id", "Abdulqader_Mukhtar_GM")
+
+    if not approval_id or decision not in ["APPROVE", "REJECT"]:
+        return jsonify({"error": "Invalid approval_id or decision parameters."}), 400
+
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT action_type, payload FROM high_value_approvals WHERE approval_id = ? AND status = 'PENDING_HUMAN_APPROVAL'", (approval_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return jsonify({"error": "Approval ID not found or already processed."}), 404
+
+            action_type, payload = row
+            new_status = "APPROVED_BY_HUMAN" if decision == "APPROVE" else "REJECTED_BY_HUMAN"
+
+            cursor.execute("UPDATE high_value_approvals SET status = ? WHERE approval_id = ?", (new_status, approval_id))
+            cursor.execute(
+                "INSERT INTO audit_logs (agent_action, details, timestamp) VALUES (?, ?, ?)",
+                (f"HUMAN_{decision}", f"General Manager {manager_id} {decision.lower()} action {action_type} (ID: {approval_id})", datetime.now(timezone.utc).isoformat())
+            )
+            conn.commit()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({
+        "status": "success",
+        "approval_id": approval_id,
+        "decision": decision,
+        "message": f"تم تسجيل قرار المدير العام بنجاح: {decision}"
+    }), 200
+# ==========================================
+
 @app.route("/api/app_wallet", methods=["GET", "POST"])
 def app_wallet_config():
     return jsonify({
@@ -464,7 +580,6 @@ def force_cancel_all():
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 200
 
-# مسار الاعتماد المتوافق مع Pi SDK v2.0 (Server-side approval)
 @app.route("/api/approve_payment", methods=["POST"])
 def approve_payment():
     data = request.json or {}
@@ -495,7 +610,6 @@ def approve_payment():
         "paymentId": payment_id
     }), 200
 
-# مسار إكمال الدفع المتوافق مع Pi SDK v2.0 وتسجيل أصل LYO التشغيلي
 @app.route("/api/complete_payment", methods=["POST"])
 def complete_payment():
     data = request.json or {}
@@ -549,6 +663,11 @@ def execute_agent_task():
     agent_name = data.get("agent_name", "Tripoli_SuperAgent")
     action_type = data.get("action_type", "AUDIT_ASSET")
     payload = data.get("payload", {})
+
+    # فحص الأمان الحتمي لطلب الوكيل
+    is_safe, msg = enforce_guardrails(str(payload))
+    if not is_safe:
+        return jsonify({"status": "blocked_by_guardrail", "error": msg}), 403
 
     result = agent_system.audit_and_execute(agent_name, action_type, payload)
     return jsonify(result), 200
