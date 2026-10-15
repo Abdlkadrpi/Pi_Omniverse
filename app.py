@@ -14,7 +14,7 @@ from agent_engine import OmniverseAgentEngine
 app = Flask(__name__, template_folder='templates')
 CORS(app)
 
-# إعداد السجلات (Audit Trail) الخاصة بنظام PRISM Supervisor والمتوافقة مع معايير التدقيق
+# إعداد السجلات (Audit Trail) الخاصة بنظام PRISM Supervisor
 logging.basicConfig(
     filename='prism_supervisor_audit.log',
     level=logging.INFO,
@@ -22,18 +22,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger("PRISM_Supervisor")
 
-# إعدادات النظام الأساسية لمشروع Omniverse وعملة LYO
 TOTAL_LYO_SUPPLY = 1_000_000_000
 node_state = {
     "node_name": "Omniverse-App-Engine-v2.0",
     "status": "Active & Synchronized with Tripoli Node",
     "network": "Pi-Soroban-CrossChain-Bridge",
-    "circulating_lyo": 250_000_000,  # الوقود التشغيلي المستخدم حالياً
+    "circulating_lyo": 250_000_000,
     "active_agents": 4,
-    "tripoli_node_bridge": "http://127.0.0.1:10000"  # تحديث ليتطابق مع المنفذ المحلي النشط
+    "tripoli_node_bridge": "http://127.0.0.1:5000"  # الربط المباشر مع خادم الوكلاء على المنفذ 5000
 }
 
-# 1. حماية مفاتيح API وجعلها مخفية حصرياً عبر متغيرات البيئة (.env)
 PI_API_KEY_SANDBOX = os.environ.get("PI_API_KEY_SANDBOX")
 PI_API_KEY_MAINNET = os.environ.get("PI_API_KEY_MAINNET")
 PI_NETWORK_ENV = os.environ.get("PI_NETWORK_ENV", "sandbox") 
@@ -45,24 +43,17 @@ DB_PATH = os.path.join(BASE_DIR, "assets.db")
 compliance_engine = OmniverseSovereignCompliance()
 agent_system = OmniverseAgentEngine()
 
-# إعدادات حماية المعدل (Rate Limiting) لتجنب الهجمات العشوائية
 REQUEST_LIMIT = 50
 TIME_WINDOW = 60
 request_records = {}
 
-# ==========================================
-# طبقة الحماية الحتمية لوكلاء الذكاء الاصطناعي (Deterministic Guardrails)
-# ==========================================
 FORBIDDEN_PATTERNS = [
-    r"http[s]?://",                # منع أي روابط خارجية غير مصرح بها للوكلاء
-    r"submit.*form",             # منع تفاعلات ملء الاستمارات التلقائية
-    r"api/v1/external",          # تقييد مسارات الـ API الخارجية
+    r"http[s]?://",
+    r"submit.*form",
+    r"api/v1/external",
 ]
 
 def enforce_guardrails(payload_text):
-    """
-    طبقة حماية تفحص استجابة أو نية الوكيل قبل التنفيذ الحقيقي لمنع الاجتهاد الزائد.
-    """
     if not isinstance(payload_text, str):
         payload_text = str(payload_text)
         
@@ -73,10 +64,6 @@ def enforce_guardrails(payload_text):
 
 
 class OmniversePrismSupervisor:
-    """
-    مستوحى من نظام PRISM: يراقب الحالة الديناميكية للعقدة والوكلاء الأذكياء،
-    ويحدد ما إذا كان التوقف أو التحديث آمناً، أو ما إذا كان يتطلب الانتقال لوضع الصيانة الآمن.
-    """
     def __init__(self):
         self.maintenance_mode = False
         self.threshold_score = 75.0
@@ -123,7 +110,6 @@ def check_rate_limit(client_ip):
     return True
 
 def generate_secure_hash(payload):
-    """محاكاة نموذج التوقيع الذاتي وحساب البصمة الرقمية للمعاملة"""
     raw_data = f"{payload}{time.time()}"
     return hashlib.sha256(raw_data.encode()).hexdigest()
 
@@ -178,7 +164,6 @@ def init_db():
                 timestamp TEXT
             )"""
         )
-        # جدول نظام التحقق البشري (Human-in-the-Loop) للمعاملات الكبرى لعملة LYO ووكلاء AI
         conn.execute(
             """CREATE TABLE IF NOT EXISTS high_value_approvals (
                 approval_id TEXT PRIMARY KEY,
@@ -189,33 +174,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )"""
         )
-
-    try:
-        real_wallets = [
-            ("GABK4J2NACKLJHMZASWJHQSWSA7CQ4YN5YDBC4NXSF6MJ567TZHG3K", "mock_pi_tx_hash_1"),
-            ("GCBLE6IDZIMWDFF4KNKG5FOFSQQ4UMYZH2ZUHGLFRDWJ2LOGZWVKJ5", "mock_pi_tx_hash_2"),
-            ("GDAYL3OXZR2FSUX3LRZ4AMDNZPGLXILJ7OKHPZYK3NN7QDXR5GZSBHO", "mock_pi_tx_hash_3"),
-            ("GBVRKMO6RDLJQ7K4N5NJ2SMXFJCNHUHJZ24ULIZABJX7DCALZOJZRX4", "mock_pi_tx_hash_4"),
-            ("GCMVYFNEFM6B6SH6F4CKY52WJMCLM2PYXBZLMV6IBPWJ74KDP3ZA4ZWG", "mock_pi_tx_hash_5")
-        ]
-        with sqlite3.connect(DB_PATH) as conn:
-            for idx, (wallet_addr, tx_hash) in enumerate(real_wallets, 1):
-                conn.execute(
-                    """
-                    INSERT OR IGNORE INTO assets (asset_name, asset_value, owner_id, payment_tx, timestamp) 
-                    VALUES (?, ?, ?, ?, ?)
-                    """,
-                    (
-                        f"Target Wallet Asset {idx}",
-                        1.0,
-                        wallet_addr,
-                        tx_hash,
-                        datetime.now(timezone.utc).isoformat(),
-                    ),
-                )
-            conn.commit()
-    except Exception:
-        pass
 
 init_db()
 
@@ -233,8 +191,8 @@ def security_firewall():
         "/api/complete_payment",
         "/api/agent/audit-trail",
         "/api/agent/execute",
-        "/api/agent/high-value-action", # مسار التحقق البشري مسموح تماماً للوصول
-        "/api/agent/human-decision",     # مسار القرار البشري مسموح
+        "/api/agent/high-value-action",
+        "/api/agent/human-decision",
         "/api/node/status",
         "/api/crosschain/verify-settlement",
         "/api/agent/autonomous-audit",
@@ -271,7 +229,7 @@ def get_node_status():
     try:
         response = requests.get(f"{node_state['tripoli_node_bridge']}/api/node/status", timeout=2)
         if response.status_code == 200:
-            node_state["tripoli_sync"] = "Connected to Tripoli Node (Port 10000)"
+            node_state["tripoli_sync"] = "Connected to Tripoli Node (Port 5000)"
         else:
             node_state["tripoli_sync"] = "Offline / Standalone mode"
     except Exception:
@@ -414,21 +372,13 @@ def autonomous_audit():
         }
     }), 200
 
-# ==========================================
-# نظام التحقق البشري (Human-in-the-Loop) للمعاملات الكبرى
-# ==========================================
 @app.route("/api/agent/high-value-action", methods=["POST"])
 def agent_high_value_action():
-    """
-    تعتمد هذه النقطة لتلقي المهام الكبرى أو تحويلات LYO العالية من قبل الوكلاء الذكاء الاصطناعي،
-    وتعمد إيقافها مؤقتاً لتتطلب موافقة المدير العام البشري (عبد القادر مختار).
-    """
     data = request.json or {}
     agent_name = data.get("agent_name", "Tripoli_SuperAgent")
     action_type = data.get("action_type", "HIGH_VALUE_LYO_TRANSFER")
     payload = data.get("payload", {})
 
-    # فحص الأمان الحتمي أولاً
     is_safe, msg = enforce_guardrails(str(payload))
     if not is_safe:
         return jsonify({"status": "blocked_by_guardrail", "error": msg}), 403
@@ -439,7 +389,7 @@ def agent_high_value_action():
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute(
                 """INSERT INTO high_value_approvals (approval_id, agent_name, action_type, payload, status)
-                   VALUES (?, ?, ?, ?, ?)""",
+                    VALUES (?, ?, ?, ?, ?)""",
                 (approval_id, agent_name, action_type, str(payload), "PENDING_HUMAN_APPROVAL")
             )
             conn.execute(
@@ -458,12 +408,9 @@ def agent_high_value_action():
 
 @app.route("/api/agent/human-decision", methods=["POST"])
 def human_decision():
-    """
-    نقطة يتفاعل من خلالها المدير العام البشري للموافقة أو الرفض على العمليات الكبرى المعلقة للوكلاء.
-    """
     data = request.json or {}
     approval_id = data.get("approval_id")
-    decision = data.get("decision")  # 'APPROVE' أو 'REJECT'
+    decision = data.get("decision")
     manager_id = data.get("manager_id", "Abdulqader_Mukhtar_GM")
 
     if not approval_id or decision not in ["APPROVE", "REJECT"]:
@@ -496,7 +443,6 @@ def human_decision():
         "decision": decision,
         "message": f"تم تسجيل قرار المدير العام بنجاح: {decision}"
     }), 200
-# ==========================================
 
 @app.route("/api/app_wallet", methods=["GET", "POST"])
 def app_wallet_config():
@@ -664,7 +610,6 @@ def execute_agent_task():
     action_type = data.get("action_type", "AUDIT_ASSET")
     payload = data.get("payload", {})
 
-    # فحص الأمان الحتمي لطلب الوكيل
     is_safe, msg = enforce_guardrails(str(payload))
     if not is_safe:
         return jsonify({"status": "blocked_by_guardrail", "error": msg}), 403

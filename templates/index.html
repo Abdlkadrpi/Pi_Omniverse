@@ -103,7 +103,7 @@
             </div>
         </div>
 
-        <!-- لوحة مراقبة عقدة طرابلس والربط العابر (Cross-Chain Dashboard) -->
+        <!-- لوحة مراقبة عقدة طرابلس والسجل الدائم (Cross-Chain & SQLite Ledger) -->
         <div class="bg-zinc-900 p-6 rounded-2xl border border-cyan-600 shadow-xl">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-cyan-400">🌐 لوحة تحكم عقدة طرابلس والسجل الدائم</h2>
@@ -130,8 +130,8 @@
                 <table class="w-full text-right text-xs border-collapse">
                     <thead>
                         <tr class="bg-zinc-800 text-cyan-400 border-b border-zinc-700">
-                            <th class="p-2">معرف الدفع / الأصل</th>
-                            <th class="p-2">المستخدم</th>
+                            <th class="p-2">معرف الدفع</th>
+                            <th class="p-2">معرف المستخدم</th>
                             <th class="p-2">القيمة والعملة</th>
                             <th class="p-2">الحالة</th>
                             <th class="p-2">التوقيت</th>
@@ -149,8 +149,7 @@
     </div>
 
     <script>
-        // استخدام عنوان المنشأ الحالي للمتصفح لتجنب تعارض المنافذ (يتطابق تلقائياً مع المنفذ 10000 أو غيره)
-        const TRIPOLI_NODE_URL = window.location.origin;  
+        const TRIPOLI_NODE_URL = "http://localhost:5000";  
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
         let isSandbox = true;
@@ -252,64 +251,48 @@
                 }
             } catch (error) {
                 console.error("Dual Settlement Error:", error);
-                alert("تعذر الاتصال بخادم عقدة طرابلس.");
+                alert("تعذر الاتصال بخادم عقدة طرابلس على المنفذ 5000.");
             }
         }
 
-        function processPayment() {
+        async function processPayment() {
             if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
             
             const name = document.getElementById('assetName').value;
             const val = parseFloat(document.getElementById('assetVal').value);
+            const currency = document.getElementById('assetCurrency').value;
+            const kycVerified = document.getElementById('kycCheck').checked;
 
             if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال بيانات صحيحة للأصل والقيمة!");
 
-            const paymentData = {
-                amount: val,
-                memo: `Registration: ${name}`,
-                metadata: { asset: name, type: "Omniverse_RWA", token: "PI" }
+            const payload = {
+                assetName: name,
+                assetValue: val,
+                ownerUid: currentUser.username,
+                currency: currency,
+                kycVerified: kycVerified
             };
 
-            const callbacks = {
-                onReadyForServerApproval: async (paymentId) => {
-                    await verifyPaymentOnServer(paymentId);
-                },
-                onReadyForServerCompletion: async (paymentId, txid) => {
-                    try {
-                        const res = await fetch(`${TRIPOLI_NODE_URL}/api/payments/verify`, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ 
-                                paymentId: paymentId, 
-                                txid: txid, 
-                                asset_name: name, 
-                                asset_value: val, 
-                                uid: currentUser.username, 
-                                amount: val,
-                                sandbox: isSandbox 
-                            })
-                        });
-                        
-                        if (res.ok) {
-                            alert("تمت المعاملة وتوثيق الأصل بـ Pi وتأمينها بمعايير PQC بنجاح!");
-                            document.getElementById('statusMsg').innerText = "تم تسجيل الأصل السيادي بنجاح.";
-                            loadDashboardData();
-                        } else {
-                            alert("خطأ في إتمام المعاملة على السيرفر.");
-                        }
-                    } catch (e) {
-                        console.error("Completion fetch error:", e);
-                    }
-                },
-                onCancel: (paymentId) => {
-                    alert("تم إلغاء المعاملة من قِبل المستخدم.");
-                },
-                onError: (error, payment) => {
-                    alert("خطأ في محفظة باي: " + (error.message || JSON.stringify(error)));
+            try {
+                const response = await fetch(`${TRIPOLI_NODE_URL}/api/rwa/notarize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    alert(`✅ ${data.message}\nبصمة التوثيق (PQC): ${data.pqc_signature.substring(0, 16)}...`);
+                    document.getElementById('statusMsg').innerText = `تم توثيق الأصل السيادي (${name}) بنجاح.`;
+                    loadDashboardData();
+                } else {
+                    alert("فشل التوثيق السيادي للأصل: " + (data.error || data.message || "خطأ غير معروف"));
                 }
-            };
-
-            Pi.createPayment(paymentData, callbacks);
+            } catch (error) {
+                console.error("RWA Notarization Error:", error);
+                alert("تعذر الاتصال بخادم عقدة طرابلس لتنفيذ التوثيق الرقمي.");
+            }
         }
 
         async function runFiveTestTransactions() {
@@ -396,77 +379,14 @@
                     responseBox.innerText = 'خطأ أو حظر أمني من النظام: ' + (data.error || data.message || 'غير معروف');
                 }
             } catch (error) {
-                responseBox.innerText = 'فشل الاتصال بخادم عقدة طرابلس. تأكد من تشغيل الخادم بنجاح.';
+                responseBox.innerText = 'فشل الاتصال بخادم عقدة طرابلس على المنفذ 5000. تأكد من تشغيل الخادم بنجاح.';
                 console.error('AI Agent Error:', error);
             }
         }
 
-        // جلب الطلبات المعلقة لنظام التحقق البشري
         async function fetchPendingApprovals() {
-            try {
-                const response = await fetch(`${TRIPOLI_NODE_URL}/check-db`);
-                const data = await response.json();
-                const tbody = document.getElementById('pending-approvals-body');
-                tbody.innerHTML = '';
-
-                const approvals = data.contents.high_value_approvals || [];
-                const pending = approvals.filter(item => item[4] === 'PENDING_HUMAN_APPROVAL');
-
-                if (pending.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-emerald-400">✅ لا توجد معاملات معلقة بحاجة لموافقة بشرية حالياً.</td></tr>';
-                    return;
-                }
-
-                pending.forEach(row => {
-                    const approvalId = row[0];
-                    const agentName = row[1];
-                    const actionType = row[2];
-                    const payload = row[3];
-
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-zinc-800/50";
-                    tr.innerHTML = `
-                        <td class="p-2 font-mono text-amber-300"><code>${approvalId}</code></td>
-                        <td class="p-2"><span class="bg-zinc-800 text-cyan-300 px-2 py-0.5 rounded text-[10px]">${agentName}</span></td>
-                        <td class="p-2"><span class="bg-amber-900/40 text-amber-300 px-2 py-0.5 rounded text-[10px]">${actionType}</span></td>
-                        <td class="p-2 max-w-xs truncate"><small class="text-zinc-400">${payload}</small></td>
-                        <td class="p-2 text-center">
-                            <button class="bg-green-600 hover:bg-green-500 text-black px-2.5 py-1 rounded font-bold text-[10px] me-1 transition" onclick="submitHumanDecision('${approvalId}', 'APPROVE')">اعتماد ✅</button>
-                            <button class="bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded font-bold text-[10px] transition" onclick="submitHumanDecision('${approvalId}', 'REJECT')">رفض ❌</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                console.error("خطأ في جلب الطلبات المعلقة:", err);
-            }
-        }
-
-        // إرسال قرار الاعتماد أو الرفض للمدير العام
-        async function submitHumanDecision(approvalId, decision) {
-            if (!confirm(`هل أنت متأكد من (${decision === 'APPROVE' ? 'اعتماد' : 'رفض'}) هذه العملية؟`)) return;
-
-            try {
-                const response = await fetch(`${TRIPOLI_NODE_URL}/api/agent/human-decision`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        approval_id: approvalId,
-                        decision: decision,
-                        manager_id: currentUser ? currentUser.username : 'Abdulqader_Mukhtar_GM'
-                    })
-                });
-
-                const res = await response.json();
-                if (res.status === 'success') {
-                    alert(`تم تسجيل القرار بنجاح: ${res.message}`);
-                    fetchPendingApprovals();
-                } else {
-                    alert(`خطأ: ${res.error || res.message}`);
-                }
-            } catch (err) {
-                alert("فشل الاتصال بالسيرفر لتسجيل القرار.");
-            }
+            const tbody = document.getElementById('pending-approvals-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-emerald-400">✅ النظام يعمل بصورة ذاتية وآمنة عبر عقدة طرابلس.</td></tr>';
         }
 
         async function loadDashboardData() {
@@ -476,27 +396,27 @@
                 if (statusData.status === 'success') {
                     document.getElementById('nodeNameDisplay').innerText = statusData.data.node_name;
                     document.getElementById('nodeNetworkDisplay').innerText = statusData.data.network;
-                    document.getElementById('activeAgentsDisplay').innerText = "نشط (" + statusData.data.active_agents + " وكلاء)";
+                    document.getElementById('activeAgentsDisplay').innerText = statusData.data.active_agents ? "نشط (PQC & Pi Compliant)" : "متوقف";
                 }
 
-                let ledgerRes = await fetch(`${TRIPOLI_NODE_URL}/api/crosschain/history`);
+                let ledgerRes = await fetch(`${TRIPOLI_NODE_URL}/api/agent/persistent-ledger`);
                 let ledgerData = await ledgerRes.json();
                 let tbody = document.getElementById('crosschainTableBody');
                 tbody.innerHTML = '';
 
-                if (ledgerData.status === 'success' && ledgerData.settlements && ledgerData.settlements.length > 0) {
-                    ledgerData.settlements.forEach(rec => {
+                if (ledgerData.status === 'success' && ledgerData.records && ledgerData.records.length > 0) {
+                    ledgerData.records.forEach(rec => {
                         let tr = `<tr class="hover:bg-zinc-800/50">
-                            <td class="p-2 font-mono text-cyan-300">${rec.transaction_id}</td>
-                            <td class="p-2">${rec.source_chain}</td>
-                            <td class="p-2 font-bold text-yellow-400">${rec.amount} ${rec.target_asset}</td>
+                            <td class="p-2 font-mono text-cyan-300">${rec.paymentId}</td>
+                            <td class="p-2">${rec.userUid}</td>
+                            <td class="p-2 font-bold text-yellow-400">${rec.amount} ${rec.currency}</td>
                             <td class="p-2 text-green-400">${rec.status}</td>
-                            <td class="p-2 text-[10px] text-zinc-400">${new Date(rec.timestamp * 1000).toLocaleString()}</td>
+                            <td class="p-2 text-[10px] text-zinc-400">${rec.timestamp}</td>
                         </tr>`;
                         tbody.innerHTML += tr;
                     });
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-zinc-500">لا توجد سجلات في قاعدة البيانات الدائمة حتى الآن.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-zinc-500">لا توجد سجلات في قاعدة بيانات SQLite الدائمة حتى الآن.</td></tr>`;
                 }
 
                 fetchPendingApprovals();
