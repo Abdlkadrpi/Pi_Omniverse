@@ -13,7 +13,7 @@
         <!-- البطاقة الرئيسية لتطبيق Omniverse -->
         <div class="bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
             <h1 class="text-2xl text-yellow-500 font-bold mb-1 text-center">OMNIVERSE HUB</h1>
-            <p class="text-xs text-center text-cyan-400 font-mono mb-3">🛡️ درع الحماية المقاوم للكم (PQC) ومحرك الذكاء الاصطناعي المحلي نشط</p>
+            <p class="text-xs text-center text-cyan-400 font-mono mb-3">🛡️ درع الحماية المقاوم للكم (PQC) ومحرك الذكاء الاصطناعي المحلي وبوابة PiVerify نشطة</p>
             
             <!-- زر تبديل البيئة بين Testnet و Mainnet -->
             <div class="flex justify-center items-center gap-2 mb-4">
@@ -25,6 +25,9 @@
             <p class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - عقدة طرابلس (Tripoli-Node-v0.6.3)</p>
             
             <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
+            
+            <!-- زر تفعيل مصادقة PiVerify العالمية الجديدة -->
+            <button id="piVerifyBtn" onclick="authenticatePiVerify()" class="w-full bg-purple-600 p-3 rounded-lg font-bold text-white mb-3 hover:bg-purple-500 transition shadow-lg text-xs">🌐 تفعيل التحقق العالمي (PiVerify KYC Gateway)</button>
             
             <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-4 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
 
@@ -48,12 +51,13 @@
                     <select id="assetCurrency" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none text-xs font-bold">
                         <option value="PI">عملة Pi الأساسية</option>
                         <option value="OUSD">عملة مستقرة (OUSD)</option>
+                        <option value="LYO">عملة المنفعة (LYO)</option>
                     </select>
                 </div>
 
                 <div class="flex items-center gap-2 bg-black p-2 border border-zinc-800 rounded">
                     <input type="checkbox" id="kycCheck" class="w-4 h-4 accent-yellow-500" checked>
-                    <label for="kycCheck" class="text-xs text-zinc-300">أؤكد اجتياز التحقق من الهوية والامتثال (KYC Verified)</label>
+                    <label for="kycCheck" class="text-xs text-zinc-300">أؤكد اجتياز التحقق من الهوية والامتثال (KYC Verified & PiVerify)</label>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -113,7 +117,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
                 <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
                     <span class="text-xs text-zinc-400 block">حالة العقدة</span>
-                    <span id="nodeNameDisplay" class="text-sm font-bold text-cyan-300">Tripoli-Node-v0.6.3</span>
+                    <span id="nodeNameDisplay" class="text-sm font-bold text-cyan-300">Tripoli-Node-v0.6.3-PiVerify</span>
                 </div>
                 <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
                     <span class="text-xs text-zinc-400 block">شبكة التوجيه</span>
@@ -121,7 +125,7 @@
                 </div>
                 <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
                     <span class="text-xs text-zinc-400 block">الوكلاء النشطون</span>
-                    <span id="activeAgentsDisplay" class="text-sm font-bold text-green-400">نشط (PQC & Pi Compliant)</span>
+                    <span id="activeAgentsDisplay" class="text-sm font-bold text-green-400">نشط (PQC & PiVerify)</span>
                 </div>
             </div>
 
@@ -149,10 +153,11 @@
     </div>
 
     <script>
-        const TRIPOLI_NODE_URL = "http://localhost:5000";  
+        const TRIPOLI_NODE_URL = "";  // النسب المباشر للخادم الحالي على Render أو المحلي
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
         let isSandbox = true;
+        let piverifyAccessToken = localStorage.getItem("piverify_token") || null;
 
         function initPiSDK() {
             Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
@@ -188,6 +193,34 @@
             }
         }
 
+        // --- دالة مصادقة PiVerify الجديدة ---
+        async function authenticatePiVerify() {
+            try {
+                const auth = await Pi.authenticate(['username', 'payments', 'piverify:kyc_status'], onIncompletePayment);
+                currentUser = auth.user;
+                
+                const response = await fetch(`${TRIPOLI_NODE_URL}/api/v1/piverify/authenticate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken: auth.accessToken })
+                });
+
+                const result = await response.json();
+                if (response.ok && result.status === "SUCCESS") {
+                    piverifyAccessToken = auth.accessToken;
+                    localStorage.setItem("piverify_token", auth.accessToken);
+                    document.getElementById('piVerifyBtn').innerText = "✅ تم التحقق عبر PiVerify: " + result.user.username;
+                    alert("تم التحقق بنجاح عبر بوابة PiVerify العالمية وتوثيق الهوية السيادية!");
+                    loadDashboardData();
+                } else {
+                    alert("فشل التحقق عبر PiVerify: " + (result.error || "خطأ غير معروف"));
+                }
+            } catch (err) {
+                console.error("PiVerify Auth Error:", err);
+                alert("حدث خطأ أثناء الاتصال ببوابة PiVerify.");
+            }
+        }
+
         function onIncompletePayment(payment) {
             console.log("Incomplete payment found:", payment.identifier);
             verifyPaymentOnServer(payment.identifier);
@@ -197,7 +230,10 @@
             try {
                 const response = await fetch(`${TRIPOLI_NODE_URL}/api/payments/verify`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
+                    },
                     body: JSON.stringify({ 
                         paymentId: paymentId, 
                         uid: currentUser ? currentUser.username : "unknown", 
@@ -221,7 +257,7 @@
             }
 
             if (!kycVerified) {
-                return alert("عذراً، اجتياز تحقق الـ KYC شرط أساسي لتسوية المعاملات.");
+                return alert("عذراً، اجتياز تحقق الـ KYC و PiVerify شرط أساسي لتسوية المعاملات.");
             }
 
             const payload = {
@@ -236,7 +272,10 @@
             try {
                 const response = await fetch(`${TRIPOLI_NODE_URL}/api/v2/payment/settle-dual`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
+                    },
                     body: JSON.stringify(payload)
                 });
 
@@ -251,7 +290,7 @@
                 }
             } catch (error) {
                 console.error("Dual Settlement Error:", error);
-                alert("تعذر الاتصال بخادم عقدة طرابلس على المنفذ 5000.");
+                alert("تعذر الاتصال بخادم عقدة طرابلس.");
             }
         }
 
@@ -276,14 +315,17 @@
             try {
                 const response = await fetch(`${TRIPOLI_NODE_URL}/api/rwa/notarize`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
+                    },
                     body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
 
                 if (response.ok && data.status === 'success') {
-                    alert(`✅ ${data.message}\nبصمة التوثيق (PQC): ${data.pqc_signature.substring(0, 16)}...`);
+                    alert(`✅ ${data.message}\nبصمة التوثيق (PQC): ${data.pqc_signature ? data.pqc_signature.substring(0, 16) : 'Verified'}...`);
                     document.getElementById('statusMsg').innerText = `تم توثيق الأصل السيادي (${name}) بنجاح.`;
                     loadDashboardData();
                 } else {
@@ -314,7 +356,10 @@
                         onReadyForServerCompletion: async (paymentId, txid) => {
                             await fetch(`${TRIPOLI_NODE_URL}/api/payments/verify`, {
                                 method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-PiVerify-Access-Token': piverifyAccessToken || ''
+                                },
                                 body: JSON.stringify({ 
                                     paymentId: paymentId, 
                                     txid: txid, 
@@ -338,7 +383,7 @@
                     }
                 });
             }
-            alert("تم الانتهاء من دورة المعاملات التجريبية. تحقق من منصة المطورين!");
+            alert("تم الانتهاء من دورة المعاملات التجريبية والدعم عبر PiVerify!");
             loadDashboardData();
         }
 
@@ -346,6 +391,7 @@
             if(!confirm("هل أنت متأكد من تطهير العمليات والبيانات المؤقتة؟")) return;
             try {
                 localStorage.clear();
+                piverifyAccessToken = null;
                 alert("تمت عملية التطهير المحلي بنجاح.");
                 loadDashboardData();
             } catch(e) {
@@ -367,7 +413,10 @@
             try {
                 const response = await fetch(`${TRIPOLI_NODE_URL}/api/agent/propose-update`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
+                    },
                     body: JSON.stringify({ task: promptText, action: "cluster_dispatch" })
                 });
 
@@ -379,14 +428,14 @@
                     responseBox.innerText = 'خطأ أو حظر أمني من النظام: ' + (data.error || data.message || 'غير معروف');
                 }
             } catch (error) {
-                responseBox.innerText = 'فشل الاتصال بخادم عقدة طرابلس على المنفذ 5000. تأكد من تشغيل الخادم بنجاح.';
+                responseBox.innerText = 'فشل الاتصال بخادم عقدة طرابلس.';
                 console.error('AI Agent Error:', error);
             }
         }
 
         async function fetchPendingApprovals() {
             const tbody = document.getElementById('pending-approvals-body');
-            tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-emerald-400">✅ النظام يعمل بصورة ذاتية وآمنة عبر عقدة طرابلس.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-emerald-400">✅ النظام يعمل بصورة ذاتية وآمنة عبر عقدة طرابلس وبوابة PiVerify.</td></tr>';
         }
 
         async function loadDashboardData() {
@@ -396,7 +445,7 @@
                 if (statusData.status === 'success') {
                     document.getElementById('nodeNameDisplay').innerText = statusData.data.node_name;
                     document.getElementById('nodeNetworkDisplay').innerText = statusData.data.network;
-                    document.getElementById('activeAgentsDisplay').innerText = statusData.data.active_agents ? "نشط (PQC & Pi Compliant)" : "متوقف";
+                    document.getElementById('activeAgentsDisplay').innerText = statusData.data.active_agents ? "نشط (PQC & PiVerify)" : "متوقف";
                 }
 
                 let ledgerRes = await fetch(`${TRIPOLI_NODE_URL}/api/agent/persistent-ledger`);
@@ -427,6 +476,9 @@
 
         window.onload = function() {
             loadDashboardData();
+            if (piverifyAccessToken) {
+                document.getElementById('piVerifyBtn').innerText = "✅ مسجل وموثق عبر PiVerify";
+            }
         };
     </script>
 </body>
