@@ -6,12 +6,19 @@ from routes.lyo_routes import lyo_bp
 from routes.node_routes import node_bp
 from routes.agent_routes import agent_bp
 
+# استيراد محرك الحماية والسيادة لعقدة طرابلس وأومنيفيرس
+from deploy_omniverse_sovereignty import OmniverseSovereignDeployer
+
 app = Flask(__name__)
 
 # تسجيل جميع المسارات المعيارية (Blueprints)
 app.register_blueprint(lyo_bp)
 app.register_blueprint(node_bp)
 app.register_blueprint(agent_bp)
+
+# تفعيل ونشر درع الحماية السيادي والتدقيق الفوري (PRISM AI Security & Solo Host Guard)
+sovereign_deployer = OmniverseSovereignDeployer()
+sovereign_deployer.execute_full_deployment(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "assets.db")
@@ -45,7 +52,12 @@ def index():
 
 @app.route('/health')
 def health_check():
-    return jsonify({"status": "healthy", "architecture": "Flask Blueprints Modular - Zero Error"}), 200
+    return jsonify({
+        "status": "healthy", 
+        "architecture": "Flask Blueprints Modular - Zero Error",
+        "node": "Tripoli Node v0.6.3",
+        "security": "PRISM AI Shield Active"
+    }), 200
 
 # تهيئة قاعدة البيانات عند بدء التشغيل
 init_db()
