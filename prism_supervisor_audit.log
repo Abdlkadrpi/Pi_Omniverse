@@ -31760,3 +31760,66 @@
 2026-10-15 18:39:10,316 [INFO] werkzeug:  * Debugger PIN: 112-903-391
 2026-10-15 18:42:48,005 [INFO] werkzeug: 127.0.0.1 - - [15/Oct/2026 18:42:48] "GET / HTTP/1.1" 200 -
 2026-10-15 18:42:51,108 [INFO] werkzeug: 127.0.0.1 - - [15/Oct/2026 18:42:51] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-10-19 21:31:34,131 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.103:10000
+2026-10-19 21:31:34,132 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-19 21:31:34,150 [INFO] werkzeug:  * Restarting with stat
+2026-10-19 21:31:40,412 [WARNING] werkzeug:  * Debugger is active!
+2026-10-19 21:31:40,475 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-20 19:28:11,592 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.101:10000
+2026-10-20 19:28:11,628 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-20 19:28:11,655 [INFO] werkzeug:  * Restarting with stat
+2026-10-20 19:29:13,911 [WARNING] werkzeug:  * Debugger is active!
+2026-10-20 19:29:13,925 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-20 19:29:26,529 [INFO] werkzeug: 127.0.0.1 - - [20/Oct/2026 19:29:26] "[35m[1mPOST /api/negotiate/start HTTP/1.1[0m" 500 -
+2026-10-20 19:33:42,070 [INFO] werkzeug:  * Detected change in 'C:\\Users\\«·—Ì«œ… ··Õ«”»« \\Desktop\\Pi_Omniverse\\app.py', reloading
+2026-10-20 19:33:42,555 [INFO] werkzeug:  * Restarting with stat
+2026-10-20 19:33:51,358 [WARNING] werkzeug:  * Debugger is active!
+2026-10-20 19:33:51,370 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-20 19:35:32,698 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.101:10000
+2026-10-20 19:35:32,699 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-20 19:35:32,703 [INFO] werkzeug:  * Restarting with stat
+2026-10-20 19:35:44,488 [WARNING] werkzeug:  * Debugger is active!
+2026-10-20 19:35:44,503 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-20 19:36:05,310 [INFO] werkzeug: 127.0.0.1 - - [20/Oct/2026 19:36:05] "[35m[1mPOST /api/negotiate/start HTTP/1.1[0m" 500 -
+2026-10-20 19:38:20,770 [INFO] werkzeug:  * Detected change in 'C:\\Users\\«·—Ì«œ… ··Õ«”»« \\Desktop\\Pi_Omniverse\\app.py', reloading
+2026-10-20 19:38:21,316 [INFO] werkzeug:  * Restarting with stat
+2026-10-20 19:41:36,843 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.101:10000
+2026-10-20 19:41:36,843 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-20 19:41:36,851 [INFO] werkzeug:  * Restarting with stat
+2026-10-20 19:41:45,683 [WARNING] werkzeug:  * Debugger is active!
+2026-10-20 19:41:45,705 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-20 19:43:53,614 [INFO] werkzeug: 127.0.0.1 - - [20/Oct/2026 19:43:53] "POST /api/negotiate/start HTTP/1.1" 200 -
+2026-10-20 19:59:06,283 [INFO] werkzeug: 127.0.0.1 - - [20/Oct/2026 19:59:06] "GET / HTTP/1.1" 200 -
+2026-10-20 19:59:26,038 [INFO] werkzeug: 127.0.0.1 - - [20/Oct/2026 19:59:26] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-10-20 19:59:26,934 [INFO] werkzeug: 127.0.0.1 - - [20/Oct/2026 19:59:26] "GET /api/node/status HTTP/1.1" 200 -
+2026-10-20 19:59:27,233 [INFO] werkzeug: 127.0.0.1 - - [20/Oct/2026 19:59:27] "[33mGET /api/agent/persistent-ledger HTTP/1.1[0m" 404 -
+2026-10-22 19:09:04,600 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.103:10000
+2026-10-22 19:09:04,602 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-22 19:09:04,611 [INFO] werkzeug:  * Restarting with stat
+2026-10-22 19:09:11,142 [WARNING] werkzeug:  * Debugger is active!
+2026-10-22 19:09:11,208 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-22 19:13:00,528 [INFO] werkzeug:  * Detected change in 'C:\\Users\\«·—Ì«œ… ··Õ«”»« \\Desktop\\Pi_Omniverse\\test_lyo_utility.py', reloading
+2026-10-22 19:13:01,056 [INFO] werkzeug:  * Restarting with stat
+2026-10-22 19:13:12,041 [WARNING] werkzeug:  * Debugger is active!
+2026-10-22 19:13:12,055 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-22 19:13:27,644 [INFO] werkzeug: 127.0.0.1 - - [22/Oct/2026 19:13:27] "POST /api/v1/lyo/execute-utility HTTP/1.1" 200 -
+2026-10-22 19:20:49,434 [INFO] werkzeug:  * Detected change in 'C:\\Users\\«·—Ì«œ… ··Õ«”»« \\Desktop\\Pi_Omniverse\\check_db_records.py', reloading
+2026-10-22 19:20:50,092 [INFO] werkzeug:  * Restarting with stat
+2026-10-22 19:20:59,274 [WARNING] werkzeug:  * Debugger is active!
+2026-10-22 19:20:59,286 [INFO] werkzeug:  * Debugger PIN: 112-903-391
+2026-10-22 19:29:33,204 [INFO] werkzeug: 127.0.0.1 - - [22/Oct/2026 19:29:33] "GET /api/node/status HTTP/1.1" 200 -
