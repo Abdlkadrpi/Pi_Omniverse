@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة أومنيفيرس | لوحة تحكم نود طرابلس الآمنة</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card-alt: #172033;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-purple: #818cf8;
+            --accent-amber: #fbbf24;
+        }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; flex-wrap: wrap; gap: 10px; }
+        header h1 { margin: 0; font-size: 1.5rem; color: var(--accent-blue); display: flex; align-items: center; gap: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .card { background: var(--bg-secondary); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: border-color 0.3s; }
+        .card:hover { border-color: #475569; }
+        h3 { margin-top: 0; color: var(--accent-blue); font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 0.85rem; font-weight: bold; background: #065f46; color: var(--accent-green); }
+        .lock-badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 0.85rem; font-weight: bold; background: #78350f; color: var(--accent-amber); border: 1px solid #f59e0b; }
+        .pqc-badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 0.85rem; font-weight: bold; background: #1e1b4b; color: var(--accent-purple); border: 1px solid #6366f1; }
+        pre { background: var(--bg-primary); padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: #cbd5e1; border: 1px solid var(--border-color); max-height: 250px; margin: 10px 0 0 0; white-space: pre-wrap; word-break: break-all; }
+        button { background: #0284c7; color: white; border: none; padding: 9px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 8px; margin-left: 5px; font-size: 0.8rem; transition: background 0.2s; }
+        button:hover { background: #0369a1; }
+        button.action-btn { background: #059669; }
+        button.action-btn:hover { background: #047857; }
+        button.cluster-btn { background: #4f46e5; }
+        button.cluster-btn:hover { background: #4338ca; }
+        button.pqc-btn { background: #7c3aed; }
+        button.pqc-btn:hover { background: #6d28d9; }
+        button.danger-btn { background: #dc2626; }
+        button.danger-btn:hover { background: #b91c1c; }
+        input[type="text"] { background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; margin-top: 8px; margin-left: 5px; width: 220px; max-width: 100%; box-sizing: border-box; }
+        .meta-val { color: var(--accent-blue); font-family: monospace; font-weight: bold; }
+        .status-feedback { font-size: 0.8rem; margin-top: 8px; color: var(--text-muted); }
+        .pulse-dot { height: 10px; width: 10px; background-color: #34d399; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 rgba(52, 211, 153, 0.4); animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span class="pulse-dot"></span>
+                أومنيفيرس | مراقبة نود طرابلس v0.6.3 (آمن ومحصّن)
+            </h1>
+            <div>
+                <span class="status-badge" id="node-status-text">متصل ومؤمن</span>
+                <span style="font-size: 0.8rem; margin-right: 10px; color: var(--text-muted);">المدير: عبد القادر مختار</span>
+            </div>
+        </header>
+
+        <!-- قسم الأمان الكمّي الجديد (PQC) وتوقيع المعاملات والمدفوعات -->
+        <div class="grid">
+            <div class="card" style="grid-column: span 2; background: var(--bg-card-alt); border: 1px solid #6366f1;">
+                <h3>🛡️ درع الحماية المقاوم للكم (PQC & Dual-Layer Guardrails)</h3>
+                <p><strong>حالة الدرع:</strong> <span class="pqc-badge" id="pqc-status-badge">نشط ومؤمن بالكامل</span></p>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">إجراء الفحوصات، توقيع المعاملات، والتحقق من مدفوعات Pi Network وتوكن LYO:</p>
+                <div>
+                    <button class="pqc-btn" onclick="checkPqcHealth()">فحص صحة العقدة (PQC Health)</button>
+                    <button class="pqc-btn" onclick="verifyPqcAction()">اختبار توقيع معاملة PQC</button>
+                    <button class="action-btn" onclick="checkComplianceDirect()">فحص الامتثال المباشر لـ Pi</button>
+                </div>
+                <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">التحقق من دفع Pi (معرف المعاملة):</label><br>
+                    <input type="text" id="payment-id-input" value="test_payment_id_123" placeholder="أدخل معرف الدفع...">
+                    <button class="action-btn" onclick="verifyPiPaymentGui()">تحقق من الدفع (/api/payments/verify)</button>
+                </div>
+                <pre id="pqc-output">انقر فوق أحد الأزرار أعلاه لاختبار طبقة الحماية الكمّية والامتثال...</pre>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>⚡ حالة العقدة والوقود (Zero-Trust)</h3>
+                <p><strong>المنصة:</strong> Omniverse Smart City</p>
+                <p><strong>الوقود:</strong> LYO Token (Fixed Supply: 1B)</p>
+                <p><strong>الوضع الذاتي:</strong> <span id="auto-mode" class="meta-val">Active (Constitutional AI)</span></p>
+                <p><strong>حالة الشبكة:</strong> Tripoli Node v0.6.3 (Docker)</p>
+                <button onclick="fetchStatus()">تحديث حالة النود</button>
+            </div>
+
+            <div class="card">
+                <h3>🔒 حالة إقفال LYO والكتلة الحتمية</h3>
+                <p><strong>حالة الاحتياطي:</strong> <span id="lyo-lock-badge" class="lock-badge">LYO_FUEL_RESERVE_LOCKED</span></p>
+                <p><strong>ارتفاع الكتلة (Block):</strong> <span class="meta-val" id="target-block">10887646</span></p>
+                <p><strong>معرّف العقدة:</strong> <span class="meta-val">tripoli-node-0.6.3</span></p>
+                <button class="action-btn" onclick="triggerLockSync()">تأكيد إقفال LYO (بلوك 10887646)</button>
+                <div class="status-feedback" id="sync-feedback">جاهز للتحقق الحتمي الآمن</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>⚙️ توزيع المهام العنقودية (Cluster Dispatch)</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">توجيه المهام عبر عصب العتاد المحلي:</p>
+                <div>
+                    <button class="cluster-btn" onclick="dispatchCluster('ai_agent_unit', 'AI LYO telemetry audit')">وحدة الذكاء (AI)</button>
+                    <button class="cluster-btn" onclick="dispatchCluster('consensus_unit', 'Validate LYO fuel lock at block 10887646')">وحدة الإجماع (Soroban)</button>
+                    <button class="cluster-btn" onclick="dispatchCluster('db_storage_unit', 'Sync SQLite audit ledger')">وحدة التخزين (DB)</button>
+                </div>
+                <pre id="cluster-output">في انتظار توزيع المهام العنقودية...</pre>
+            </div>
+
+            <div class="card">
+                <h3>🌐 حالة Soroban RPC & Ledger</h3>
+                <pre id="soroban-data">جاري الفحص...</pre>
+                <button onclick="checkSoroban()">تحديث فحص Soroban</button>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>💬 غرفة العمليات الحية (WebSocket & Guardrails)</h3>
+                <pre id="ws-logs" style="height: 150px;">متصل عبر قناة الويب سكت الآمنة...</pre>
+                <div>
+                    <button onclick="sendWsAction('check_tripoli_node')">فحص النود عبر الـ Live</button>
+                    <button onclick="sendWsAction('audit_lyo_agents')">تدقيق LYO الحي</button>
+                    <button class="danger-btn" onclick="sendWsAction('malicious_test_command')">اختبار الحظر الأمني</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📜 سجلات تدقيق الوكلاء (Audit Trail)</h3>
+                <pre id="audit-logs">جاري تحميل السجلات...</pre>
+                <button onclick="loadAuditTrail()">تحديث السجلات</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // اتصال الويب سكت الآمن
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        let ws;
+        const wsLogs = document.getElementById('ws-logs');
+
+        function initWebSocket() {
+            try {
+                ws = new WebSocket(protocol + window.location.host + '/ws/live-agent');
+                
+                ws.onopen = function() {
+                    wsLogs.innerText += '\n[اتصال WebSocket]: متصل بنجاح مع غرفة العمليات.';
+                };
+
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if(data.status === 'blocked') {
+                            wsLogs.innerText += `\n[حظر أمني ناجح]: ${data.error || JSON.stringify(data)}`;
+                        } else {
+                            wsLogs.innerText += `\n[استجابة آمنة]: ${data.message || JSON.stringify(data)}`;
+                        }
+                    } catch (err) {
+                        wsLogs.innerText += `\n[رسالة خام]: ${event.data}`;
+                    }
+                    wsLogs.scrollTop = wsLogs.scrollHeight;
+                };
+
+                ws.onerror = function(err) {
+                    wsLogs.innerText += '\n[تنبيه WebSocket]: تعذر الاتصال بخادم الويب سكت المباشر.';
+                };
+            } catch (e) {
+                console.error("WS Init Error:", e);
+            }
+        }
+
+        function sendWsAction(actionName) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                wsLogs.innerText += '\n[خطأ]: اتصال WebSocket غير مفتوح حالياً.';
+                return;
+            }
+            const payload = { action: actionName, timestamp: Date.now() };
+            ws.send(JSON.stringify(payload));
+            wsLogs.innerText += `\n[إرسال أمر]: ${actionName}`;
+        }
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/agent/status');
+                const data = await res.json();
+                document.getElementById('auto-mode').innerText = data.autonomous_mode || 'Active';
+                document.getElementById('node-status-text').innerText = data.status || 'متصل ومؤمن';
+            } catch (e) {
+                console.error("Fetch Status Error:", e);
+            }
+        }
+
+        async function checkSoroban() {
+            document.getElementById('soroban-data').innerText = 'جاري الاتصال...';
+            try {
+                const res = await fetch('/api/check-soroban');
+                const data = await res.json();
+                document.getElementById('soroban-data').innerText = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('soroban-data').innerText = 'خطأ في الاتصال: ' + e;
+            }
+        }
+
+        async function loadAuditTrail() {
+            try {
+                const res = await fetch('/api/agent/audit-trail');
+                const data = await res.json();
+                document.getElementById('audit-logs').innerText = data.audit_trail_log || JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('audit-logs').innerText = 'خطأ في تحميل السجلات';
+            }
+        }
+
+        // دوال طبقة الأمان المقاوم للكم الجديدة (PQC) والامتثال والمدفوعات
+        async function checkPqcHealth() {
+            const out = document.getElementById('pqc-output');
+            out.innerText = 'جاري فحص صحة العقدة وبروتوكولات PQC...';
+            try {
+                const res = await fetch('/api/pq/node-health');
+                const data = await res.json();
+                out.innerText = JSON.stringify(data, null, 2);
+            } catch (e) {
+                out.innerText = 'خطأ في الاتصال بنقطة PQC Health: ' + e;
+            }
+        }
+
+        async function verifyPqcAction() {
+            const out = document.getElementById('pqc-output');
+            out.innerText = 'جاري توليد وتوقيع معاملة PQC الآمنة لتوكن LYO...';
+            try {
+                const res = await fetch('/api/pq/verify-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action_id: "TRIPOLI-PQC-" + Date.now(),
+                        payload: { token: "LYO", status: "secure_sync_verified", operator: "Abd Al-Qader Mukhtar" }
+                    })
+                });
+                const data = await res.json();
+                out.innerText = JSON.stringify(data, null, 2);
+                loadAuditTrail();
+            } catch (e) {
+                out.innerText = 'خطأ في تنفيذ توقيع PQC: ' + e;
+            }
+        }
+
+        async function checkComplianceDirect() {
+            const out = document.getElementById('pqc-output');
+            out.innerText = 'جاري فحص توافق سياسات Pi Network...';
+            try {
+                const res = await fetch('/api/agent/compliance-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: "gui_audit_check", target: "tripoli_node" })
+                });
+                const data = await res.json();
+                out.innerText = JSON.stringify(data, null, 2);
+                loadAuditTrail();
+            } catch (e) {
+                out.innerText = 'خطأ في فحص الامتثال: ' + e;
+            }
+        }
+
+        async function verifyPiPaymentGui() {
+            const out = document.getElementById('pqc-output');
+            const paymentId = document.getElementById('payment-id-input').value.trim();
+            out.innerText = `جاري التحقق من عملية الدفع (${paymentId}) عبر خادم Pi Network...`;
+            try {
+                const res = await fetch('/api/payments/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: paymentId })
+                });
+                const data = await res.json();
+                out.innerText = JSON.stringify(data, null, 2);
+                loadAuditTrail();
+            } catch (e) {
+                out.innerText = 'خطأ في مسار التحقق من الدفع: ' + e;
+            }
+        }
+
+        async function triggerLockSync() {
+            const feedbackEl = document.getElementById('sync-feedback');
+            feedbackEl.innerText = 'جاري إرسال إشارة الإقفال الحتمي للنود...';
+            try {
+                const res = await fetch('/api/agent/propose-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'sync_soroban_lyo', block: 10887646 })
+                });
+                const data = await res.json();
+                if (data.status === 'committed') {
+                    feedbackEl.innerText = `تم الإقفال بنجاح ضد البلوك ${data.result.block || 10887646}`;
+                    loadAuditTrail();
+                } else if (data.status === 'blocked') {
+                    feedbackEl.innerText = 'تم الحظر بواسطة درع الأمان: ' + (data.error || 'سياسة مقيدة');
+                } else {
+                    feedbackEl.innerText = 'استجابة غير متوقعة: ' + JSON.stringify(data);
+                }
+            } catch (e) {
+                feedbackEl.innerText = 'خطأ أثناء تنفيذ الإقفال: ' + e;
+            }
+        }
+
+        async function dispatchCluster(worker, task) {
+            const outEl = document.getElementById('cluster-output');
+            outEl.innerText = `جاري توزيع المهمة إلى ${worker}...`;
+            try {
+                const res = await fetch('/api/cluster/dispatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ worker: worker, task: task })
+                });
+                const data = await res.json();
+                outEl.innerText = JSON.stringify(data, null, 2);
+                loadAuditTrail();
+            } catch (e) {
+                outEl.innerText = 'خطأ في توزيع العنقود: ' + e;
+            }
+        }
+
+        // تهيئة التشغيل عند تحميل الصفحة
+        window.onload = function() {
+            initWebSocket();
+            fetchStatus();
+            checkSoroban();
+            loadAuditTrail();
+            setInterval(fetchStatus, 15000);
+        };
+    </script>
+</body>
+</html>
