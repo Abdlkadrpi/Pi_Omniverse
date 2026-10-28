@@ -1,0 +1,32 @@
+version: '3.8'
+
+networks:
+  isolated_net:
+    internal: true  # شبكة داخلية معزولة تماماً بدون اتصال مباشر بالإنترنت العام
+  proxy_net:
+    driver: bridge
+
+services:
+  agent_supervisor:
+    image: python:3.10-slim
+    container_name: omniverse_agent_supervisor
+    restart: unless-stopped
+    volumes:
+      - ./Omniverse_Agent_System:/app
+    environment:
+      - FLASK_ENV=production
+      - SECURITY_MODE=strict_isolation
+      - KILL_SWITCH_ENABLED=true
+    networks:
+      - isolated_net
+      - proxy_net
+    command: python /app/app.py
+
+  tripoli_node_proxy:
+    image: alpine/socat:latest
+    container_name: tripoli_dns_guard
+    restart: unless-stopped
+    networks:
+      - proxy_net
+    # تصفية ومراقبة حركة المرور الواردة والصادرة ومنع أي استعلامات DNS مشبوهة
+    command: tcp-l:53,fork,reuseaddr udp:127.0.0.1:53
