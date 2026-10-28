@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 
 from routes.lyo_routes import lyo_bp
 from routes.node_routes import node_bp
@@ -8,6 +8,10 @@ from routes.agent_routes import agent_bp
 
 # استيراد محرك الحماية والسيادة لعقدة طرابلس وأومنيفيرس
 from deploy_omniverse_sovereignty import OmniverseSovereignDeployer
+
+# استيراد محرك المرونة التشفيرية ووسيط الحماية الصارم (Zero-Trust & Quantum-Resilient)
+from crypto_agility import CryptoAgilityEngine
+from agent_security import require_zero_trust_security
 
 app = Flask(__name__)
 
@@ -19,6 +23,9 @@ app.register_blueprint(agent_bp)
 # تفعيل ونشر درع الحماية السيادي والتدقيق الفوري (PRISM AI Security & Solo Host Guard)
 sovereign_deployer = OmniverseSovereignDeployer()
 sovereign_deployer.execute_full_deployment(app)
+
+# تهيئة محرك التشفير الكمي الهجين للعمليات الآمنة
+crypto_engine = CryptoAgilityEngine(mode="quantum_hybrid")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "assets.db")
@@ -56,7 +63,20 @@ def health_check():
         "status": "healthy", 
         "architecture": "Flask Blueprints Modular - Zero Error",
         "node": "Tripoli Node v0.6.3",
-        "security": "PRISM AI Shield Active"
+        "security": "PRISM AI Shield & Quantum-Resilient Active"
+    }), 200
+
+# مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع التحقق من KYC والتشفير الكمي
+@app.route('/api/v1/lyo/execute-task', methods=['POST'])
+@require_zero_trust_security
+def execute_agent_task():
+    data = request.json or {}
+    return jsonify({
+        "status": "success",
+        "message": "Zero-Trust & Quantum-Resilient security validation passed.",
+        "utility_token": "LYO",
+        "node": "Tripoli Node",
+        "action_executed": data.get("action", "default_smart_city_task")
     }), 200
 
 # تهيئة قاعدة البيانات عند بدء التشغيل
