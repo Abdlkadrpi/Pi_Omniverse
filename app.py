@@ -7,8 +7,9 @@ from routes.node_routes import node_bp
 from routes.agent_routes import agent_bp
 from routes.rwa_engine import rwa_bp
 from routes.soroban_bridge import soroban_bridge_bp
-# استيراد مسار منصة الحوكمة اللامركزية (DAO Governance Engine)
 from routes.dao_governance import dao_bp
+# استيراد مسار نظام المحاكاة التنبؤية بالذكاء الاصطناعي (Predictive Simulation Engine)
+from routes.predictive_simulation import simulation_bp
 
 # استيراد محرك الحماية والسيادة لعقدة طرابلس وأومنيفيرس
 from deploy_omniverse_sovereignty import OmniverseSovereignDeployer
@@ -19,13 +20,14 @@ from agent_security import require_zero_trust_security
 
 app = Flask(__name__)
 
-# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها RWA، جسر Soroban، وحوكمة DAO
+# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها RWA، جسر Soroban، حوكمة DAO، والمحاكاة التنبؤية
 app.register_blueprint(lyo_bp)
 app.register_blueprint(node_bp)
 app.register_blueprint(agent_bp)
 app.register_blueprint(rwa_bp)
 app.register_blueprint(soroban_bridge_bp)
 app.register_blueprint(dao_bp)
+app.register_blueprint(simulation_bp)
 
 # تفعيل ونشر درع الحماية السيادي والتدقيق الفوري (PRISM AI Security & Solo Host Guard)
 sovereign_deployer = OmniverseSovereignDeployer()
@@ -73,7 +75,8 @@ def health_check():
         "security": "PRISM AI Shield & Quantum-Resilient Active",
         "rwa_module": "Active & Secured",
         "soroban_bridge": "Active & Connected",
-        "dao_governance": "Active & Secured"
+        "dao_governance": "Active & Secured",
+        "predictive_simulation": "Active & AI-Powered"
     }), 200
 
 # مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع التحقق من KYC والتشفير الكمي
