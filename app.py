@@ -5,6 +5,8 @@ from flask import Flask, jsonify, render_template, request
 from routes.lyo_routes import lyo_bp
 from routes.node_routes import node_bp
 from routes.agent_routes import agent_bp
+# استيراد مسار وحدة ترميز الأصول الحقيقية (RWA Engine) الذي أنشأناه
+from routes.rwa_engine import rwa_bp
 
 # استيراد محرك الحماية والسيادة لعقدة طرابلس وأومنيفيرس
 from deploy_omniverse_sovereignty import OmniverseSovereignDeployer
@@ -15,10 +17,11 @@ from agent_security import require_zero_trust_security
 
 app = Flask(__name__)
 
-# تسجيل جميع المسارات المعيارية (Blueprints)
+# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها وحدة RWA الجديدة
 app.register_blueprint(lyo_bp)
 app.register_blueprint(node_bp)
 app.register_blueprint(agent_bp)
+app.register_blueprint(rwa_bp)
 
 # تفعيل ونشر درع الحماية السيادي والتدقيق الفوري (PRISM AI Security & Solo Host Guard)
 sovereign_deployer = OmniverseSovereignDeployer()
@@ -63,7 +66,8 @@ def health_check():
         "status": "healthy", 
         "architecture": "Flask Blueprints Modular - Zero Error",
         "node": "Tripoli Node v0.6.3",
-        "security": "PRISM AI Shield & Quantum-Resilient Active"
+        "security": "PRISM AI Shield & Quantum-Resilient Active",
+        "rwa_module": "Active & Secured"
     }), 200
 
 # مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع التحقق من KYC والتشفير الكمي
