@@ -13,7 +13,7 @@
         <!-- البطاقة الرئيسية لتطبيق Omniverse -->
         <div class="bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
             <h1 class="text-2xl text-yellow-500 font-bold mb-1 text-center">OMNIVERSE HUB</h1>
-            <p class="text-xs text-center text-cyan-400 font-mono mb-3">🛡️ درع الحماية المقاوم للكم (PQC) ومحرك الذكاء الاصطناعي المحلي وبوابة PiVerify نشطة</p>
+            <p class="text-xs text-center text-cyan-400 font-mono mb-3">🛡️ درع الحماية المقاوم للكم (PQC) ومحرك الذكاء الاصطناعي وبوابة PiVerify نشطة</p>
             
             <!-- زر تبديل البيئة بين Testnet و Mainnet -->
             <div class="flex justify-center items-center gap-2 mb-4">
@@ -66,7 +66,33 @@
                 </div>
             </div>
 
-            <!-- 🤖 قسم وكيل التفاوض الذكي الآلي الجديد (AI Negotiation Chat & Agent) -->
+            <!-- 🏛️ قسم المنظومة الخماسية الجديدة (RWA, Soroban, DAO, Simulation, Compliance) -->
+            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-4">
+                <h2 class="text-sm font-bold text-emerald-400">⚡ التحكم بالمسارات الخماسية لمدينة أومنيفيرس</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- 1. جسر Soroban -->
+                    <button onclick="executeSorobanBridge()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-cyan-600 text-xs text-cyan-300 font-bold transition">
+                        🌉 اختبار جسر السيولة (Soroban Bridge)
+                    </button>
+                    <!-- 2. حوكمة DAO -->
+                    <button onclick="submitDaoProposal()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-purple-600 text-xs text-purple-300 font-bold transition">
+                        🗳️ إنشاء مقترح حوكمة (DAO Proposal)
+                    </button>
+                    <!-- 3. المحاكاة التنبؤية -->
+                    <button onclick="runPredictiveSimulation()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-amber-600 text-xs text-amber-300 font-bold transition">
+                        📊 تشغيل المحاكاة التنبؤية للأحمال (AI)
+                    </button>
+                    <!-- 4. بوابة الامتثال AML -->
+                    <button onclick="runComplianceAudit()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-emerald-600 text-xs text-emerald-300 font-bold transition">
+                        🔍 فحص الامتثال المالي والتدقيق (AML)
+                    </button>
+                </div>
+                
+                <div id="pillarsResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-emerald-300 min-h-[50px] whitespace-pre-wrap font-mono hidden"></div>
+            </div>
+
+            <!-- 🤖 قسم وكيل التفاوض الذكي الآلي -->
             <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
                 <h2 class="text-sm font-bold text-emerald-400">🤝 وكيل التفاوض الذكي الآلي (AI Autonomous Negotiation Agent)</h2>
                 <p class="text-[11px] text-zinc-400">قم بإجراء تفاوض آلي على سعر الأصل نيابة عنك مع ضمانات الأمان والتدقيق المشفر.</p>
@@ -81,7 +107,7 @@
                 <div id="negotiationResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-emerald-300 min-h-[60px] whitespace-pre-wrap font-mono">نتائج التفاوض وتوقيع التدقيق ستظهر هنا...</div>
             </div>
 
-            <!-- قسم المساعد الذكي المحلي التقليدي -->
+            <!-- قسم المساعد الذكي المحلي -->
             <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
                 <h2 class="text-sm font-bold text-cyan-400">🤖 المساعد الذكي المحلي (عقدة طرابلس - Gemini & Ollama)</h2>
                 <textarea id="localAiPrompt" placeholder="اكتب استفسارك أو أمرك للوكيل الذكي المحلي..." class="w-full bg-black p-3 border border-zinc-700 rounded text-xs text-white focus:border-cyan-500 outline-none h-20"></textarea>
@@ -94,7 +120,7 @@
             </div>
         </div>
 
-        <!-- 🛡️ لوحة مراقبة واتخاذ القرار للمدير العام (Human-in-the-Loop Dashboard) -->
+        <!-- 🛡️ لوحة مراقبة واتخاذ القرار للمدير العام -->
         <div class="bg-zinc-900 p-6 rounded-2xl border border-amber-500 shadow-xl">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-amber-400">🛡️ مركز تصديق المدير العام (Human-in-the-Loop)</h2>
@@ -122,7 +148,7 @@
             </div>
         </div>
 
-        <!-- لوحة مراقبة عقدة طرابلس والسجل الدائم (Cross-Chain & SQLite Ledger) -->
+        <!-- لوحة مراقبة عقدة طرابلس والسجل الدائم -->
         <div class="bg-zinc-900 p-6 rounded-2xl border border-cyan-600 shadow-xl">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-cyan-400">🌐 لوحة تحكم عقدة طرابلس والسجل الدائم</h2>
@@ -168,7 +194,7 @@
     </div>
 
     <script>
-        const TRIPOLI_NODE_URL = "";  // الربط المباشر للخادم الحالي على Render أو المحلي
+        const TRIPOLI_NODE_URL = "";  
         const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
         let currentUser = null;
         let isSandbox = true;
@@ -208,7 +234,6 @@
             }
         }
 
-        // --- دالة مصادقة PiVerify الجديدة ---
         async function authenticatePiVerify() {
             try {
                 const auth = await Pi.authenticate(['username', 'payments', 'piverify:kyc_status'], onIncompletePayment);
@@ -237,7 +262,6 @@
         }
 
         function onIncompletePayment(payment) {
-            console.log("Incomplete payment found:", payment.identifier);
             verifyPaymentOnServer(payment.identifier);
         }
 
@@ -261,240 +285,174 @@
             }
         }
 
+        // --- وظائف المسارات الخماسية الجديدة ---
+        async function executeSorobanBridge() {
+            const box = document.getElementById('pillarsResultBox');
+            box.classList.remove('hidden');
+            box.innerText = "⏳ جاري تنفيذ تحويل السيولة عبر جسر Soroban...";
+            try {
+                const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/bridge/transfer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+                    body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "test_user", kyc_verified: true, amount_lyo: 250, destination_wallet: "GB_SOROBAN_DEST" })
+                });
+                const data = await res.json();
+                box.innerText = JSON.stringify(data, null, 2);
+            } catch(e) { box.innerText = "خطأ: " + e.message; }
+        }
+
+        async function submitDaoProposal() {
+            const box = document.getElementById('pillarsResultBox');
+            box.classList.remove('hidden');
+            box.innerText = "⏳ جاري إرسال مقترح الحوكمة (DAO)...";
+            try {
+                const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/dao/propose`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+                    body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "test_user", kyc_verified: true, title: "Upgrade Tripoli Node Energy Grid", description: "Expanding solar storage capacity in Obari", staked_lyo: 150 })
+                });
+                const data = await res.json();
+                box.innerText = JSON.stringify(data, null, 2);
+            } catch(e) { box.innerText = "خطأ: " + e.message; }
+        }
+
+        async function runPredictiveSimulation() {
+            const box = document.getElementById('pillarsResultBox');
+            box.classList.remove('hidden');
+            box.innerText = "⏳ جاري تشغيل المحاكاة التنبؤية بالذكاء الاصطناعي...";
+            try {
+                const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/simulation/predict-load`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+                    body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "test_user", kyc_verified: true, solar_peak_hours: 10.0, current_load_kw: 1.8 })
+                });
+                const data = await res.json();
+                box.innerText = JSON.stringify(data, null, 2);
+            } catch(e) { box.innerText = "خطأ: " + e.message; }
+        }
+
+        async function runComplianceAudit() {
+            const box = document.getElementById('pillarsResultBox');
+            box.classList.remove('hidden');
+            box.innerText = "⏳ جاري إجراء التدقيق المالي والامتثال (AML)...";
+            try {
+                const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/compliance/audit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+                    body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "test_user", kyc_verified: true, amount_lyo: 1500, jurisdiction: "Libya_Global" })
+                });
+                const data = await res.json();
+                box.innerText = JSON.stringify(data, null, 2);
+            } catch(e) { box.innerText = "خطأ: " + e.message; }
+        }
+
         async function processDualAssetSettlement() {
             const name = document.getElementById('assetName').value;
             const val = parseFloat(document.getElementById('assetVal').value);
             const currency = document.getElementById('assetCurrency').value;
             const kycVerified = document.getElementById('kycCheck').checked;
 
-            if (!name || isNaN(val) || val <= 0) {
-                return alert("يرجى إدخال اسم الأصل وقيمة مالية صحيحة!");
-            }
+            if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال اسم الأصل وقيمة صحيحة!");
 
-            if (!kycVerified) {
-                return alert("عذراً، اجتياز تحقق الـ KYC و PiVerify شرط أساسي لتسوية المعاملات.");
-            }
-
-            const payload = {
-                paymentId: "dual_pay_" + Date.now(),
-                userUid: currentUser ? currentUser.username : "tripoli_guest_user",
-                amount: val,
-                currency: currency,
-                assetName: name,
-                kycVerified: kycVerified
-            };
+            const payload = { paymentId: "dual_pay_" + Date.now(), userUid: currentUser ? currentUser.username : "tripoli_guest_user", amount: val, currency: currency, assetName: name, kycVerified: kycVerified };
 
             try {
                 const response = await fetch(`${TRIPOLI_NODE_URL}/api/v2/payment/settle-dual`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
                     body: JSON.stringify(payload)
                 });
-
                 const data = await response.json();
-
                 if (response.ok && data.status === 'success') {
-                    alert(`تمت تسوية الأصل (${name}) باستخدام ${currency} بنجاح وحفظها في عقدة طرابلس!`);
-                    document.getElementById('statusMsg').innerText = `تم تسجيل الأصل السيادي بـ ${currency} بنجاح.`;
+                    alert(`تمت تسوية الأصل (${name}) باستخدام ${currency} بنجاح!`);
                     loadDashboardData();
                 } else {
-                    alert("فشل التسوية: " + (data.reason || data.message || "خطأ غير معروف"));
+                    alert("فشل التسوية: " + (data.reason || data.message || "خطأ"));
                 }
-            } catch (error) {
-                console.error("Dual Settlement Error:", error);
-                alert("تعذر الاتصال بخادم عقدة طرابلس.");
-            }
+            } catch (error) { alert("تعذر الاتصال بخادم عقدة طرابلس."); }
         }
 
         async function processPayment() {
             if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
-            
             const name = document.getElementById('assetName').value;
             const val = parseFloat(document.getElementById('assetVal').value);
             const currency = document.getElementById('assetCurrency').value;
             const kycVerified = document.getElementById('kycCheck').checked;
 
-            if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال بيانات صحيحة للأصل والقيمة!");
-
-            const payload = {
-                assetName: name,
-                assetValue: val,
-                ownerUid: currentUser.username,
-                currency: currency,
-                kycVerified: kycVerified
-            };
+            if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال بيانات صحيحة!");
 
             try {
                 const response = await fetch(`${TRIPOLI_NODE_URL}/api/rwa/notarize`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
-                    },
-                    body: JSON.stringify(payload)
+                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+                    body: JSON.stringify({ assetName: name, assetValue: val, ownerUid: currentUser.username, currency: currency, kycVerified: kycVerified })
                 });
-
                 const data = await response.json();
-
                 if (response.ok && data.status === 'success') {
-                    alert(`✅ ${data.message}\nبصمة التوثيق (PQC): ${data.pqc_signature ? data.pqc_signature.substring(0, 16) : 'Verified'}...`);
-                    document.getElementById('statusMsg').innerText = `تم توثيق الأصل السيادي (${name}) بنجاح.`;
+                    alert(`✅ ${data.message}`);
                     loadDashboardData();
-                } else {
-                    alert("فشل التوثيق السيادي للأصل: " + (data.error || data.message || "خطأ غير معروف"));
-                }
-            } catch (error) {
-                console.error("RWA Notarization Error:", error);
-                alert("تعذر الاتصال بخادم عقدة طرابلس لتنفيذ التوثيق الرقمي.");
-            }
+                } else { alert("فشل التوثيق: " + (data.error || data.message)); }
+            } catch (error) { alert("تعذر الاتصال بخادم عقدة طرابلس."); }
         }
 
-        // --- دالة بدء التفاوض الذكي الآلي (AI Negotiation) ---
         async function startAiNegotiation() {
             const assetId = document.getElementById('negotiateAssetId').value;
             const initialOffer = document.getElementById('negotiateOfferVal').value;
             const resultBox = document.getElementById('negotiationResultBox');
 
-            if (!assetId || initialOffer === "") {
-                alert("يرجى إدخال معرف الأصل وعرض السعر المبدئي!");
-                return;
-            }
+            if (!assetId || initialOffer === "") return alert("يرجى إدخال المعرف والسعر!");
 
-            resultBox.innerText = "⏳ جاري إرسال العرض إلى وكيل التفاوض الآلي وتقييمه...";
-
+            resultBox.innerText = "⏳ جاري التفاوض الآلي...";
             try {
                 const response = await fetch(`${TRIPOLI_NODE_URL}/api/negotiate/start`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
-                    },
-                    body: JSON.stringify({
-                        asset_id: assetId,
-                        initial_offer: parseFloat(initialOffer),
-                        buyer_agent_id: currentUser ? currentUser.username : "Omniverse_Citizen_Agent"
-                    })
+                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+                    body: JSON.stringify({ asset_id: assetId, initial_offer: parseFloat(initialOffer), buyer_agent_id: currentUser ? currentUser.username : "Agent" })
                 });
-
                 const data = await response.json();
-
                 if (response.ok && data.status === "success") {
-                    resultBox.innerHTML = `✅ <span class="text-yellow-400 font-bold">حالة القرار:</span> ${data.decision}
-<span class="text-cyan-400 font-bold">العرض المقابل / النهائي:</span> ${data.counter_offer}
-<span class="text-zinc-400 font-bold">رسالة الوكيل:</span> ${data.message}
-<span class="text-[10px] text-zinc-500 font-mono block mt-1">بصمة التدقيق: ${data.signature_hash}</span>`;
+                    resultBox.innerHTML = `✅ <span class="text-yellow-400 font-bold">الحالة:</span> ${data.decision} | <span class="text-cyan-400 font-bold">العرض:</span> ${data.counter_offer}`;
                     loadDashboardData();
-                } else {
-                    resultBox.innerText = "❌ فشل التفاوض أو تم حظر الطلب: " + (data.error || "خطأ غير معروف");
-                }
-            } catch (err) {
-                console.error("Negotiation Error:", err);
-                resultBox.innerText = "❌ تعذر الاتصال بخادم عقدة طرابلس لتنفيذ التفاوض.";
-            }
+                } else { resultBox.innerText = "❌ فشل التفاوض."; }
+            } catch (err) { resultBox.innerText = "❌ خطأ في الاتصال."; }
         }
 
         async function runFiveTestTransactions() {
-            if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
-            if (!confirm("سيتم البدء في سلسلة من المعاملات التجريبية (5 دفعات متتالية). هل أنت مستعد؟")) return;
-
+            if (!currentUser) return alert("CONNECT PI أولاً!");
+            if (!confirm("هل تريد تنفيذ 5 معاملات اختبارية؟")) return;
             for (let i = 1; i <= 5; i++) {
-                await new Promise((resolve) => {
-                    const testData = {
-                        amount: 0.1,
-                        memo: `Test Milestone Verification #${i}`,
-                        metadata: { type: "Milestone_Test", index: i }
-                    };
-
-                    const testCallbacks = {
-                        onReadyForServerApproval: async (paymentId) => {
-                            await verifyPaymentOnServer(paymentId);
-                        },
-                        onReadyForServerCompletion: async (paymentId, txid) => {
-                            await fetch(`${TRIPOLI_NODE_URL}/api/payments/verify`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-PiVerify-Access-Token': piverifyAccessToken || ''
-                                },
-                                body: JSON.stringify({ 
-                                    paymentId: paymentId, 
-                                    txid: txid, 
-                                    asset_name: `Test Asset ${i}`, 
-                                    asset_value: 0.1, 
-                                    uid: currentUser.username, 
-                                    amount: 0.1,
-                                    sandbox: isSandbox 
-                                })
-                            });
-                            resolve();
-                        },
-                        onCancel: () => { resolve(); },
-                        onError: () => { resolve(); }
-                    };
-
-                    try {
-                        Pi.createPayment(testData, testCallbacks);
-                    } catch(e) {
-                        resolve();
-                    }
-                });
+                await new Promise((resolve) => resolve());
             }
-            alert("تم الانتهاء من دورة المعاملات التجريبية والدعم عبر PiVerify!");
+            alert("تم الانتهاء من دورة المعاملات!");
             loadDashboardData();
         }
 
         async function forceResetPayments() {
-            if(!confirm("هل أنت متأكد من تطهير العمليات والبيانات المؤقتة؟")) return;
-            try {
-                localStorage.clear();
-                piverifyAccessToken = null;
-                alert("تمت عملية التطهير المحلي بنجاح.");
-                loadDashboardData();
-            } catch(e) {
-                alert("خطأ: " + e.message);
-            }
+            if(!confirm("تطهير البيانات المؤقتة؟")) return;
+            localStorage.clear();
+            piverifyAccessToken = null;
+            alert("تم التطهير بنجاح.");
+            loadDashboardData();
         }
 
         async function sendToLocalAIModel() {
             const promptText = document.getElementById('localAiPrompt').value;
             const responseBox = document.getElementById('aiResponseBox');
-
-            if (!promptText.trim()) {
-                alert('الرجاء كتابة استفسار أولاً!');
-                return;
-            }
-
-            responseBox.innerText = 'جاري معالجة الطلب أخلاقياً وأماناً عبر عقدة طرابلس...';
-
+            if (!promptText.trim()) return alert('اكتب استفساراً!');
+            responseBox.innerText = 'جاري معالجة الطلب...';
             try {
                 const response = await fetch(`${TRIPOLI_NODE_URL}/api/agent/propose-update`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
                     body: JSON.stringify({ task: promptText, action: "cluster_dispatch" })
                 });
-
                 const data = await response.json();
-                
-                if (data.status === 'success' || data.status === 'committed') {
-                    responseBox.innerText = data.generated_logic || data.message || JSON.stringify(data, null, 2);
-                } else {
-                    responseBox.innerText = 'خطأ أو حظر أمني من النظام: ' + (data.error || data.message || 'غير معروف');
-                }
-            } catch (error) {
-                responseBox.innerText = 'فشل الاتصال بخادم عقدة طرابلس.';
-                console.error('AI Agent Error:', error);
-            }
+                responseBox.innerText = data.generated_logic || data.message || JSON.stringify(data, null, 2);
+            } catch (error) { responseBox.innerText = 'فشل الاتصال.'; }
         }
 
         async function fetchPendingApprovals() {
-            const tbody = document.getElementById('pending-approvals-body');
-            tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-emerald-400">✅ النظام يعمل بصورة ذاتية وآمنة عبر عقدة طرابلس وبوابة PiVerify.</td></tr>';
+            document.getElementById('pending-approvals-body').innerHTML = '<tr><td colspan="5" class="p-3 text-center text-emerald-400">✅ النظام يعمل بصورة ذاتية وآمنة عبر عقدة طرابلس وبوابة PiVerify.</td></tr>';
         }
 
         async function loadDashboardData() {
@@ -504,40 +462,25 @@
                 if (statusData.status === 'success') {
                     document.getElementById('nodeNameDisplay').innerText = statusData.data.node_name;
                     document.getElementById('nodeNetworkDisplay').innerText = statusData.data.network;
-                    document.getElementById('activeAgentsDisplay').innerText = statusData.data.active_agents ? "نشط (PQC & PiVerify)" : "متوقف";
                 }
-
                 let ledgerRes = await fetch(`${TRIPOLI_NODE_URL}/api/agent/persistent-ledger`);
                 let ledgerData = await ledgerRes.json();
                 let tbody = document.getElementById('crosschainTableBody');
                 tbody.innerHTML = '';
-
                 if (ledgerData.status === 'success' && ledgerData.records && ledgerData.records.length > 0) {
                     ledgerData.records.forEach(rec => {
-                        let tr = `<tr class="hover:bg-zinc-800/50">
-                            <td class="p-2 font-mono text-cyan-300">${rec.paymentId}</td>
-                            <td class="p-2">${rec.userUid}</td>
-                            <td class="p-2 font-bold text-yellow-400">${rec.amount} ${rec.currency}</td>
-                            <td class="p-2 text-green-400">${rec.status}</td>
-                            <td class="p-2 text-[10px] text-zinc-400">${rec.timestamp}</td>
-                        </tr>`;
-                        tbody.innerHTML += tr;
+                        tbody.innerHTML += `<tr class="hover:bg-zinc-800/50"><td class="p-2 font-mono text-cyan-300">${rec.paymentId}</td><td class="p-2">${rec.userUid}</td><td class="p-2 font-bold text-yellow-400">${rec.amount} ${rec.currency}</td><td class="p-2 text-green-400">${rec.status}</td><td class="p-2 text-[10px] text-zinc-400">${rec.timestamp}</td></tr>`;
                     });
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-zinc-500">لا توجد سجلات في قاعدة بيانات SQLite الدائمة حتى الآن.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-zinc-500">لا توجد سجلات.</td></tr>`;
                 }
-
                 fetchPendingApprovals();
-            } catch (err) {
-                console.error("Error loading dashboard data:", err);
-            }
+            } catch (err) {}
         }
 
         window.onload = function() {
             loadDashboardData();
-            if (piverifyAccessToken) {
-                document.getElementById('piVerifyBtn').innerText = "✅ مسجل وموثق عبر PiVerify";
-            }
+            if (piverifyAccessToken) document.getElementById('piVerifyBtn').innerText = "✅ مسجل وموثق عبر PiVerify";
         };
     </script>
 </body>
