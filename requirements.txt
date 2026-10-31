@@ -2,3 +2,4 @@ flask
 flask-cors
 requests
 gunicorn
+cryptography>=41.0.0
