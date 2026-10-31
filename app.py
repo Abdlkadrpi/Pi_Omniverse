@@ -14,6 +14,9 @@ from routes.compliance_engine import compliance_bp
 from routes.autonomous_swarm import swarm_bp
 from routes.lyo_payment_routes import lyo_blueprint
 
+# استيراد مسار الذكاء الاصطناعي المادي والمستشعرات الفيزيائية (Physical AI Telemetry)
+from routes.physical_ai import physical_ai_bp
+
 # استيراد مسار ربط السيرفرين (تزامن عقدة طرابلس مع أومنيفيرس)
 from server_bridge_sync import server_bridge_bp
 
@@ -29,7 +32,7 @@ from prism_pqc_guardrail import require_prism_pqc_guardrail
 
 app = Flask(__name__)
 
-# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها جسر السيرفرين
+# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها مسار الذكاء المادي وجسر السيرفرين
 app.register_blueprint(lyo_bp)
 app.register_blueprint(node_bp)
 app.register_blueprint(agent_bp)
@@ -40,6 +43,7 @@ app.register_blueprint(simulation_bp)
 app.register_blueprint(compliance_bp)
 app.register_blueprint(swarm_bp)
 app.register_blueprint(lyo_blueprint)
+app.register_blueprint(physical_ai_bp) # تسجيل مسار الذكاء الاصطناعي المادي والمستشعرات
 app.register_blueprint(server_bridge_bp) # تسجيل مسار التزامن بين السيرفرين
 
 # تفعيل ونشر درع الحماية السيادي والتدقيق الفوري (PRISM AI Security & Solo Host Guard)
@@ -86,6 +90,7 @@ def health_check():
         "architecture": "Flask Blueprints Modular - Zero Error",
         "node": "Tripoli Node v0.6.3",
         "security": "PRISM AI Shield & Quantum-Resilient Active",
+        "physical_ai_gateway": "Active & Ready for Sensor Telemetry",
         "rwa_module": "Active & Secured",
         "soroban_bridge": "Active & Connected",
         "dao_governance": "Active & Secured",
@@ -103,7 +108,7 @@ def health_check():
 def execute_agent_task():
     data = request.json or {}
     is_kyc = data.get("is_kyc_verified", False)
-    
+     
     # فرض التحقق من موثقية Pi Network KYC لمنع أي استثناء
     if not is_kyc:
         return jsonify({
