@@ -2,6 +2,7 @@ import os
 import sqlite3
 from flask import Flask, jsonify, render_template, request
 
+# استيراد مسارات المشروع المعيارية (Blueprints)
 from routes.lyo_routes import lyo_bp
 from routes.node_routes import node_bp
 from routes.agent_routes import agent_bp
@@ -10,19 +11,25 @@ from routes.soroban_bridge import soroban_bridge_bp
 from routes.dao_governance import dao_bp
 from routes.predictive_simulation import simulation_bp
 from routes.compliance_engine import compliance_bp
-# استيراد مسار سرب الوكلاء الذكيين المستقلين (Autonomous Agent Swarm)
 from routes.autonomous_swarm import swarm_bp
+from routes.lyo_payment_routes import lyo_blueprint
+
+# استيراد مسار ربط السيرفرين (تزامن عقدة طرابلس مع أومنيفيرس)
+from server_bridge_sync import server_bridge_bp
 
 # استيراد محرك الحماية والسيادة لعقدة طرابلس وأومنيفيرس
 from deploy_omniverse_sovereignty import OmniverseSovereignDeployer
 
-# استيراد محرك المرونة التشفيرية ووسيط الحماية الصارم (Zero-Trust & Quantum-Resilient)
+# استيراد محركات الأمان والتشفير المتقدمة
 from crypto_agility import CryptoAgilityEngine
 from agent_security import require_zero_trust_security
 
+# استيراد درع فحص خداع الوكلاء والتشفير المقاوم للكم المحدث (PRISM PQC Guardrail)
+from prism_pqc_guardrail import require_prism_pqc_guardrail
+
 app = Flask(__name__)
 
-# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها سرب الوكلاء المستقلين
+# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها جسر السيرفرين
 app.register_blueprint(lyo_bp)
 app.register_blueprint(node_bp)
 app.register_blueprint(agent_bp)
@@ -32,6 +39,8 @@ app.register_blueprint(dao_bp)
 app.register_blueprint(simulation_bp)
 app.register_blueprint(compliance_bp)
 app.register_blueprint(swarm_bp)
+app.register_blueprint(lyo_blueprint)
+app.register_blueprint(server_bridge_bp) # تسجيل مسار التزامن بين السيرفرين
 
 # تفعيل ونشر درع الحماية السيادي والتدقيق الفوري (PRISM AI Security & Solo Host Guard)
 sovereign_deployer = OmniverseSovereignDeployer()
@@ -82,20 +91,39 @@ def health_check():
         "dao_governance": "Active & Secured",
         "predictive_simulation": "Active & AI-Powered",
         "compliance_gateway": "Active & Compliant",
-        "autonomous_swarm": "Active & 24/7 Monitoring"
+        "autonomous_swarm": "Active & 24/7 Monitoring",
+        "lyo_governance_engine": "Active & Deflationary Burn Enabled",
+        "prism_pqc_guardrail": "Active & Deception Shield Enabled"
     }), 200
 
-# مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع التحقق من KYC والتشفير الكمي
+# مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع دمج درع فحص الخداع (CoT) والتشفير الكمي
 @app.route('/api/v1/lyo/execute-task', methods=['POST'])
 @require_zero_trust_security
+@require_prism_pqc_guardrail(strict_kyc=True) # تفعيل فحص خداع الوكلاء وقوانين LYO الحتمية
 def execute_agent_task():
     data = request.json or {}
+    is_kyc = data.get("is_kyc_verified", False)
+    
+    # فرض التحقق من موثقية Pi Network KYC لمنع أي استثناء
+    if not is_kyc:
+        return jsonify({
+            "status": "error",
+            "compliance_error": "PI_KYC_REQUIRED",
+            "message": "Access denied: Pi Network KYC verification is mandatory for LYO utility and agent operations."
+        }), 403
+
+    amount = float(data.get("amount_lyo", 10.0))
+    burn_fee = amount * 0.01  # حساب نسبة الحرق الآمن 1%
+
     return jsonify({
         "status": "success",
-        "message": "Zero-Trust & Quantum-Resilient security validation passed.",
+        "message": "Zero-Trust & Quantum-Resilient security validation passed. LYO utility task executed successfully.",
         "utility_token": "LYO",
-        "node": "Tripoli Node",
-        "action_executed": data.get("action", "default_smart_city_task")
+        "node": "Tripoli Node v0.6.3",
+        "action_executed": data.get("action", "default_smart_city_task"),
+        "amount_processed": amount,
+        "deflationary_burn": burn_fee,
+        "burn_address": "0x000000000000000000000000000000000000DEAD"
     }), 200
 
 # تهيئة قاعدة البيانات عند بدء التشغيل
