@@ -14,6 +14,9 @@ from routes.compliance_engine import compliance_bp
 from routes.autonomous_swarm import swarm_bp
 from routes.lyo_payment_routes import lyo_blueprint
 
+# استيراد مسار محسن وإدارة الذاكرة الديناميكي (Dynamic Memory Optimization Layer)
+from routes.memory_optimizer import memory_bp, check_system_memory
+
 # استيراد مسار الذكاء الاصطناعي المادي والمستشعرات الفيزيائية (Physical AI Telemetry)
 from routes.physical_ai import physical_ai_bp
 
@@ -32,7 +35,7 @@ from prism_pqc_guardrail import require_prism_pqc_guardrail
 
 app = Flask(__name__)
 
-# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها مسار الذكاء المادي وجسر السيرفرين
+# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها مسار إدارة الذاكرة والذكاء المادي وجسر السيرفرين
 app.register_blueprint(lyo_bp)
 app.register_blueprint(node_bp)
 app.register_blueprint(agent_bp)
@@ -43,6 +46,7 @@ app.register_blueprint(simulation_bp)
 app.register_blueprint(compliance_bp)
 app.register_blueprint(swarm_bp)
 app.register_blueprint(lyo_blueprint)
+app.register_blueprint(memory_bp) # تسجيل مسار تحسين وإدارة الذاكرة
 app.register_blueprint(physical_ai_bp) # تسجيل مسار الذكاء الاصطناعي المادي والمستشعرات
 app.register_blueprint(server_bridge_bp) # تسجيل مسار التزامن بين السيرفرين
 
@@ -85,11 +89,16 @@ def index():
 
 @app.route('/health')
 def health_check():
+    # جلب حالة استهلاك الذاكرة العشوائية محلياً
+    mem_status = check_system_memory()
+    
     return jsonify({
         "status": "healthy", 
         "architecture": "Flask Blueprints Modular - Zero Error",
         "node": "Tripoli Node v0.6.3",
         "security": "PRISM AI Shield & Quantum-Resilient Active",
+        "memory_optimization": "Active & Dynamic Garbage Collection",
+        "system_memory": mem_status,
         "physical_ai_gateway": "Active & Ready for Sensor Telemetry",
         "rwa_module": "Active & Secured",
         "soroban_bridge": "Active & Connected",
