@@ -1,6 +1,33 @@
-node_modules
-assets.db-journal
-prism_supervisor_audit.log
+# Node modules & frontend dependencies
+node_modules/
 
-test_claude.py
+# Python bytecode and cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Local databases, journals and runtime logs
+assets.db
+assets.db-journal
+*.log
 prism_supervisor_audit.log
+*.sqlite3
+
+# Temporary and test scripts
+test_claude.py
+*.tmp
+*.bak
+
+# Environment and IDE configurations
+.env
+.vscode/
+.DS_Store
+Thumbs.db
