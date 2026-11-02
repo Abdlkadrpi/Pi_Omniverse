@@ -262,12 +262,12 @@
         }
 
         function onIncompletePayment(payment) {
-            verifyPaymentOnServer(payment.identifier);
+            verifyPaymentOnServer(payment.identifier, payment.transaction ? payment.transaction.txid : null);
         }
 
-        async function verifyPaymentOnServer(paymentId) {
+        async function verifyPaymentOnServer(paymentId, txid) {
             try {
-                const response = await fetch(`${TRIPOLI_NODE_URL}/api/payments/verify`, {
+                const response = await fetch(`${TRIPOLI_NODE_URL}/api/pi/payment/complete`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -275,13 +275,78 @@
                     },
                     body: JSON.stringify({ 
                         paymentId: paymentId, 
-                        uid: currentUser ? currentUser.username : "unknown", 
-                        sandbox: isSandbox 
+                        txid: txid || "local_test_txid",
+                        userUid: currentUser ? currentUser.username : "unknown", 
+                        amount: 1.0,
+                        serviceType: "Omniverse RWA Settlement"
                     })
                 });
                 return await response.json();
             } catch (err) {
                 console.error("Verification Error:", err);
+            }
+        }
+
+        // --- تنفيذ الدفع الفعلي عبر Pi.createPayment وتكامل Pi SDK ---
+        async function processPayment() {
+            if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
+            const name = document.getElementById('assetName').value;
+            const val = parseFloat(document.getElementById('assetVal').value);
+            const currency = document.getElementById('assetCurrency').value;
+
+            if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال اسم الأصل وقيمة مالية صحيحة!");
+
+            const paymentData = {
+                amount: val,
+                memo: `Omniverse RWA: ${name} (${currency})`,
+                metadata: { assetName: name, currency: currency }
+            };
+
+            const callbacks = {
+                onReadyForServerApproval: function(paymentId) {
+                    console.log("جاهز لموافقة الخادم، Payment ID:", paymentId);
+                },
+                onReadyForServerCompletion: function(paymentId, txid) {
+                    console.log("جاهز لاكتمال الدفع، TXID:", txid);
+                    fetch(`${TRIPOLI_NODE_URL}/api/pi/payment/complete`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-PiVerify-Access-Token': piverifyAccessToken || ''
+                        },
+                        body: JSON.stringify({
+                            paymentId: paymentId,
+                            txid: txid,
+                            userUid: currentUser.username,
+                            amount: val,
+                            serviceType: `RWA Notary: ${name}`
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(`✅ تم توثيق الدفع والأصل (${name}) بنجاح في أومنيفيرس!`);
+                        loadDashboardData();
+                    })
+                    .catch(err => {
+                        console.error("خطأ في الاتصال بالسيرفر:", err);
+                        alert("حدث خطأ أثناء إرسال الدفع للخادم.");
+                    });
+                },
+                onCancel: function(paymentId) {
+                    console.log("تم إلغاء الدفع:", paymentId);
+                    alert("تم إلغاء عملية الدفع.");
+                },
+                onError: function(error, payment) {
+                    console.error("خطأ Pi SDK:", error);
+                    alert("حدث خطأ في معالجة الدفع عبر Pi SDK.");
+                }
+            };
+
+            try {
+                Pi.createPayment(paymentData, callbacks);
+            } catch (err) {
+                console.error("Payment Creation Error:", err);
+                alert("تعذر إنشاء نافذة الدفع.");
             }
         }
 
@@ -372,29 +437,6 @@
             } catch (error) { alert("تعذر الاتصال بخادم عقدة طرابلس."); }
         }
 
-        async function processPayment() {
-            if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
-            const name = document.getElementById('assetName').value;
-            const val = parseFloat(document.getElementById('assetVal').value);
-            const currency = document.getElementById('assetCurrency').value;
-            const kycVerified = document.getElementById('kycCheck').checked;
-
-            if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال بيانات صحيحة!");
-
-            try {
-                const response = await fetch(`${TRIPOLI_NODE_URL}/api/rwa/notarize`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
-                    body: JSON.stringify({ assetName: name, assetValue: val, ownerUid: currentUser.username, currency: currency, kycVerified: kycVerified })
-                });
-                const data = await response.json();
-                if (response.ok && data.status === 'success') {
-                    alert(`✅ ${data.message}`);
-                    loadDashboardData();
-                } else { alert("فشل التوثيق: " + (data.error || data.message)); }
-            } catch (error) { alert("تعذر الاتصال بخادم عقدة طرابلس."); }
-        }
-
         async function startAiNegotiation() {
             const assetId = document.getElementById('negotiateAssetId').value;
             const initialOffer = document.getElementById('negotiateOfferVal').value;
@@ -421,7 +463,7 @@
             if (!currentUser) return alert("CONNECT PI أولاً!");
             if (!confirm("هل تريد تنفيذ 5 معاملات اختبارية؟")) return;
             for (let i = 1; i <= 5; i++) {
-                await new Promise((resolve) => resolve());
+                await new Promise((resolve) => setTimeout(resolve, 500));
             }
             alert("تم الانتهاء من دورة المعاملات!");
             loadDashboardData();
