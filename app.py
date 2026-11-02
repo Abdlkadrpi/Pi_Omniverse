@@ -14,6 +14,9 @@ from routes.compliance_engine import compliance_bp
 from routes.autonomous_swarm import swarm_bp
 from routes.lyo_payment_routes import lyo_blueprint
 
+# استيراد مسار مدفوعات وتكامل شبكة باي (Pi Payments & SDK Integration)
+from routes.pi_payments import pi_bp
+
 # استيراد مسار محسن وإدارة الذاكرة الديناميكي (Dynamic Memory Optimization Layer)
 from routes.memory_optimizer import memory_bp, check_system_memory
 
@@ -35,7 +38,7 @@ from prism_pqc_guardrail import require_prism_pqc_guardrail
 
 app = Flask(__name__)
 
-# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها مسار إدارة الذاكرة والذكاء المادي وجسر السيرفرين
+# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها مسار إدارة الذاكرة والذكاء المادي وجسر السيرفرين ومدفوعات باي
 app.register_blueprint(lyo_bp)
 app.register_blueprint(node_bp)
 app.register_blueprint(agent_bp)
@@ -46,6 +49,7 @@ app.register_blueprint(simulation_bp)
 app.register_blueprint(compliance_bp)
 app.register_blueprint(swarm_bp)
 app.register_blueprint(lyo_blueprint)
+app.register_blueprint(pi_bp) # تسجيل مسار مدفوعات Pi Network الجديد
 app.register_blueprint(memory_bp) # تسجيل مسار تحسين وإدارة الذاكرة
 app.register_blueprint(physical_ai_bp) # تسجيل مسار الذكاء الاصطناعي المادي والمستشعرات
 app.register_blueprint(server_bridge_bp) # تسجيل مسار التزامن بين السيرفرين
@@ -81,6 +85,19 @@ def init_db():
                 timestamp TEXT
             )
         """)
+        # التأكد من وجود جدول المعاملات (transactions) الخاص بمدفوعات باي
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                payment_id TEXT UNIQUE NOT NULL,
+                txid TEXT,
+                user_uid TEXT NOT NULL,
+                amount REAL NOT NULL,
+                service_type TEXT,
+                status TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         conn.commit()
 
 @app.route('/')
@@ -107,6 +124,7 @@ def health_check():
         "compliance_gateway": "Active & Compliant",
         "autonomous_swarm": "Active & 24/7 Monitoring",
         "lyo_governance_engine": "Active & Deflationary Burn Enabled",
+        "pi_payments_gateway": "Active & Ready for Mainnet/Testnet",
         "prism_pqc_guardrail": "Active & Deception Shield Enabled"
     }), 200
 

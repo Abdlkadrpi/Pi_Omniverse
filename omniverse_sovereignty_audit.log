@@ -437,3 +437,81 @@
 2026-10-31 22:25:45,282 [INFO] [Omniverse-Tripoli-Security]: 127.0.0.1 - - [31/Oct/2026 22:25:45] "POST /api/v1/physical/telemetry HTTP/1.1" 200 -
 2026-10-31 22:27:51,605 [WARNING] [Omniverse-Tripoli-Security]: مخالفة سياسية مرصودة [GDPR/Pi Policy]: عنوان IP غير مصرح به -> 127.0.0.1 | UA: curl/8.19.0
 2026-10-31 22:27:51,608 [INFO] [Omniverse-Tripoli-Security]: 127.0.0.1 - - [31/Oct/2026 22:27:51] "[31m[1mPOST /api/v1/physical/telemetry HTTP/1.1[0m" 403 -
+2026-11-01 21:28:36,958 [INFO] [Omniverse-Tripoli-Security]: === بدء التنفيذ التلقائي لسيادة أومنيفيرس وعقدة طرابلس ===
+2026-11-01 21:28:36,963 [INFO] [Omniverse-Tripoli-Security]: -> [1/3] فحص وتأمين بيئة عقدة طرابلس (Tripoli Node v0.6.3)...
+2026-11-01 21:28:36,989 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم تفعيل عزل الملفات وحماية قاعدة بيانات SQLite (assets.db) بنجاح.
+2026-11-01 21:28:36,990 [INFO] [Omniverse-Tripoli-Security]: -> [2/3] نشر درع الحماية السيادي (PRISM AI Security & Runtime Inspection)...
+2026-11-01 21:28:36,990 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم حقن ميدلوير الحماية بجميع مسارات تطبيق أومنيفيرس بنجاح.
+2026-11-01 21:28:37,006 [INFO] [Omniverse-Tripoli-Security]: -> [3/3] تنفيذ محاكاة الهجمات السيبرانية (Replay & MITM Attack Simulation)...
+2026-11-01 21:28:37,009 [INFO] [Omniverse-Tripoli-Security]: 🛡️ نتيجة المحاكاة: نجاح تام! نظام التحقق المشفر يحبط أي تلاعب بالحمولة (Payload Tampering Defeated).
+2026-11-01 21:28:37,017 [INFO] [Omniverse-Tripoli-Security]: === اكتملت كافة الخطوات بنجاح تام: النظام جاهز للريادة العالمية! ===
+2026-11-01 21:28:37,758 [INFO] [Omniverse-Tripoli-Security]: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.101:10000
+2026-11-01 21:28:37,764 [INFO] [Omniverse-Tripoli-Security]: [33mPress CTRL+C to quit[0m
+2026-11-01 21:28:37,795 [INFO] [Omniverse-Tripoli-Security]:  * Restarting with stat
+2026-11-01 21:28:43,920 [INFO] [Omniverse-Tripoli-Security]: === بدء التنفيذ التلقائي لسيادة أومنيفيرس وعقدة طرابلس ===
+2026-11-01 21:28:43,921 [INFO] [Omniverse-Tripoli-Security]: -> [1/3] فحص وتأمين بيئة عقدة طرابلس (Tripoli Node v0.6.3)...
+2026-11-01 21:28:43,928 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم تفعيل عزل الملفات وحماية قاعدة بيانات SQLite (assets.db) بنجاح.
+2026-11-01 21:28:43,936 [INFO] [Omniverse-Tripoli-Security]: -> [2/3] نشر درع الحماية السيادي (PRISM AI Security & Runtime Inspection)...
+2026-11-01 21:28:43,938 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم حقن ميدلوير الحماية بجميع مسارات تطبيق أومنيفيرس بنجاح.
+2026-11-01 21:28:43,938 [INFO] [Omniverse-Tripoli-Security]: -> [3/3] تنفيذ محاكاة الهجمات السيبرانية (Replay & MITM Attack Simulation)...
+2026-11-01 21:28:43,940 [INFO] [Omniverse-Tripoli-Security]: 🛡️ نتيجة المحاكاة: نجاح تام! نظام التحقق المشفر يحبط أي تلاعب بالحمولة (Payload Tampering Defeated).
+2026-11-01 21:28:43,955 [INFO] [Omniverse-Tripoli-Security]: === اكتملت كافة الخطوات بنجاح تام: النظام جاهز للريادة العالمية! ===
+2026-11-01 21:28:44,162 [WARNING] [Omniverse-Tripoli-Security]:  * Debugger is active!
+2026-11-01 21:28:44,180 [INFO] [Omniverse-Tripoli-Security]:  * Debugger PIN: 112-903-391
+2026-11-01 21:31:07,115 [WARNING] [Omniverse-Tripoli-Security]: مخالفة سياسية مرصودة [GDPR/Pi Policy]: عنوان IP غير مصرح به -> 127.0.0.1 | UA: curl/8.19.0
+2026-11-01 21:31:07,185 [INFO] [Omniverse-Tripoli-Security]: 127.0.0.1 - - [01/Nov/2026 21:31:07] "POST /api/v1/memory/purge HTTP/1.1" 200 -
+2026-11-02 02:24:09,575 [INFO] [Omniverse-Tripoli-Security]: === بدء التنفيذ التلقائي لسيادة أومنيفيرس وعقدة طرابلس ===
+2026-11-02 02:24:09,611 [INFO] [Omniverse-Tripoli-Security]: -> [1/3] فحص وتأمين بيئة عقدة طرابلس (Tripoli Node v0.6.3)...
+2026-11-02 02:24:09,614 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم تفعيل عزل الملفات وحماية قاعدة بيانات SQLite (assets.db) بنجاح.
+2026-11-02 02:24:09,626 [INFO] [Omniverse-Tripoli-Security]: -> [2/3] نشر درع الحماية السيادي (PRISM AI Security & Runtime Inspection)...
+2026-11-02 02:24:09,666 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم حقن ميدلوير الحماية بجميع مسارات تطبيق أومنيفيرس بنجاح.
+2026-11-02 02:24:09,702 [INFO] [Omniverse-Tripoli-Security]: -> [3/3] تنفيذ محاكاة الهجمات السيبرانية (Replay & MITM Attack Simulation)...
+2026-11-02 02:24:09,782 [INFO] [Omniverse-Tripoli-Security]: 🛡️ نتيجة المحاكاة: نجاح تام! نظام التحقق المشفر يحبط أي تلاعب بالحمولة (Payload Tampering Defeated).
+2026-11-02 02:24:09,848 [INFO] [Omniverse-Tripoli-Security]: === اكتملت كافة الخطوات بنجاح تام: النظام جاهز للريادة العالمية! ===
+2026-11-02 02:24:11,244 [INFO] [Omniverse-Tripoli-Security]: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.101:10000
+2026-11-02 02:24:11,286 [INFO] [Omniverse-Tripoli-Security]: [33mPress CTRL+C to quit[0m
+2026-11-02 02:24:11,493 [INFO] [Omniverse-Tripoli-Security]:  * Restarting with stat
+2026-11-02 02:24:57,160 [INFO] [Omniverse-Tripoli-Security]: === بدء التنفيذ التلقائي لسيادة أومنيفيرس وعقدة طرابلس ===
+2026-11-02 02:24:57,161 [INFO] [Omniverse-Tripoli-Security]: -> [1/3] فحص وتأمين بيئة عقدة طرابلس (Tripoli Node v0.6.3)...
+2026-11-02 02:24:57,163 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم تفعيل عزل الملفات وحماية قاعدة بيانات SQLite (assets.db) بنجاح.
+2026-11-02 02:24:57,167 [INFO] [Omniverse-Tripoli-Security]: -> [2/3] نشر درع الحماية السيادي (PRISM AI Security & Runtime Inspection)...
+2026-11-02 02:24:57,169 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم حقن ميدلوير الحماية بجميع مسارات تطبيق أومنيفيرس بنجاح.
+2026-11-02 02:24:57,172 [INFO] [Omniverse-Tripoli-Security]: -> [3/3] تنفيذ محاكاة الهجمات السيبرانية (Replay & MITM Attack Simulation)...
+2026-11-02 02:24:57,175 [INFO] [Omniverse-Tripoli-Security]: 🛡️ نتيجة المحاكاة: نجاح تام! نظام التحقق المشفر يحبط أي تلاعب بالحمولة (Payload Tampering Defeated).
+2026-11-02 02:24:57,175 [INFO] [Omniverse-Tripoli-Security]: === اكتملت كافة الخطوات بنجاح تام: النظام جاهز للريادة العالمية! ===
+2026-11-02 02:24:57,318 [WARNING] [Omniverse-Tripoli-Security]:  * Debugger is active!
+2026-11-02 02:24:57,328 [INFO] [Omniverse-Tripoli-Security]:  * Debugger PIN: 112-903-391
+2026-11-02 20:38:13,114 [INFO] [Omniverse-Tripoli-Security]: === بدء التنفيذ التلقائي لسيادة أومنيفيرس وعقدة طرابلس ===
+2026-11-02 20:38:13,126 [INFO] [Omniverse-Tripoli-Security]: -> [1/3] فحص وتأمين بيئة عقدة طرابلس (Tripoli Node v0.6.3)...
+2026-11-02 20:38:13,130 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم تفعيل عزل الملفات وحماية قاعدة بيانات SQLite (assets.db) بنجاح.
+2026-11-02 20:38:13,131 [INFO] [Omniverse-Tripoli-Security]: -> [2/3] نشر درع الحماية السيادي (PRISM AI Security & Runtime Inspection)...
+2026-11-02 20:38:13,134 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم حقن ميدلوير الحماية بجميع مسارات تطبيق أومنيفيرس بنجاح.
+2026-11-02 20:38:13,143 [INFO] [Omniverse-Tripoli-Security]: -> [3/3] تنفيذ محاكاة الهجمات السيبرانية (Replay & MITM Attack Simulation)...
+2026-11-02 20:38:13,156 [INFO] [Omniverse-Tripoli-Security]: 🛡️ نتيجة المحاكاة: نجاح تام! نظام التحقق المشفر يحبط أي تلاعب بالحمولة (Payload Tampering Defeated).
+2026-11-02 20:38:13,160 [INFO] [Omniverse-Tripoli-Security]: === اكتملت كافة الخطوات بنجاح تام: النظام جاهز للريادة العالمية! ===
+2026-11-02 20:38:13,651 [INFO] [Omniverse-Tripoli-Security]: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.101:10000
+2026-11-02 20:38:13,706 [INFO] [Omniverse-Tripoli-Security]: [33mPress CTRL+C to quit[0m
+2026-11-02 20:38:13,720 [INFO] [Omniverse-Tripoli-Security]:  * Restarting with stat
+2026-11-02 20:38:18,522 [INFO] [Omniverse-Tripoli-Security]: === بدء التنفيذ التلقائي لسيادة أومنيفيرس وعقدة طرابلس ===
+2026-11-02 20:38:18,524 [INFO] [Omniverse-Tripoli-Security]: -> [1/3] فحص وتأمين بيئة عقدة طرابلس (Tripoli Node v0.6.3)...
+2026-11-02 20:38:18,530 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم تفعيل عزل الملفات وحماية قاعدة بيانات SQLite (assets.db) بنجاح.
+2026-11-02 20:38:18,531 [INFO] [Omniverse-Tripoli-Security]: -> [2/3] نشر درع الحماية السيادي (PRISM AI Security & Runtime Inspection)...
+2026-11-02 20:38:18,535 [INFO] [Omniverse-Tripoli-Security]: ✔️ تم حقن ميدلوير الحماية بجميع مسارات تطبيق أومنيفيرس بنجاح.
+2026-11-02 20:38:18,536 [INFO] [Omniverse-Tripoli-Security]: -> [3/3] تنفيذ محاكاة الهجمات السيبرانية (Replay & MITM Attack Simulation)...
+2026-11-02 20:38:18,542 [INFO] [Omniverse-Tripoli-Security]: 🛡️ نتيجة المحاكاة: نجاح تام! نظام التحقق المشفر يحبط أي تلاعب بالحمولة (Payload Tampering Defeated).
+2026-11-02 20:38:18,543 [INFO] [Omniverse-Tripoli-Security]: === اكتملت كافة الخطوات بنجاح تام: النظام جاهز للريادة العالمية! ===
+2026-11-02 20:38:18,709 [WARNING] [Omniverse-Tripoli-Security]:  * Debugger is active!
+2026-11-02 20:38:18,725 [INFO] [Omniverse-Tripoli-Security]:  * Debugger PIN: 112-903-391
+2026-11-02 20:41:20,617 [INFO] [Omniverse-Tripoli-Security]: 127.0.0.1 - - [02/Nov/2026 20:41:20] "GET /health HTTP/1.1" 200 -
+2026-11-02 20:41:23,044 [WARNING] [Omniverse-Tripoli-Security]: مخالفة سياسية مرصودة [GDPR/Pi Policy]: عنوان IP غير مصرح به -> 127.0.0.1 | UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36
+2026-11-02 20:41:23,137 [ERROR] [Omniverse-Tripoli-Security]: CRITICAL EXCEPTION CAUGHT BY PRISM SHIELD: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2026-11-02 20:41:24,444 [INFO] [Omniverse-Tripoli-Security]: 127.0.0.1 - - [02/Nov/2026 20:41:24] "[35m[1mGET /favicon.ico HTTP/1.1[0m" 500 -
