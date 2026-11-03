@@ -66,6 +66,29 @@
                 </div>
             </div>
 
+            <!-- 🏛️ قسم حوكمة التصويت لعملة LYO المقاوم للكم ومشرف PRISM (المضاف حديثاً) -->
+            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-4">
+                <h2 class="text-sm font-bold text-yellow-400">🗳️ حوكمة التصويت لعملة المنفعة LYO (مقاوم للكم & PRISM)</h2>
+                <p class="text-[11px] text-zinc-400">المشاركة في التصويت المجتمعي المعتمد بتوجيهات SEC والمدعوم بالتشفير المقاوم للكم (PQC).</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input id="proposalId" placeholder="معرف المقترح (مثال: PROP-OMNIVERSE-2026)" value="PROP-OMNIVERSE-2026" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-yellow-500 outline-none">
+                    <input id="lyoVotingBalance" type="number" step="1.0" placeholder="رصيد LYO للمشاركة" value="1000.0" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-yellow-500 outline-none">
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <label class="text-xs text-zinc-300 font-bold">خيار التصويت:</label>
+                    <select id="voteChoice" class="bg-black p-2 border border-zinc-700 rounded text-xs text-yellow-400 font-bold outline-none">
+                        <option value="true">موافق (True)</option>
+                        <option value="false">معارض (False)</option>
+                    </select>
+                </div>
+                
+                <button onclick="castLyoSecureVote()" class="w-full bg-yellow-600 hover:bg-yellow-500 p-2.5 rounded-lg font-bold text-xs transition shadow text-black">إرسال وتوثيق الصوت تحت درع PQC 🛡️</button>
+                
+                <div id="lyoVotingResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-yellow-300 min-h-[60px] whitespace-pre-wrap font-mono">نتيجة التصويت والتوقيع المشفر ستظهر هنا...</div>
+            </div>
+
             <!-- 🏛️ قسم المنظومة الخماسية الجديدة (RWA, Soroban, DAO, Simulation, Compliance) -->
             <div class="mt-6 pt-4 border-t border-zinc-800 space-y-4">
                 <h2 class="text-sm font-bold text-emerald-400">⚡ التحكم بالمسارات الخماسية لمدينة أومنيفيرس</h2>
@@ -347,6 +370,50 @@
             } catch (err) {
                 console.error("Payment Creation Error:", err);
                 alert("تعذر إنشاء نافذة الدفع.");
+            }
+        }
+
+        // --- وظيفة التصويت اللامركزي لعملة LYO ---
+        async function castLyoSecureVote() {
+            const proposalId = document.getElementById('proposalId').value;
+            const lyoBalance = parseFloat(document.getElementById('lyoVotingBalance').value);
+            const voteChoice = document.getElementById('voteChoice').value === "true";
+            const resultBox = document.getElementById('lyoVotingResultBox');
+
+            if (!proposalId || isNaN(lyoBalance) || lyoBalance <= 0) {
+                return alert("يرجى إدخال معرف مقترح صحيح ورصيد LYO للمشاركة!");
+            }
+
+            resultBox.innerText = "⏳ جاري إرسال وتوثيق الصوت عبر درع PQC ومشرف PRISM...";
+            
+            try {
+                const response = await fetch(`${TRIPOLI_NODE_URL}/api/v1/lyo/vote`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-PiVerify-Access-Token': piverifyAccessToken || ''
+                    },
+                    body: JSON.stringify({
+                        pi_uid: currentUser ? currentUser.username : "tripoli_guest_voter",
+                        proposal_id: proposalId,
+                        vote_choice: voteChoice,
+                        kyc_verified: true,
+                        lyo_balance: lyoBalance
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.status === "SUCCESS") {
+                    resultBox.innerHTML = `✅ <span class="text-green-400 font-bold">الحالة:</span> ${data.message}\n` +
+                                          `🛡️ <span class="text-cyan-400 font-bold">مشرف PRISM:</span> ${data.audit.status} (مخاطر: ${data.audit.risk_score})\n` +
+                                          `🔐 <span class="text-yellow-400 font-bold">التوقيع الكمي:</span> ${data.pqc_signature.substring(0, 35)}...`;
+                    loadDashboardData();
+                } else {
+                    resultBox.innerText = `❌ رفض التصويت: ${data.message || data.error}`;
+                }
+            } catch (err) {
+                console.error("Voting Error:", err);
+                resultBox.innerText = "❌ حدث خطأ أثناء الاتصال بالسيرفر.";
             }
         }
 
