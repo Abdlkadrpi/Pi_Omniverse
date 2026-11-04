@@ -2,6 +2,9 @@ import os
 import sqlite3
 from flask import Flask, jsonify, render_template, request
 
+# استيراد الجدار الناري الذكي (Omniverse Smart WAF) من المجلد الرئيسي
+from omniverse_waf import OmniverseSmartWAF, require_prism_clearance
+
 # استيراد مسارات المشروع المعيارية (Blueprints)
 from routes.lyo_routes import lyo_bp
 from routes.node_routes import node_bp
@@ -40,6 +43,9 @@ from agent_security import require_zero_trust_security
 from prism_pqc_guardrail import require_prism_pqc_guardrail
 
 app = Flask(__name__)
+
+# تفعيل وربط الجدار الناري الذكي (Omniverse Smart WAF - بحد أقصى 60 طلباً بالدقيقة لكل IP)
+waf = OmniverseSmartWAF(app, max_requests_per_minute=60)
 
 # تسجيل جميع المسارات المعيارية (Blueprints) بما فيها مسار التصويت وحوكمة LYO
 app.register_blueprint(lyo_bp)
@@ -117,7 +123,7 @@ def health_check():
         "status": "healthy", 
         "architecture": "Flask Blueprints Modular - Zero Error",
         "node": "Tripoli Node v0.6.3",
-        "security": "PRISM AI Shield & Quantum-Resilient Active",
+        "security": "PRISM AI Shield & Smart WAF & Quantum-Resilient Active",
         "memory_optimization": "Active & Dynamic Garbage Collection",
         "system_memory": mem_status,
         "physical_ai_gateway": "Active & Ready for Sensor Telemetry",
@@ -133,7 +139,7 @@ def health_check():
         "prism_pqc_guardrail": "Active & Deception Shield Enabled"
     }), 200
 
-# مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع دمج درع فحص الخداع (CoT) والتشفير الكمي
+# مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع دمج درع فحص الخداع (CoT) والتشفير الكمي والجدار الناري
 @app.route('/api/v1/lyo/execute-task', methods=['POST'])
 @require_zero_trust_security
 @require_prism_pqc_guardrail(strict_kyc=True) # تفعيل فحص خداع الوكلاء وقوانين LYO الحتمية
@@ -154,7 +160,7 @@ def execute_agent_task():
 
     return jsonify({
         "status": "success",
-        "message": "Zero-Trust & Quantum-Resilient security validation passed. LYO utility task executed successfully.",
+        "message": "Zero-Trust, Smart WAF & Quantum-Resilient security validation passed. LYO utility task executed successfully.",
         "utility_token": "LYO",
         "node": "Tripoli Node v0.6.3",
         "action_executed": data.get("action", "default_smart_city_task"),
