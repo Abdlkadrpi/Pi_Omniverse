@@ -24,7 +24,7 @@ from routes.compliance_engine import compliance_bp
 from routes.autonomous_swarm import swarm_bp
 from routes.lyo_payment_routes import lyo_blueprint
 
-# استيراد مسار التصويت وحوكمة LYO المقاوم للكم (المضاف حديثاً)
+# استيراد مسار التصويت وحوكمة LYO المقاوم للكم
 from blueprints.lyo_voting.routes import lyo_voting_bp
 
 # استيراد مسار مدفوعات وتكامل شبكة باي (Pi Payments & SDK Integration)
@@ -54,7 +54,7 @@ app = Flask(__name__)
 # تفعيل وربط الجدار الناري الذكي (Omniverse Smart WAF - بحد أقصى 60 طلباً بالدقيقة لكل IP)
 waf = OmniverseSmartWAF(app, max_requests_per_minute=60)
 
-# تسجيل جميع المسارات المعيارية (Blueprints) بما فيها مسار التصويت وحوكمة LYO
+# تسجيل جميع المسارات المعيارية (Blueprints)
 app.register_blueprint(lyo_bp)
 app.register_blueprint(node_bp)
 app.register_blueprint(agent_bp)
@@ -65,17 +65,17 @@ app.register_blueprint(simulation_bp)
 app.register_blueprint(compliance_bp)
 app.register_blueprint(swarm_bp)
 app.register_blueprint(lyo_blueprint)
-app.register_blueprint(lyo_voting_bp) # تسجيل مسار التصويت وحوكمة LYO المقاوم للكم
-app.register_blueprint(pi_bp) # تسجيل مسار مدفوعات Pi Network الجديد
-app.register_blueprint(memory_bp) # تسجيل مسار تحسين وإدارة الذاكرة
-app.register_blueprint(physical_ai_bp) # تسجيل مسار الذكاء الاصطناعي المادي والمستشعرات
-app.register_blueprint(server_bridge_bp) # تسجيل مسار التزامن بين السيرفرين
+app.register_blueprint(lyo_voting_bp)
+app.register_blueprint(pi_bp)
+app.register_blueprint(memory_bp)
+app.register_blueprint(physical_ai_bp)
+app.register_blueprint(server_bridge_bp)
 
 # تفعيل ونشر درع الحماية السيادي والتدقيق الفوري (PRISM AI Security & Solo Host Guard)
 sovereign_deployer = OmniverseSovereignDeployer()
 sovereign_deployer.execute_full_deployment(app)
 
-# تهيئة محرك التشفر الكمي الهجين للعمليات الآمنة
+# تهيئة محرك التشفير الكمي الهجين للعمليات الآمنة
 crypto_engine = CryptoAgilityEngine(mode="quantum_hybrid")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -102,7 +102,6 @@ def init_db():
                 timestamp TEXT
             )
         """)
-        # التأكد من وجود جدول المعاملات (transactions) الخاص بمدفوعات باي
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transactions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,9 +122,7 @@ def index():
 
 @app.route('/health')
 def health_check():
-    # جلب حالة استهلاك الذاكرة العشوائية محلياً
     mem_status = check_system_memory()
-    
     return jsonify({
         "status": "healthy", 
         "architecture": "Flask Blueprints Modular - Zero Error",
@@ -146,15 +143,13 @@ def health_check():
         "prism_pqc_guardrail": "Active & Deception Shield Enabled"
     }), 200
 
-# مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع أرشفة تلقائية فورية وفحص PRISM PQC Guardrail
 @app.route('/api/v1/lyo/execute-task', methods=['POST'])
 @require_zero_trust_security
-@require_prism_pqc_guardrail(strict_kyc=True) # تفعيل درع فحص خداع الوكلاء وقوانين LYO الحتمية والمقاومة للكم
+@require_prism_pqc_guardrail(strict_kyc=True)
 def execute_agent_task():
     data = request.json or {}
     is_kyc = data.get("is_kyc_verified", False)
      
-    # فرض التحقق من موثقية Pi Network KYC لمنع أي استثناء
     if not is_kyc:
         return jsonify({
             "status": "error",
@@ -163,7 +158,7 @@ def execute_agent_task():
         }), 403
 
     amount = float(data.get("amount_lyo", 10.0))
-    burn_fee = amount * 0.01  # حساب نسبة الحرق الآمن 1%
+    burn_fee = amount * 0.01  
     net_allocated = amount - burn_fee
 
     response_payload = {
@@ -191,7 +186,6 @@ def execute_agent_task():
         }
     }
 
-    # 📥 الأرشفة التلقائية والفورية في قاعدة بيانات عقدة طرابلس (assets.db) وتأكيد إنشاء الجدول
     try:
         init_ledger_database()
         archive_verified_transaction(response_payload)
@@ -200,10 +194,8 @@ def execute_agent_task():
 
     return jsonify(response_payload), 200
 
-# مسار API لاستعراض كافة المعاملات المؤرشفة بصيغة JSON (متاح للتدقيق والمراقبة السيادية)
 @app.route('/api/v1/sovereign/ledger/archive', methods=['GET'])
 def get_sovereign_ledger_archive():
-    """استرجاع كافة المعاملات المالية المؤرشفة في دفتر أستاذ عقدة طرابلس"""
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
@@ -254,10 +246,8 @@ def get_sovereign_ledger_archive():
             "message": f"Failed to retrieve Tripoli Node ledger archive: {str(e)}"
         }), 500
 
-# مسار API لتصدير الأرشيف السيادي كملف CSV قابل للتحميل
 @app.route('/api/v1/sovereign/ledger/export-csv', methods=['GET'])
 def export_sovereign_ledger_csv():
-    """تصدير كافة المعاملات المؤرشفة في دفتر أستاذ عقدة طرابلس كملف CSV"""
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
@@ -308,4 +298,4 @@ init_ledger_database()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
