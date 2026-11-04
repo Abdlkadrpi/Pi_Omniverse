@@ -1,9 +1,16 @@
 import os
 import sqlite3
-from flask import Flask, jsonify, render_template, request
+import json
+import csv
+import io
+import time
+from flask import Flask, jsonify, render_template, request, make_response
 
 # استيراد الجدار الناري الذكي (Omniverse Smart WAF) من المجلد الرئيسي
 from omniverse_waf import OmniverseSmartWAF, require_prism_clearance
+
+# استيراد دالة الأرشفة التلقائية وجداول عقدة طرابلس
+from archive_transactions import archive_verified_transaction, init_ledger_database
 
 # استيراد مسارات المشروع المعيارية (Blueprints)
 from routes.lyo_routes import lyo_bp
@@ -68,7 +75,7 @@ app.register_blueprint(server_bridge_bp) # تسجيل مسار التزامن ب
 sovereign_deployer = OmniverseSovereignDeployer()
 sovereign_deployer.execute_full_deployment(app)
 
-# تهيئة محرك التشفير الكمي الهجين للعمليات الآمنة
+# تهيئة محرك التشفر الكمي الهجين للعمليات الآمنة
 crypto_engine = CryptoAgilityEngine(mode="quantum_hybrid")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -139,10 +146,10 @@ def health_check():
         "prism_pqc_guardrail": "Active & Deception Shield Enabled"
     }), 200
 
-# مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع دمج درع فحص الخداع (CoT) والتشفير الكمي والجدار الناري
+# مسار محمي ومخصص للوكلاء الذكيين ومعاملات عملة LYO مع أرشفة تلقائية فورية وفحص PRISM PQC Guardrail
 @app.route('/api/v1/lyo/execute-task', methods=['POST'])
 @require_zero_trust_security
-@require_prism_pqc_guardrail(strict_kyc=True) # تفعيل فحص خداع الوكلاء وقوانين LYO الحتمية
+@require_prism_pqc_guardrail(strict_kyc=True) # تفعيل درع فحص خداع الوكلاء وقوانين LYO الحتمية والمقاومة للكم
 def execute_agent_task():
     data = request.json or {}
     is_kyc = data.get("is_kyc_verified", False)
@@ -157,20 +164,147 @@ def execute_agent_task():
 
     amount = float(data.get("amount_lyo", 10.0))
     burn_fee = amount * 0.01  # حساب نسبة الحرق الآمن 1%
+    net_allocated = amount - burn_fee
 
-    return jsonify({
+    response_payload = {
         "status": "success",
         "message": "Zero-Trust, Smart WAF & Quantum-Resilient security validation passed. LYO utility task executed successfully.",
         "utility_token": "LYO",
         "node": "Tripoli Node v0.6.3",
-        "action_executed": data.get("action", "default_smart_city_task"),
-        "amount_processed": amount,
-        "deflationary_burn": burn_fee,
-        "burn_address": "0x000000000000000000000000000000000000DEAD"
-    }), 200
+        "cyber_security": {
+            "pqc_signature_verified": True,
+            "prism_guardrail_status": "PASSED",
+            "timestamp": time.time()
+        },
+        "transaction_details": {
+            "pi_user_uid": data.get("user_uid", "tripoli_node_admin_01"),
+            "service_type": data.get("action", "default_smart_city_task"),
+            "gross_paid_lyo": amount,
+            "net_allocated_lyo": net_allocated,
+            "burned_lyo": burn_fee,
+            "burn_address": "0x000000000000000000000000000000000000DEAD",
+            "node_origin": "Tripoli_Node_Gate_01"
+        },
+        "compliance_standards": {
+            "pi_network_sdk": "v2.0_Verified",
+            "global_utility_standard": "Compliant_Non_Security_Utility"
+        }
+    }
 
-# تهيئة قاعدة البيانات عند بدء التشغيل
+    # 📥 الأرشفة التلقائية والفورية في قاعدة بيانات عقدة طرابلس (assets.db) وتأكيد إنشاء الجدول
+    try:
+        init_ledger_database()
+        archive_verified_transaction(response_payload)
+    except Exception as e:
+        print(f"[-] خطأ أثناء أرشفة المعاملة في الخادم: {e}")
+
+    return jsonify(response_payload), 200
+
+# مسار API لاستعراض كافة المعاملات المؤرشفة بصيغة JSON (متاح للتدقيق والمراقبة السيادية)
+@app.route('/api/v1/sovereign/ledger/archive', methods=['GET'])
+def get_sovereign_ledger_archive():
+    """استرجاع كافة المعاملات المالية المؤرشفة في دفتر أستاذ عقدة طرابلس"""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='sovereign_ledger_archive';
+            """)
+            if not cursor.fetchone():
+                return jsonify({
+                    "status": "success",
+                    "node": "Tripoli Node v0.6.3",
+                    "total_records": 0,
+                    "transactions": []
+                }), 200
+
+            cursor.execute("SELECT * FROM sovereign_ledger_archive ORDER BY id DESC;")
+            rows = cursor.fetchall()
+
+            transactions = []
+            for row in rows:
+                transactions.append({
+                    "id": row["id"],
+                    "transaction_id": row["transaction_id"],
+                    "pi_user_uid": row["pi_user_uid"],
+                    "service_type": row["service_type"],
+                    "gross_paid_lyo": row["gross_paid_lyo"],
+                    "net_allocated_lyo": row["net_allocated_lyo"],
+                    "burned_lyo": row["burned_lyo"],
+                    "burn_address": row["burn_address"],
+                    "node_origin": row["node_origin"],
+                    "pqc_verified": bool(row["pqc_verified"]),
+                    "timestamp": row["timestamp"],
+                    "raw_response": json.loads(row["raw_response_json"]) if row["raw_response_json"] else {}
+                })
+
+            return jsonify({
+                "status": "success",
+                "node": "Tripoli Node v0.6.3",
+                "total_records": len(transactions),
+                "transactions": transactions
+            }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to retrieve Tripoli Node ledger archive: {str(e)}"
+        }), 500
+
+# مسار API لتصدير الأرشيف السيادي كملف CSV قابل للتحميل
+@app.route('/api/v1/sovereign/ledger/export-csv', methods=['GET'])
+def export_sovereign_ledger_csv():
+    """تصدير كافة المعاملات المؤرشفة في دفتر أستاذ عقدة طرابلس كملف CSV"""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM sovereign_ledger_archive ORDER BY id DESC;")
+            rows = cursor.fetchall()
+
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            writer.writerow([
+                "ID", "Transaction ID", "Pi User UID", "Service Type", 
+                "Gross Paid (LYO)", "Net Allocated (LYO)", "Burned LYO (1%)", 
+                "Burn Address", "Node Origin", "PQC Verified", "Timestamp"
+            ])
+            
+            for row in rows:
+                writer.writerow([
+                    row["id"],
+                    row["transaction_id"],
+                    row["pi_user_uid"],
+                    row["service_type"],
+                    row["gross_paid_lyo"],
+                    row["net_allocated_lyo"],
+                    row["burned_lyo"],
+                    row["burn_address"],
+                    row["node_origin"],
+                    row["pqc_verified"],
+                    row["timestamp"]
+                ])
+            
+            output.seek(0)
+            
+            response = make_response(output.getvalue())
+            response.headers["Content-Disposition"] = "attachment; filename=tripoli_node_ledger_archive.csv"
+            response.headers["Content-Type"] = "text/csv; charset=utf-8"
+            return response
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to export CSV archive: {str(e)}"
+        }), 500
+
+# تهيئة قواعد البيانات عند بدء التشغيل
 init_db()
+init_ledger_database()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

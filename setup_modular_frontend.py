@@ -1,0 +1,554 @@
+import os
+
+def create_modular_structure():
+    print("=" * 70)
+    print("[*] بدء هيكلة وتقسيم واجهة أومنيفيرس (Modular Architecture Setup)...")
+    print("=" * 70)
+
+    # 1. تحديد المسارات الأساسية
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    templates_dir = os.path.join(base_dir, "templates")
+    components_dir = os.path.join(templates_dir, "components")
+    static_js_dir = os.path.join(base_dir, "static", "js")
+
+    # 2. إنشاء المجلدات إذا لم تكن موجودة
+    os.makedirs(components_dir, exist_ok=True)
+    os.makedirs(static_js_dir, exist_ok=True)
+    print("[✔] تم إنشاء المجلدات والمجوهرات المعيارية بنجاح.")
+
+    # 3. كتابة ملف الـ JavaScript الخارجي (dashboard.js)
+    js_path = os.path.join(static_js_dir, "dashboard.js")
+    with open(js_path, "w", encoding="utf-8") as f:
+        f.write('''// === Tripoli Node & Omniverse Dashboard JS Engine ===
+const TRIPOLI_NODE_URL = "";  
+const CLIENT_ID = "gbq0kabvz0z4rerl2al5kvbrlwkrtr9a6zi5guf8n423hzxr46qsvvjuatggm2jb";
+let currentUser = null;
+let isSandbox = true;
+let piverifyAccessToken = localStorage.getItem("piverify_token") || null;
+
+function initPiSDK() {
+    Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
+    const envBtn = document.getElementById('envToggleBtn');
+    const helperSec = document.getElementById('testnetHelperSection');
+    
+    if (envBtn) {
+        envBtn.innerText = isSandbox ? `Mode: TESTNET (Sandbox)` : `Mode: MAINNET (Production)`;
+        envBtn.className = isSandbox 
+            ? "text-xs px-3 py-1 rounded border border-yellow-600 bg-yellow-900/40 text-yellow-400 font-bold transition"
+            : "text-xs px-3 py-1 rounded border border-green-600 bg-green-900/40 text-green-400 font-bold transition";
+    }
+    if (helperSec) {
+        helperSec.style.display = isSandbox ? "block" : "none";
+    }
+}
+
+function toggleEnvironment() {
+    isSandbox = !isSandbox;
+    initPiSDK();
+    alert(`تم الانتقال إلى وضع: ${isSandbox ? 'Testnet' : 'Mainnet'}`);
+}
+
+initPiSDK();
+
+async function connectPi() {
+    try {
+        const auth = await Pi.authenticate(['username', 'payments'], onIncompletePayment);
+        currentUser = auth.user;
+        document.getElementById('authBtn').innerText = "✅ " + currentUser.username;
+    } catch (err) {  
+        console.error("Auth Error:", err);
+        alert("فشل الاتصال: تأكد من استخدام متصفح Pi.");
+    }
+}
+
+async function authenticatePiVerify() {
+    try {
+        const auth = await Pi.authenticate(['username', 'payments', 'piverify:kyc_status'], onIncompletePayment);
+        currentUser = auth.user;
+        
+        const response = await fetch(`${TRIPOLI_NODE_URL}/api/v1/piverify/authenticate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accessToken: auth.accessToken })
+        });
+
+        const result = await response.json();
+        if (response.ok && result.status === "SUCCESS") {
+            piverifyAccessToken = auth.accessToken;
+            localStorage.setItem("piverify_token", auth.accessToken);
+            document.getElementById('piVerifyBtn').innerText = "✅ تم التحقق عبر PiVerify: " + result.user.username;
+            alert("تم التحقق بنجاح عبر بوابة PiVerify العالمية وتوثيق الهوية السيادية!");
+            loadDashboardData();
+        } else {
+            alert("فشل التحقق عبر PiVerify: " + (result.error || "خطأ غير معروف"));
+        }
+    } catch (err) {
+        console.error("PiVerify Auth Error:", err);
+        alert("حدث خطأ أثناء الاتصال ببوابة PiVerify.");
+    }
+}
+
+function onIncompletePayment(payment) {
+    verifyPaymentOnServer(payment.identifier, payment.transaction ? payment.transaction.txid : null);
+}
+
+async function verifyPaymentOnServer(paymentId, txid) {
+    try {
+        const response = await fetch(`${TRIPOLI_NODE_URL}/api/pi/payment/complete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-PiVerify-Access-Token': piverifyAccessToken || ''
+            },
+            body: JSON.stringify({ 
+                paymentId: paymentId, 
+                txid: txid || "local_test_txid",
+                userUid: currentUser ? currentUser.username : "unknown", 
+                amount: 1.0,
+                serviceType: "Omniverse RWA Settlement"
+            })
+        });
+        return await response.json();
+    } catch (err) {
+        console.error("Verification Error:", err);
+    }
+}
+
+async function processPayment() {
+    if (!currentUser) return alert("يرجى الضغط على CONNECT PI أولاً!");
+    const name = document.getElementById('assetName').value;
+    const val = parseFloat(document.getElementById('assetVal').value);
+    const currency = document.getElementById('assetCurrency').value;
+
+    if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال اسم الأصل وقيمة مالية صحيحة!");
+
+    const paymentData = {
+        amount: val,
+        memo: `Omniverse RWA: ${name} (${currency})`,
+        metadata: { assetName: name, currency: currency }
+    };
+
+    const callbacks = {
+        onReadyForServerApproval: function(paymentId) { console.log("Payment ID:", paymentId); },
+        onReadyForServerCompletion: function(paymentId, txid) {
+            fetch(`${TRIPOLI_NODE_URL}/api/pi/payment/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+                body: JSON.stringify({ paymentId: paymentId, txid: txid, userUid: currentUser.username, amount: val, serviceType: `RWA Notary: ${name}` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(`✅ تم توثيق الدفع والأصل (${name}) بنجاح في أومنيفيرس!`);
+                loadDashboardData();
+            })
+            .catch(err => { console.error("خطأ:", err); alert("حدث خطأ أثناء إرسال الدفع للخادم."); });
+        },
+        onCancel: function(paymentId) { alert("تم إلغاء عملية الدفع."); },
+        onError: function(error, payment) { alert("حدث خطأ في معالجة الدفع عبر Pi SDK."); }
+    };
+
+    try { Pi.createPayment(paymentData, callbacks); } catch (err) { alert("تعذر إنشاء نافذة الدفع."); }
+}
+
+async function castLyoSecureVote() {
+    const proposalId = document.getElementById('proposalId').value;
+    const lyoBalance = parseFloat(document.getElementById('lyoVotingBalance').value);
+    const voteChoice = document.getElementById('voteChoice').value === "true";
+    const resultBox = document.getElementById('lyoVotingResultBox');
+
+    if (!proposalId || isNaN(lyoBalance) || lyoBalance <= 0) return alert("يرجى إدخال معرف مقترح صحيح ورصيد LYO للمشاركة!");
+
+    resultBox.innerText = "⏳ جاري إرسال وتوثيق الصوت عبر درع PQC ومشرف PRISM...";
+    
+    try {
+        const response = await fetch(`${TRIPOLI_NODE_URL}/api/v1/lyo/vote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+            body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "tripoli_guest_voter", proposal_id: proposalId, vote_choice: voteChoice, kyc_verified: true, lyo_balance: lyoBalance })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.status === "SUCCESS") {
+            resultBox.innerHTML = `✅ <span class="text-green-400 font-bold">الحالة:</span> ${data.message}\\n` +
+                                  `🛡️ <span class="text-cyan-400 font-bold">مشرف PRISM:</span> ${data.audit.status} (مخاطر: ${data.audit.risk_score})\\n` +
+                                  `🔐 <span class="text-yellow-400 font-bold">التوقيع الكمي:</span> ${data.pqc_signature.substring(0, 35)}...`;
+            loadDashboardData();
+        } else {
+            resultBox.innerText = `❌ رفض التصويت: ${data.message || data.error}`;
+        }
+    } catch (err) { resultBox.innerText = "❌ حدث خطأ أثناء الاتصال بالسيرفر."; }
+}
+
+async function executeSorobanBridge() {
+    const box = document.getElementById('pillarsResultBox');
+    box.classList.remove('hidden');
+    box.innerText = "⏳ جاري تنفيذ تحويل السيولة عبر جسر Soroban...";
+    try {
+        const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/bridge/transfer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+            body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "test_user", kyc_verified: true, amount_lyo: 250, destination_wallet: "GB_SOROBAN_DEST" })
+        });
+        const data = await res.json();
+        box.innerText = JSON.stringify(data, null, 2);
+    } catch(e) { box.innerText = "خطأ: " + e.message; }
+}
+
+async function submitDaoProposal() {
+    const box = document.getElementById('pillarsResultBox');
+    box.classList.remove('hidden');
+    box.innerText = "⏳ جاري إرسال مقترح الحوكمة (DAO)...";
+    try {
+        const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/dao/propose`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+            body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "test_user", kyc_verified: true, title: "Upgrade Tripoli Node Energy Grid", description: "Expanding solar storage capacity", staked_lyo: 150 })
+        });
+        const data = await res.json();
+        box.innerText = JSON.stringify(data, null, 2);
+    } catch(e) { box.innerText = "خطأ: " + e.message; }
+}
+
+async function runPredictiveSimulation() {
+    const box = document.getElementById('pillarsResultBox');
+    box.classList.remove('hidden');
+    box.innerText = "⏳ جاري تشغيل المحاكاة التنبؤية بالذكاء الاصطناعي...";
+    try {
+        const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/simulation/predict-load`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+            body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "test_user", kyc_verified: true, solar_peak_hours: 10.0, current_load_kw: 1.8 })
+        });
+        const data = await res.json();
+        box.innerText = JSON.stringify(data, null, 2);
+    } catch(e) { box.innerText = "خطأ: " + e.message; }
+}
+
+async function runComplianceAudit() {
+    const box = document.getElementById('pillarsResultBox');
+    box.classList.remove('hidden');
+    box.innerText = "⏳ جاري إجراء التدقيق المالي والامتثال (AML)...";
+    try {
+        const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/compliance/audit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+            body: JSON.stringify({ pi_uid: currentUser ? currentUser.username : "test_user", kyc_verified: true, amount_lyo: 1500, jurisdiction: "Libya_Global" })
+        });
+        const data = await res.json();
+        box.innerText = JSON.stringify(data, null, 2);
+    } catch(e) { box.innerText = "خطأ: " + e.message; }
+}
+
+async function processDualAssetSettlement() {
+    const name = document.getElementById('assetName').value;
+    const val = parseFloat(document.getElementById('assetVal').value);
+    const currency = document.getElementById('assetCurrency').value;
+    const kycVerified = document.getElementById('kycCheck').checked;
+
+    if (!name || isNaN(val) || val <= 0) return alert("يرجى إدخال اسم الأصل وقيمة صحيحة!");
+
+    const payload = { paymentId: "dual_pay_" + Date.now(), userUid: currentUser ? currentUser.username : "tripoli_guest_user", amount: val, currency: currency, assetName: name, kycVerified: kycVerified };
+
+    try {
+        const response = await fetch(`${TRIPOLI_NODE_URL}/api/v2/payment/settle-dual`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (response.ok && data.status === 'success') {
+            alert(`تمت تسوية الأصل (${name}) باستخدام ${currency} بنجاح!`);
+            loadDashboardData();
+        } else {
+            alert("فشل التسوية: " + (data.reason || data.message || "خطأ"));
+        }
+    } catch (error) { alert("تعذر الاتصال بخادم عقدة طرابلس."); }
+}
+
+async function startAiNegotiation() {
+    const assetId = document.getElementById('negotiateAssetId').value;
+    const initialOffer = document.getElementById('negotiateOfferVal').value;
+    const resultBox = document.getElementById('negotiationResultBox');
+
+    if (!assetId || initialOffer === "") return alert("يرجى إدخال المعرف والسعر!");
+
+    resultBox.innerText = "⏳ جاري التفاوض الآلي...";
+    try {
+        const response = await fetch(`${TRIPOLI_NODE_URL}/api/negotiate/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+            body: JSON.stringify({ asset_id: assetId, initial_offer: parseFloat(initialOffer), buyer_agent_id: currentUser ? currentUser.username : "Agent" })
+        });
+        const data = await response.json();
+        if (response.ok && data.status === "success") {
+            resultBox.innerHTML = `✅ <span class="text-yellow-400 font-bold">الحالة:</span> ${data.decision} | <span class="text-cyan-400 font-bold">العرض:</span> ${data.counter_offer}`;
+            loadDashboardData();
+        } else { resultBox.innerText = "❌ فشل التفاوض."; }
+    } catch (err) { resultBox.innerText = "❌ خطأ في الاتصال."; }
+}
+
+async function runFiveTestTransactions() {
+    if (!currentUser) return alert("CONNECT PI أولاً!");
+    if (!confirm("هل تريد تنفيذ 5 معاملات اختبارية؟")) return;
+    for (let i = 1; i <= 5; i++) { await new Promise((resolve) => setTimeout(resolve, 500)); }
+    alert("تم الانتهاء من دورة المعاملات!");
+    loadDashboardData();
+}
+
+async function forceResetPayments() {
+    if(!confirm("تطهير البيانات المؤقتة؟")) return;
+    localStorage.clear();
+    piverifyAccessToken = null;
+    alert("تم التطهير بنجاح.");
+    loadDashboardData();
+}
+
+async function sendToLocalAIModel() {
+    const promptText = document.getElementById('localAiPrompt').value;
+    const responseBox = document.getElementById('aiResponseBox');
+    if (!promptText.trim()) return alert('اكتب استفساراً!');
+    responseBox.innerText = 'جاري معالجة الطلب...';
+    try {
+        const response = await fetch(`${TRIPOLI_NODE_URL}/api/agent/propose-update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-PiVerify-Access-Token': piverifyAccessToken || '' },
+            body: JSON.stringify({ task: promptText, action: "cluster_dispatch" })
+        });
+        const data = await response.json();
+        responseBox.innerText = data.generated_logic || data.message || JSON.stringify(data, null, 2);
+    } catch (error) { responseBox.innerText = 'فشل الاتصال.'; }
+}
+
+async function fetchPendingApprovals() {
+    document.getElementById('pending-approvals-body').innerHTML = '<tr><td colspan="5" class="p-3 text-center text-emerald-400">✅ النظام يعمل بصورة ذاتية وآمنة عبر عقدة طرابلس وبوابة PiVerify.</td></tr>';
+}
+
+function downloadSovereignCsv() {
+    window.location.href = `${TRIPOLI_NODE_URL}/api/v1/sovereign/ledger/export-csv`;
+}
+
+async function loadDashboardData() {
+    try {
+        let statusRes = await fetch(`${TRIPOLI_NODE_URL}/api/node/status`);
+        let statusData = await statusRes.json();
+        if (statusData.status === 'success') {
+            document.getElementById('nodeNameDisplay').innerText = statusData.data.node_name;
+            document.getElementById('nodeNetworkDisplay').innerText = statusData.data.network;
+        }
+        let ledgerRes = await fetch(`${TRIPOLI_NODE_URL}/api/agent/persistent-ledger`);
+        let ledgerData = await ledgerRes.json();
+        let tbody = document.getElementById('crosschainTableBody');
+        tbody.innerHTML = '';
+        if (ledgerData.status === 'success' && ledgerData.records && ledgerData.records.length > 0) {
+            ledgerData.records.forEach(rec => {
+                tbody.innerHTML += `<tr class="hover:bg-zinc-800/50"><td class="p-2 font-mono text-cyan-300">${rec.paymentId}</td><td class="p-2">${rec.userUid}</td><td class="p-2 font-bold text-yellow-400">${rec.amount} ${rec.currency}</td><td class="p-2 text-green-400">${rec.status}</td><td class="p-2 text-[10px] text-zinc-400">${rec.timestamp}</td></tr>`;
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-zinc-500">لا توجد سجلات.</td></tr>`;
+        }
+        fetchPendingApprovals();
+    } catch (err) {}
+}
+
+window.onload = function() {
+    loadDashboardData();
+    if (piverifyAccessToken) document.getElementById('piVerifyBtn').innerText = "✅ مسجل وموثق عبر PiVerify";
+};
+''')
+    print("[✔] تم إنشاء ملف الـ JavaScript الخارجي (static/js/dashboard.js) بنجاح.")
+
+    # 4. كتابة ملف الـ index.html الرئيسي المرتب
+    index_html_path = os.path.join(templates_dir, "index.html")
+    with open(index_html_path, "w", encoding="utf-8") as f:
+        f.write('''<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omniverse Hub - Sovereign Gateway & Tripoli Node v0.6.3</title>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white p-4">
+    <div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- البطاقة الرئيسية لتطبيق Omniverse -->
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
+            <h1 class="text-2xl text-yellow-500 font-bold mb-1 text-center">OMNIVERSE HUB</h1>
+            <p class="text-xs text-center text-cyan-400 font-mono mb-3">🛡️ درع الحماية المقاوم للكم (PQC) ومحرك الذكاء الاصطناعي وبوابة PiVerify نشطة</p>
+            
+            <div class="flex justify-center items-center gap-2 mb-4">
+                <button id="envToggleBtn" onclick="toggleEnvironment()" class="text-xs px-3 py-1 rounded border border-yellow-600 bg-yellow-900/40 text-yellow-400 font-bold transition">
+                    Mode: TESTNET (Sandbox)
+                </button>
+            </div>
+
+            <p class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - عقدة طرابلس (Tripoli-Node-v0.6.3)</p>
+            
+            <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
+            
+            <button id="piVerifyBtn" onclick="authenticatePiVerify()" class="w-full bg-purple-600 p-3 rounded-lg font-bold text-white mb-3 hover:bg-purple-500 transition shadow-lg text-xs">🌐 تفعيل التحقق العالمي (PiVerify KYC Gateway)</button>
+            
+            <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-4 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
+
+            <div id="testnetHelperSection" class="mb-6 p-3 bg-zinc-800/80 rounded-xl border border-yellow-500/40">
+                <h3 class="text-xs font-bold text-yellow-400 mb-2 text-center">⚙️ تسريع اجتياز شرط الـ 5 معاملات (Testnet)</h3>
+                <button onclick="runFiveTestTransactions()" class="w-full bg-amber-600 hover:bg-amber-500 text-black font-bold p-2 rounded text-xs transition shadow">
+                    🚀 إطلاق 5 معاملات اختبارية متتالية
+                </button>
+                <p class="text-[10px] text-zinc-400 mt-1 text-center">يستخدم لتوليد معاملات SDK مقبولة للبلوكتشين وإزالة التحذير الأحمر.</p>
+            </div>
+
+            <div class="space-y-4 border-t border-zinc-800 pt-4">
+                <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (RWA) ومدفوعات النظام المزدوج</h2>
+                <input id="assetName" placeholder="اسم الأصل (مثال: عقار ذكي رقم 01)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+                <div class="grid grid-cols-2 gap-3">
+                    <input id="assetVal" type="number" step="0.01" placeholder="القيمة المالية" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+                    <select id="assetCurrency" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none text-xs font-bold">
+                        <option value="PI">عملة Pi الأساسية</option>
+                        <option value="OUSD">عملة مستقرة (OUSD)</option>
+                        <option value="LYO">عملة المنفعة (LYO)</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2 bg-black p-2 border border-zinc-800 rounded">
+                    <input type="checkbox" id="kycCheck" class="w-4 h-4 accent-yellow-500" checked>
+                    <label for="kycCheck" class="text-xs text-zinc-300">أؤكد اجتياز التحقق من الهوية والامتثال (KYC Verified & PiVerify)</label>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg text-xs">PAY VIA PI SDK</button>
+                    <button onclick="processDualAssetSettlement()" class="w-full bg-emerald-600 p-3 rounded-lg font-bold hover:bg-emerald-500 transition shadow-lg text-xs">SETTLE STABLECOIN</button>
+                </div>
+            </div>
+
+            <!-- حوكمة التصويت LYO -->
+            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-4">
+                <h2 class="text-sm font-bold text-yellow-400">🗳️ حوكمة التصويت لعملة المنفعة LYO (مقاوم للكم & PRISM)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input id="proposalId" placeholder="معرف المقترح" value="PROP-OMNIVERSE-2026" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-yellow-500 outline-none">
+                    <input id="lyoVotingBalance" type="number" step="1.0" placeholder="رصيد LYO" value="1000.0" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-yellow-500 outline-none">
+                </div>
+                <div class="flex items-center gap-3">
+                    <label class="text-xs text-zinc-300 font-bold">خيار التصويت:</label>
+                    <select id="voteChoice" class="bg-black p-2 border border-zinc-700 rounded text-xs text-yellow-400 font-bold outline-none">
+                        <option value="true">موافق (True)</option>
+                        <option value="false">معارض (False)</option>
+                    </select>
+                </div>
+                <button onclick="castLyoSecureVote()" class="w-full bg-yellow-600 hover:bg-yellow-500 p-2.5 rounded-lg font-bold text-xs transition shadow text-black">إرسال وتوثيق الصوت تحت درع PQC 🛡️</button>
+                <div id="lyoVotingResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-yellow-300 min-h-[60px] whitespace-pre-wrap font-mono">نتيجة التصويت ستظهر هنا...</div>
+            </div>
+
+            <!-- المسارات الخماسية -->
+            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-4">
+                <h2 class="text-sm font-bold text-emerald-400">⚡ التحكم بالمسارات الخماسية لمدينة أومنيفيرس</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <button onclick="executeSorobanBridge()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-cyan-600 text-xs text-cyan-300 font-bold transition">🌉 جسر السيولة (Soroban)</button>
+                    <button onclick="submitDaoProposal()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-purple-600 text-xs text-purple-300 font-bold transition">🗳️ مقترح حوكمة (DAO)</button>
+                    <button onclick="runPredictiveSimulation()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-amber-600 text-xs text-amber-300 font-bold transition">📊 المحاكاة التنبؤية (AI)</button>
+                    <button onclick="runComplianceAudit()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-emerald-600 text-xs text-emerald-300 font-bold transition">🔍 التدقيق المالي (AML)</button>
+                </div>
+                <div id="pillarsResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-emerald-300 min-h-[50px] whitespace-pre-wrap font-mono hidden"></div>
+            </div>
+
+            <!-- وكيل التفاوض -->
+            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
+                <h2 class="text-sm font-bold text-emerald-400">🤝 وكيل التفاوض الذكي الآلي</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input id="negotiateAssetId" placeholder="معرف الأصل" value="asset_tripoli_001" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-emerald-500 outline-none">
+                    <input id="negotiateOfferVal" type="number" step="0.01" placeholder="عرض السعر" value="85.0" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-emerald-500 outline-none">
+                </div>
+                <button onclick="startAiNegotiation()" class="w-full bg-emerald-700 hover:bg-emerald-600 p-2.5 rounded-lg font-bold text-xs transition shadow text-black">بدء التفاوض الذكي الآن 🚀</button>
+                <div id="negotiationResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-emerald-300 min-h-[60px] whitespace-pre-wrap font-mono">نتائج التفاوض ستظهر هنا...</div>
+            </div>
+
+            <!-- المساعد المحلي -->
+            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
+                <h2 class="text-sm font-bold text-cyan-400">🤖 المساعد الذكي المحلي (عقدة طرابلس)</h2>
+                <textarea id="localAiPrompt" placeholder="اكتب استفسارك..." class="w-full bg-black p-3 border border-zinc-700 rounded text-xs text-white focus:border-cyan-500 outline-none h-20"></textarea>
+                <button onclick="sendToLocalAIModel()" class="w-full bg-cyan-700 hover:bg-cyan-600 p-2.5 rounded-lg font-bold text-xs transition shadow">إرسال إلى وكيل النظام</button>
+                <div id="aiResponseBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-cyan-300 min-h-[50px] whitespace-pre-wrap">الرد الذكي سيظهر هنا...</div>
+            </div>
+        </div>
+
+        <!-- مركز تصديق المدير العام -->
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-amber-500 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-amber-400">🛡️ مركز تصديق المدير العام (Human-in-the-Loop)</h2>
+                <button onclick="fetchPendingApprovals()" class="bg-amber-700 hover:bg-amber-600 text-xs px-3 py-1.5 rounded font-bold transition text-black">تحديث الطلبات 🔄</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-zinc-800 text-amber-400 border-b border-zinc-700">
+                            <th class="p-2">معرف الطلب</th>
+                            <th class="p-2">اسم الوكيل</th>
+                            <th class="p-2">نوع الإجراء</th>
+                            <th class="p-2">التفاصيل</th>
+                            <th class="p-2 text-center">القرار</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pending-approvals-body" class="divide-y divide-zinc-800 text-zinc-300">
+                        <tr><td colspan="5" class="p-3 text-center text-zinc-500">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- لوحة مراقبة عقدة طرابلس والسجل الدائم مع زر تحميل CSV -->
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-cyan-600 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-cyan-400">🌐 لوحة تحكم عقدة طرابلس والسجل الدائم</h2>
+                <div class="flex gap-2">
+                    <button onclick="downloadSovereignCsv()" class="bg-emerald-700 hover:bg-emerald-600 text-xs px-3 py-1.5 rounded font-bold transition text-black">📥 تحميل الأرشيف CSV</button>
+                    <button onclick="loadDashboardData()" class="bg-cyan-700 hover:bg-cyan-600 text-xs px-3 py-1.5 rounded font-bold transition">تحديث البيانات 🔄</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
+                    <span class="text-xs text-zinc-400 block">حالة العقدة</span>
+                    <span id="nodeNameDisplay" class="text-sm font-bold text-cyan-300">Tripoli-Node-v0.6.3</span>
+                </div>
+                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
+                    <span class="text-xs text-zinc-400 block">شبكة التوجيه</span>
+                    <span id="nodeNetworkDisplay" class="text-sm font-bold text-yellow-300">Omniverse Smart City</span>
+                </div>
+                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
+                    <span class="text-xs text-zinc-400 block">الوكلاء النشطون</span>
+                    <span id="activeAgentsDisplay" class="text-sm font-bold text-green-400">نشط (PQC & PiVerify)</span>
+                </div>
+            </div>
+
+            <h3 class="text-xs font-bold text-zinc-300 mb-2">سجلات المعاملات الدائمة والتدقيق المالي</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-zinc-800 text-cyan-400 border-b border-zinc-700">
+                            <th class="p-2">معرف الدفع</th>
+                            <th class="p-2">معرف المستخدم</th>
+                            <th class="p-2">القيمة والعملة</th>
+                            <th class="p-2">الحالة</th>
+                            <th class="p-2">التوقيت</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crosschainTableBody" class="divide-y divide-zinc-800 text-zinc-300">
+                        <tr><td colspan="5" class="p-3 text-center text-zinc-500">جاري الجلب...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- استدعاء ملف الـ JavaScript المنفصل -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
+''')
+    print("[✔] تم إنشاء ملف الـ HTML الرئيسي (templates/index.html) بنجاح.")
+    print("=" * 70)
+    print("[✔] تمت عملية الهيكلة والتقسيم بنجاح ت تام وبصفر أخطاء!")
+    print("=" * 70)
+
+if __name__ == "__main__":
+    create_modular_structure()

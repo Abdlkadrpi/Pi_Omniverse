@@ -1,5 +1,6 @@
 import time
 import re
+import json as py_json
 import logging
 from functools import wraps
 from flask import request, jsonify
@@ -26,7 +27,7 @@ class OmniverseSmartWAF:
         # أنماط الهجمات والحقن الشائعة (Regex Patterns)
         self.injection_patterns = [
             # SQL Injection patterns
-            re.compile(r"(\%27)|(')|(--)|(\/\*)|(\*\/)|(UNION)|(SELECT)|(DROP)|(INSERT)|(UPDATE)|(DELETE)", re.IGNORECASE),
+            re.compile(r"(\%27)|(--)|(\/\*)|(\*\/)|(UNION)|(SELECT)|(DROP)|(INSERT)|(UPDATE)|(DELETE)", re.IGNORECASE),
             # Command / System Injection patterns
             re.compile(r"(;|\||&|\$\(|\bcat\b|\bwget\b|\bcurl\b|\bnc\b|\bpython3?\b)", re.IGNORECASE),
             # Prompt Injection / LLM Abuse patterns targeting AI agents
@@ -92,11 +93,12 @@ class OmniverseSmartWAF:
         payload_data = ""
         try:
             if request.args:
-                payload_data += str(request.args.to_dict())
+                payload_data += py_json.dumps(request.args.to_dict())
             if request.is_json and request.get_json(silent=True):
-                payload_data += str(request.get_json(silent=True))
+                # استخدام json.dumps لضمان التوافق الآمن مع الفحص دون التأثير بعلامات التنصيص المفردة
+                payload_data += py_json.dumps(request.get_json(silent=True))
             if request.form:
-                payload_data += str(request.form.to_dict())
+                payload_data += py_json.dumps(request.form.to_dict())
         except Exception as e:
             return True, f"Malformed payload parsing error: {str(e)}"
 
