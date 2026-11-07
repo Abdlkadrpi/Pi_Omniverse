@@ -3,196 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omniverse Hub - Sovereign Gateway & Tripoli Node v0.6.3</title>
+    <title>أومنيفيرس | النظام البيئي الذكي وعقدة طرابلس</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; }
+        body { font-family: 'Cairo', sans-serif; background-color: #030712; color: #f3f4f6; }
+        .glow-gold { box-shadow: 0 0 25px rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.3); }
+        .glow-cyan { box-shadow: 0 0 25px rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); }
     </style>
 </head>
-<body class="bg-black text-white p-4">
-    <div class="max-w-4xl mx-auto space-y-6">
-        
-        <!-- البطاقة الرئيسية لتطبيق Omniverse مع شارات التحقق الحية وحالة الأمان -->
-        <div class="bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
-            <div class="flex items-center justify-center space-x-3 space-x-reverse mb-2">
-                <div class="w-10 h-10 bg-yellow-600 rounded-xl flex items-center justify-center font-black text-xl text-black shadow-lg shadow-yellow-600/30">Ω</div>
-                <h1 class="text-2xl text-yellow-500 font-bold text-center">OMNIVERSE HUB</h1>
-            </div>
-            <p class="text-xs text-center text-cyan-400 font-mono mb-2">🛡️ درع الحماية المقاوم للكم (PQC) ومحرك الذكاء الاصطناعي وبوابة PiVerify نشطة</p>
-            
-            <!-- مؤشرات الأمان الحية (Live Telemetry Badges) المضافة بصرياً -->
-            <div class="flex flex-wrap justify-center items-center gap-2 mb-4">
-                <span class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-600 font-mono">🟢 Tripoli Node v0.6.3: Active</span>
-                <span class="text-[10px] px-2.5 py-1 rounded-full bg-yellow-950 text-yellow-400 border border-yellow-600 font-mono">⚡ PRISM PQC Shield: Online</span>
-                <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-950 text-purple-400 border border-purple-600 font-mono">🔒 Zero-Trust Enforced</span>
-            </div>
-            
-            <div class="flex justify-center items-center gap-2 mb-4">
-                <button id="envToggleBtn" onclick="toggleEnvironment()" class="text-xs px-3 py-1 rounded border border-yellow-600 bg-yellow-900/40 text-yellow-400 font-bold transition">
-                    Mode: TESTNET (Sandbox)
-                </button>
-            </div>
+<body class="min-h-screen flex flex-col justify-between selection:bg-yellow-500 selection:text-black">
 
-            <p class="text-xs text-center text-zinc-400 mb-6">منصة المدن الذكية والوكلاء الرقميين - عقدة طرابلس (Tripoli-Node-v0.6.3)</p>
-            
-            <button id="authBtn" onclick="connectPi()" class="w-full bg-yellow-600 p-3 rounded-lg font-bold text-black mb-3 hover:bg-yellow-500 transition shadow-lg">CONNECT PI</button>
-            
-            <button id="piVerifyBtn" onclick="authenticatePiVerify()" class="w-full bg-purple-600 p-3 rounded-lg font-bold text-white mb-3 hover:bg-purple-500 transition shadow-lg text-xs">🌐 تفعيل التحقق العالمي (PiVerify KYC Gateway)</button>
-            
-            <button onclick="forceResetPayments()" class="w-full bg-red-600 p-2 rounded-lg font-bold text-white mb-4 text-sm hover:bg-red-700 transition">🧹 SURGICAL RESET</button>
-
-            <div id="testnetHelperSection" class="mb-6 p-3 bg-zinc-800/80 rounded-xl border border-yellow-500/40">
-                <h3 class="text-xs font-bold text-yellow-400 mb-2 text-center">⚙️ تسريع اجتياز شرط الـ 5 معاملات (Testnet)</h3>
-                <button onclick="runFiveTestTransactions()" class="w-full bg-amber-600 hover:bg-amber-500 text-black font-bold p-2 rounded text-xs transition shadow">
-                    🚀 إطلاق 5 معاملات اختبارية متتالية
-                </button>
-                <p class="text-[10px] text-zinc-400 mt-1 text-center">يستخدم لتوليد معاملات SDK مقبولة للبلوكتشين وإزالة التحذير الأحمر.</p>
-            </div>
-
-            <div class="space-y-4 border-t border-zinc-800 pt-4">
-                <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (RWA) ومدفوعات النظام المزدوج</h2>
-                <input id="assetName" placeholder="اسم الأصل (مثال: عقار ذكي رقم 01)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none text-xs">
-                <div class="grid grid-cols-2 gap-3">
-                    <input id="assetVal" type="number" step="0.01" placeholder="القيمة المالية" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none text-xs">
-                    <select id="assetCurrency" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none text-xs font-bold">
-                        <option value="PI">عملة Pi الأساسية</option>
-                        <option value="OUSD">عملة مستقرة (OUSD)</option>
-                        <option value="LYO">عملة المنفعة (LYO)</option>
-                    </select>
-                </div>
-                <div class="flex items-center gap-2 bg-black p-2 border border-zinc-800 rounded">
-                    <input type="checkbox" id="kycCheck" class="w-4 h-4 accent-yellow-500" checked>
-                    <label for="kycCheck" class="text-xs text-zinc-300">أؤكد اجتياز التحقق من الهوية والامتثال (KYC Verified & PiVerify)</label>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="processPayment()" class="w-full bg-blue-600 p-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg text-xs">PAY VIA PI SDK</button>
-                    <button onclick="processDualAssetSettlement()" class="w-full bg-emerald-600 p-3 rounded-lg font-bold hover:bg-emerald-500 transition shadow-lg text-xs">SETTLE STABLECOIN</button>
+    <!-- شريط التنقل العلوي -->
+    <header class="bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center font-black text-xl text-black shadow-lg shadow-yellow-500/20">Ω</div>
+                <div>
+                    <h1 class="font-bold text-base text-white">أومنيفيرس (Omniverse)</h1>
+                    <p class="text-[11px] text-yellow-500 font-mono">بوابة المدن الذكية - قمة شبكة باي 2026</p>
                 </div>
             </div>
-
-            <!-- حوكمة التصويت LYO -->
-            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-4">
-                <h2 class="text-sm font-bold text-yellow-400">🗳️ حوكمة التصويت لعملة المنفعة LYO (مقاوم للكم & PRISM)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input id="proposalId" placeholder="معرف المقترح" value="PROP-OMNIVERSE-2026" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-yellow-500 outline-none">
-                    <input id="lyoVotingBalance" type="number" step="1.0" placeholder="رصيد LYO" value="1000.0" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-yellow-500 outline-none">
-                </div>
-                <div class="flex items-center gap-3">
-                    <label class="text-xs text-zinc-300 font-bold">خيار التصويت:</label>
-                    <select id="voteChoice" class="bg-black p-2 border border-zinc-700 rounded text-xs text-yellow-400 font-bold outline-none">
-                        <option value="true">موافق (True)</option>
-                        <option value="false">معارض (False)</option>
-                    </select>
-                </div>
-                <button onclick="castLyoSecureVote()" class="w-full bg-yellow-600 hover:bg-yellow-500 p-2.5 rounded-lg font-bold text-xs transition shadow text-black">إرسال وتوثيق الصوت تحت درع PQC 🛡️</button>
-                <div id="lyoVotingResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-yellow-300 min-h-[60px] whitespace-pre-wrap font-mono">نتيجة التصويت ستظهر هنا...</div>
-            </div>
-
-            <!-- المسارات الخماسية -->
-            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-4">
-                <h2 class="text-sm font-bold text-emerald-400">⚡ التحكم بالمسارات الخماسية لمدينة أومنيفيرس</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button onclick="executeSorobanBridge()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-cyan-600 text-xs text-cyan-300 font-bold transition">🌉 جسر السيولة (Soroban)</button>
-                    <button onclick="submitDaoProposal()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-purple-600 text-xs text-purple-300 font-bold transition">🗳️ مقترح حوكمة (DAO)</button>
-                    <button onclick="runPredictiveSimulation()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-amber-600 text-xs text-amber-300 font-bold transition">📊 المحاكاة التنبؤية (AI)</button>
-                    <button onclick="runComplianceAudit()" class="bg-zinc-800 hover:bg-zinc-700 p-3 rounded-lg border border-emerald-600 text-xs text-emerald-300 font-bold transition">🔍 التدقيق المالي (AML)</button>
-                </div>
-                <div id="pillarsResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-emerald-300 min-h-[50px] whitespace-pre-wrap font-mono hidden"></div>
-            </div>
-
-            <!-- وكيل التفاوض -->
-            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
-                <h2 class="text-sm font-bold text-emerald-400">🤝 وكيل التفاوض الذكي الآلي</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input id="negotiateAssetId" placeholder="معرف الأصل" value="asset_tripoli_001" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-emerald-500 outline-none">
-                    <input id="negotiateOfferVal" type="number" step="0.01" placeholder="عرض السعر" value="85.0" class="w-full bg-black p-2.5 border border-zinc-700 rounded text-xs text-white focus:border-emerald-500 outline-none">
-                </div>
-                <button onclick="startAiNegotiation()" class="w-full bg-emerald-700 hover:bg-emerald-600 p-2.5 rounded-lg font-bold text-xs transition shadow text-black">بدء التفاوض الذكي الآن 🚀</button>
-                <div id="negotiationResultBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-emerald-300 min-h-[60px] whitespace-pre-wrap font-mono">نتائج التفاوض ستظهر هنا...</div>
-            </div>
-
-            <!-- المساعد المحلي -->
-            <div class="mt-6 pt-4 border-t border-zinc-800 space-y-3">
-                <h2 class="text-sm font-bold text-cyan-400">🤖 المساعد الذكي المحلي (عقدة طرابلس)</h2>
-                <textarea id="localAiPrompt" placeholder="اكتب استفسارك..." class="w-full bg-black p-3 border border-zinc-700 rounded text-xs text-white focus:border-cyan-500 outline-none h-20"></textarea>
-                <button onclick="sendToLocalAIModel()" class="w-full bg-cyan-700 hover:bg-cyan-600 p-2.5 rounded-lg font-bold text-xs transition shadow">إرسال إلى وكيل النظام</button>
-                <div id="aiResponseBox" class="p-3 bg-black border border-zinc-800 rounded text-xs text-cyan-300 min-h-[50px] whitespace-pre-wrap">الرد الذكي سيظهر هنا...</div>
+            <!-- زر تبديل الأوضاع المحمي بمفتاح سيادة -->
+            <div class="flex items-center gap-2">
+                <button onclick="switchView('user')" id="btnUserView" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-yellow-500 text-black transition shadow">واجهة النظام البيئي</button>
+                <button onclick="requestAdminAccess()" id="btnAdminView" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition border border-zinc-700">غرفة عمليات طرابلس 🛡️</button>
             </div>
         </div>
+    </header>
 
-        <!-- مركز تصديق المدير العام -->
-        <div class="bg-zinc-900 p-6 rounded-2xl border border-amber-500 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-amber-400">🛡️ مركز تصديق المدير العام (Human-in-the-Loop)</h2>
-                <button onclick="fetchPendingApprovals()" class="bg-amber-700 hover:bg-amber-600 text-xs px-3 py-1.5 rounded font-bold transition text-black">تحديث الطلبات 🔄</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-right text-xs border-collapse">
-                    <thead>
-                        <tr class="bg-zinc-800 text-amber-400 border-b border-zinc-700">
-                            <th class="p-2">معرف الطلب</th>
-                            <th class="p-2">اسم الوكيل</th>
-                            <th class="p-2">نوع الإجراء</th>
-                            <th class="p-2">التفاصيل</th>
-                            <th class="p-2 text-center">القرار</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pending-approvals-body" class="divide-y divide-zinc-800 text-zinc-300">
-                        <tr><td colspan="5" class="p-3 text-center text-zinc-500">جاري التحميل...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- المحتوى الرئيسي -->
+    <main class="max-w-6xl mx-auto p-4 md:p-6 w-full my-4 flex-grow">
 
-        <!-- لوحة مراقبة عقدة طرابلس والسجل الدائم مع زر تحميل CSV -->
-        <div class="bg-zinc-900 p-6 rounded-2xl border border-cyan-600 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-cyan-400">🌐 لوحة تحكم عقدة طرابلس والسجل الدائم</h2>
-                <div class="flex gap-2">
-                    <button onclick="downloadSovereignCsv()" class="bg-emerald-700 hover:bg-emerald-600 text-xs px-3 py-1.5 rounded font-bold transition text-black">📥 تحميل الأرشيف CSV</button>
-                    <button onclick="loadDashboardData()" class="bg-cyan-700 hover:bg-cyan-600 text-xs px-3 py-1.5 rounded font-bold transition">تحديث البيانات 🔄</button>
+        <!-- ================= قسم المستخدم العادي واللجان (User/Ecosystem Hub) ================= -->
+        <section id="viewUser" class="space-y-6">
+            
+            <!-- لوحة الترحيب والقيمة المضافة -->
+            <div class="bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 md:p-8 rounded-2xl glow-gold relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 max-w-2xl">
+                    <span class="inline-block px-3 py-1 bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full text-xs font-semibold mb-3">النظام البيئي المعتمد لشبكة باي</span>
+                    <h2 class="text-2xl md:text-3xl font-black text-white mb-3">مستقبل المدن الذكية والأصول الرقمية الموثقة</h2>
+                    <p class="text-zinc-400 text-xs md:text-sm leading-relaxed mb-6">
+                        منصة أومنيفيرس تتيح لك توثيق الأصول الحقيقية (RWA)، واستخدام وكلاء الذكاء الاصطناعي لإنجاز المهام اليومية، والدفع الآمن عبر عملة المنفعة LYO وعملة Pi حصراً للمستخدمين المجتازين لمرتبة KYC.
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <button id="authBtn" onclick="connectPi()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs transition shadow-lg shadow-yellow-500/20 flex items-center gap-2">
+                            <span>الاتصال بـ Pi Network SDK</span>
+                        </button>
+                        <button onclick="authenticatePiVerify()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center gap-2">
+                            <span>تحقق الهوية PiVerify KYC</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
-                    <span class="text-xs text-zinc-400 block">حالة العقدة</span>
-                    <span id="nodeNameDisplay" class="text-sm font-bold text-cyan-300">Tripoli-Node-v0.6.3</span>
+            <!-- شبكة الخدمات والأصول (RWA & AI Agents) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- توثيق الأصول والمدفوعات -->
+                <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
+                    <h3 class="font-bold text-sm text-yellow-400 flex items-center gap-2">
+                        <span>🏛️</span> توثيق الأصول السيادية (RWA) والدفع المزدوج
+                    </h3>
+                    <div class="space-y-3 text-xs">
+                        <input id="assetName" placeholder="اسم الأصل (مثال: عقار رقم 01 - طرابلس)" class="w-full bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-yellow-500 outline-none">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input id="assetVal" type="number" step="0.01" placeholder="القيمة المالية" class="bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-yellow-500 outline-none">
+                            <select id="assetCurrency" class="bg-black p-3 border border-zinc-800 rounded-xl text-yellow-400 font-bold focus:border-yellow-500 outline-none">
+                                <option value="PI">عملة Pi</option>
+                                <option value="OUSD">عملة مستقرة OUSD</option>
+                                <option value="LYO">عملة المنفعة LYO</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <button onclick="processPayment()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold p-3 rounded-xl transition shadow">دفع عبر Pi SDK</button>
+                            <button onclick="processDualAssetSettlement()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-3 rounded-xl transition shadow">تسوية الأصل (RWA)</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
-                    <span class="text-xs text-zinc-400 block">شبكة التوجيه</span>
-                    <span id="nodeNetworkDisplay" class="text-sm font-bold text-yellow-300">Omniverse Smart City</span>
+
+                <!-- المساعد الذكي ووكيل التفاوض -->
+                <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
+                    <h3 class="font-bold text-sm text-cyan-400 flex items-center gap-2">
+                        <span>🤖</span> المساعد الذكي ووكيل التفاوض الآلي
+                    </h3>
+                    <div class="space-y-3 text-xs">
+                        <textarea id="localAiPrompt" placeholder="اطرح استفسارك على وكيل النظام الذكي..." class="w-full bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-cyan-500 outline-none h-20 resize-none"></textarea>
+                        <button onclick="sendToLocalAIModel()" class="w-full bg-cyan-700 hover:bg-cyan-600 text-white font-bold p-2.5 rounded-xl transition">إرسال الاستفسار للوكيل</button>
+                        <div id="aiResponseBox" class="p-3 bg-black border border-zinc-800 rounded-xl text-cyan-300 min-h-[45px] text-[11px] whitespace-pre-wrap font-mono">الرد الذكي سيظهر هنا...</div>
+                    </div>
                 </div>
-                <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700">
-                    <span class="text-xs text-zinc-400 block">الوكلاء النشطون</span>
-                    <span id="activeAgentsDisplay" class="text-sm font-bold text-green-400">نشط (PQC & PiVerify)</span>
-                </div>
+
             </div>
 
-            <h3 class="text-xs font-bold text-zinc-300 mb-2">سجلات المعاملات الدائمة والتدقيق المالي</h3>
-            <div class="overflow-x-auto">
-                <table class="w-full text-right text-xs border-collapse">
-                    <thead>
-                        <tr class="bg-zinc-800 text-cyan-400 border-b border-zinc-700">
-                            <th class="p-2">معرف الدفع</th>
-                            <th class="p-2">معرف المستخدم</th>
-                            <th class="p-2">القيمة والعملة</th>
-                            <th class="p-2">الحالة</th>
-                            <th class="p-2">التوقيت</th>
-                        </tr>
-                    </thead>
-                    <tbody id="crosschainTableBody" class="divide-y divide-zinc-800 text-zinc-300">
-                        <tr><td colspan="5" class="p-3 text-center text-zinc-500">جاري الجلب...</td></tr>
-                    </tbody>
-                </table>
+            <!-- حوكمة LYO والمسارات الخماسية -->
+            <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
+                <h3 class="font-bold text-sm text-yellow-400 flex items-center gap-2">
+                    <span>⚡</span> منظومة حوكمة LYO والمسارات الذكية للشبكة
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <button onclick="executeSorobanBridge()" class="p-3 bg-black hover:bg-zinc-800 border border-cyan-900 rounded-xl text-cyan-300 font-bold transition">🌉 جسر السيولة Soroban</button>
+                    <button onclick="submitDaoProposal()" class="p-3 bg-black hover:bg-zinc-800 border border-purple-900 rounded-xl text-purple-300 font-bold transition">🗳️ مقترح حوكمة DAO</button>
+                    <button onclick="runPredictiveSimulation()" class="p-3 bg-black hover:bg-zinc-800 border border-amber-900 rounded-xl text-amber-300 font-bold transition">📊 المحاكاة التنبؤية AI</button>
+                    <button onclick="runComplianceAudit()" class="p-3 bg-black hover:bg-zinc-800 border border-emerald-900 rounded-xl text-emerald-300 font-bold transition">🔍 التدقيق المالي AML</button>
+                </div>
+                <div id="pillarsResultBox" class="p-3 bg-black border border-zinc-800 rounded-xl text-xs text-emerald-400 min-h-[45px] whitespace-pre-wrap font-mono hidden"></div>
             </div>
-        </div>
 
-    </div>
+        </section>
 
-    <!-- استدعاء ملف الـ JavaScript المنفصل -->
+
+        <!-- ================= غرفة عمليات عقدة طرابلس السيادية (Admin / Node Command Center) ================= -->
+        <section id="viewAdmin" class="space-y-6 hidden">
+            
+            <div class="bg-zinc-900 p-6 rounded-2xl border border-cyan-600 glow-cyan space-y-4">
+                <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-cyan-400">🛡️ غرفة عمليات عقدة طرابلس والدفاع المقاوم للكم (PQC)</h2>
+                        <p class="text-[11px] text-zinc-400">لوحة التحكم السيادية الخاصة بالمدير العام (عبد القادر مختار)</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-700 text-xs font-mono">Tripoli Node v0.6.3</span>
+                </div>
+
+                <!-- مؤشرات الأمان الحية الحصينة -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-black p-3.5 rounded-xl border border-zinc-800">
+                        <span class="text-[11px] text-zinc-400 block">حالة درع PRISM AI</span>
+                        <span class="text-xs font-bold text-emerald-400">نشط 100% (مقاوم للكم PQC)</span>
+                    </div>
+                    <div class="bg-black p-3.5 rounded-xl border border-zinc-800">
+                        <span class="text-[11px] text-zinc-400 block">بروتوكول Zero-Trust</span>
+                        <span class="text-xs font-bold text-yellow-400">مفعل على كافة المسارات</span>
+                    </div>
+                    <div class="bg-black p-3.5 rounded-xl border border-zinc-800">
+                        <span class="text-[11px] text-zinc-400 block">حالة قاعدة البيانات (assets.db)</span>
+                        <span class="text-xs font-bold text-purple-400">معزولة وآمنة تماماً</span>
+                    </div>
+                </div>
+
+                <!-- تصديق المدير العام (Human-in-the-Loop) -->
+                <div class="pt-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-bold text-amber-400">📋 سجل تصديقات المدير العام المعلقة</h3>
+                        <button onclick="fetchPendingApprovals()" class="bg-amber-600 hover:bg-amber-500 text-black text-xs px-3 py-1 rounded font-bold transition">تحديث الطلبات 🔄</button>
+                    </div>
+                    <div class="overflow-x-auto border border-zinc-800 rounded-xl">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-zinc-950 text-amber-400 border-b border-zinc-800">
+                                <tr>
+                                    <th class="p-2.5">معرف الطلب</th>
+                                    <th class="p-2.5">اسم الوكيل</th>
+                                    <th class="p-2.5">نوع الإجراء</th>
+                                    <th class="p-2.5">التفاصيل</th>
+                                    <th class="p-2.5 text-center">القرار</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-approvals-body" class="divide-y divide-zinc-800 text-zinc-300">
+                                <tr><td colspan="5" class="p-3 text-center text-zinc-500">جاري تحميل سجلات العقدة...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- الأرشيف الدائم وسجلات المعاملات -->
+                <div class="pt-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-bold text-cyan-400">📜 السجل الدائم لعقدة طرابلس (Tripoli Node Ledger)</h3>
+                        <div class="flex gap-2">
+                            <button onclick="downloadSovereignCsv()" class="bg-emerald-600 hover:bg-emerald-500 text-black text-xs px-3 py-1 rounded font-bold transition">📥 تحميل الأرشيف CSV</button>
+                            <button onclick="loadDashboardData()" class="bg-cyan-700 hover:bg-cyan-600 text-white text-xs px-3 py-1 rounded font-bold transition">تحديث السجلات 🔄</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto border border-zinc-800 rounded-xl">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-zinc-950 text-cyan-400 border-b border-zinc-800">
+                                <tr>
+                                    <th class="p-2.5">معرف الدفع</th>
+                                    <th class="p-2.5">معرف المستخدم</th>
+                                    <th class="p-2.5">القيمة والعملة</th>
+                                    <th class="p-2.5">الحالة الأمنية</th>
+                                    <th class="p-2.5">التوقيت</th>
+                                </tr>
+                            </thead>
+                            <tbody id="crosschainTableBody" class="divide-y divide-zinc-800 text-zinc-300">
+                                <tr><td colspan="5" class="p-3 text-center text-zinc-500">جاري جلب السجلات الدائمة...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- تذييل الصفحة -->
+    <footer class="bg-zinc-950 border-t border-zinc-800 py-4 text-center text-[11px] text-zinc-500">
+        جميع الحقوق محفوظة © 2026 - أومنيفيرس وعقدة طرابلس ضمن النظام البيئي لشبكة Pi Network.
+    </footer>
+
+    <!-- سكربت الحماية بكلمة مرور والتبديل بين الواجهات -->
+    <script>
+        // ضع مفتاح السيادة السري الخاص بك هنا بين علامتي التنصيص
+        const ADMIN_SOVEREIGN_PIN = "Aa12800$$";
+
+        function requestAdminAccess() {
+            let enteredPin = prompt("🔒 إدخال مفتاح السيادة الخاص بالمدير العام:");
+            if (enteredPin === ADMIN_SOVEREIGN_PIN && ADMIN_SOVEREIGN_PIN !== "") {
+                switchView('admin');
+            } else if (enteredPin !== null) {
+                alert("❌ خطأ: مفتاح السيادة غير صحيح! هذه الغرفة محصنة ومخصصة للمدير العام فقط.");
+            }
+        }
+
+        function switchView(mode) {
+            const userView = document.getElementById('viewUser');
+            const adminView = document.getElementById('viewAdmin');
+            const btnUser = document.getElementById('btnUserView');
+            const btnAdmin = document.getElementById('btnAdminView');
+
+            if (mode === 'user') {
+                userView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                btnUser.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-yellow-500 text-black transition shadow";
+                btnAdmin.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition border border-zinc-700";
+            } else {
+                adminView.classList.remove('hidden');
+                userView.classList.add('hidden');
+                btnAdmin.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-600 text-white transition shadow";
+                btnUser.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition border border-zinc-700";
+                loadDashboardData();
+                fetchPendingApprovals();
+            }
+        }
+    </script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
 </html>
