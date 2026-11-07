@@ -6,13 +6,20 @@
     <title>Omniverse Hub - Sovereign Gateway & Tripoli Node v0.6.3</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
 </head>
 <body class="bg-black text-white p-4">
     <div class="max-w-4xl mx-auto space-y-6">
         
         <!-- البطاقة الرئيسية لتطبيق Omniverse مع شارات التحقق الحية وحالة الأمان -->
         <div class="bg-zinc-900 p-6 rounded-2xl border border-yellow-600 shadow-xl">
-            <h1 class="text-2xl text-yellow-500 font-bold mb-1 text-center">OMNIVERSE HUB</h1>
+            <div class="flex items-center justify-center space-x-3 space-x-reverse mb-2">
+                <div class="w-10 h-10 bg-yellow-600 rounded-xl flex items-center justify-center font-black text-xl text-black shadow-lg shadow-yellow-600/30">Ω</div>
+                <h1 class="text-2xl text-yellow-500 font-bold text-center">OMNIVERSE HUB</h1>
+            </div>
             <p class="text-xs text-center text-cyan-400 font-mono mb-2">🛡️ درع الحماية المقاوم للكم (PQC) ومحرك الذكاء الاصطناعي وبوابة PiVerify نشطة</p>
             
             <!-- مؤشرات الأمان الحية (Live Telemetry Badges) المضافة بصرياً -->
@@ -46,9 +53,9 @@
 
             <div class="space-y-4 border-t border-zinc-800 pt-4">
                 <h2 class="text-sm font-bold text-yellow-400">توثيق الأصول السيادية (RWA) ومدفوعات النظام المزدوج</h2>
-                <input id="assetName" placeholder="اسم الأصل (مثال: عقار ذكي رقم 01)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+                <input id="assetName" placeholder="اسم الأصل (مثال: عقار ذكي رقم 01)" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none text-xs">
                 <div class="grid grid-cols-2 gap-3">
-                    <input id="assetVal" type="number" step="0.01" placeholder="القيمة المالية" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none">
+                    <input id="assetVal" type="number" step="0.01" placeholder="القيمة المالية" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none text-xs">
                     <select id="assetCurrency" class="w-full bg-black p-3 border border-zinc-700 rounded text-white focus:border-yellow-500 outline-none text-xs font-bold">
                         <option value="PI">عملة Pi الأساسية</option>
                         <option value="OUSD">عملة مستقرة (OUSD)</option>
