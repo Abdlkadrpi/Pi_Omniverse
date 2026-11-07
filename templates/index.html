@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أومنيفيرس | النظام البيئي الذكي وعقدة طرابلس</title>
+    <title id="pageTitle">أومنيفيرس | النظام البيئي الذكي وعقدة طرابلس</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -18,17 +18,19 @@
     <!-- شريط التنقل العلوي -->
     <header class="bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 p-4 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3 space-x-reverse">
+            <div class="flex items-center space-x-3 space-x-reverse" id="navBrandContainer">
                 <div class="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center font-black text-xl text-black shadow-lg shadow-yellow-500/20">Ω</div>
                 <div>
-                    <h1 class="font-bold text-base text-white">أومنيفيرس (Omniverse)</h1>
-                    <p class="text-[11px] text-yellow-500 font-mono">بوابة المدن الذكية - قمة شبكة باي 2026</p>
+                    <h1 class="font-bold text-base text-white" data-i18n="navTitle">أومنيفيرس (Omniverse)</h1>
+                    <p class="text-[11px] text-yellow-500 font-mono" data-i18n="navSub">بوابة المدن الذكية - قمة شبكة باي 2026</p>
                 </div>
             </div>
-            <!-- زر تبديل الأوضاع المحمي بمفتاح سيادة -->
+            <!-- الأزرار العلوية: تبديل اللغة + تبديل الأوضاع -->
             <div class="flex items-center gap-2">
-                <button onclick="switchView('user')" id="btnUserView" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-yellow-500 text-black transition shadow">واجهة النظام البيئي</button>
-                <button onclick="requestAdminAccess()" id="btnAdminView" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition border border-zinc-700">غرفة عمليات طرابلس 🛡️</button>
+                <!-- زر تبديل اللغة -->
+                <button onclick="toggleLanguage()" id="btnLangToggle" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-800 text-yellow-400 hover:bg-zinc-700 transition border border-yellow-500/30">English 🌐</button>
+                <button onclick="switchView('user')" id="btnUserView" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-yellow-500 text-black transition shadow" data-i18n="btnEco">واجهة النظام البيئي</button>
+                <button onclick="requestAdminAccess()" id="btnAdminView" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition border border-zinc-700" data-i18n="btnAdmin">غرفة عمليات طرابلس 🛡️</button>
             </div>
         </div>
     </header>
@@ -43,17 +45,17 @@
             <div class="bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 md:p-8 rounded-2xl glow-gold relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="relative z-10 max-w-2xl">
-                    <span class="inline-block px-3 py-1 bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full text-xs font-semibold mb-3">النظام البيئي المعتمد لشبكة باي</span>
-                    <h2 class="text-2xl md:text-3xl font-black text-white mb-3">مستقبل المدن الذكية والأصول الرقمية الموثقة</h2>
-                    <p class="text-zinc-400 text-xs md:text-sm leading-relaxed mb-6">
+                    <span class="inline-block px-3 py-1 bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full text-xs font-semibold mb-3" data-i18n="badgeEco">النظام البيئي المعتمد لشبكة باي</span>
+                    <h2 class="text-2xl md:text-3xl font-black text-white mb-3" data-i18n="heroTitle">مستقبل المدن الذكية والأصول الرقمية الموثقة</h2>
+                    <p class="text-zinc-400 text-xs md:text-sm leading-relaxed mb-6" data-i18n="heroDesc">
                         منصة أومنيفيرس تتيح لك توثيق الأصول الحقيقية (RWA)، واستخدام وكلاء الذكاء الاصطناعي لإنجاز المهام اليومية، والدفع الآمن عبر عملة المنفعة LYO وعملة Pi حصراً للمستخدمين المجتازين لمرتبة KYC.
                     </p>
                     <div class="flex flex-wrap gap-3">
                         <button id="authBtn" onclick="connectPi()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-2.5 rounded-xl text-xs transition shadow-lg shadow-yellow-500/20 flex items-center gap-2">
-                            <span>الاتصال بـ Pi Network SDK</span>
+                            <span data-i18n="btnPiSdk">الاتصال بـ Pi Network SDK</span>
                         </button>
                         <button onclick="authenticatePiVerify()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center gap-2">
-                            <span>تحقق الهوية PiVerify KYC</span>
+                            <span data-i18n="btnKyc">تحقق الهوية PiVerify KYC</span>
                         </button>
                     </div>
                 </div>
@@ -65,21 +67,21 @@
                 <!-- توثيق الأصول والمدفوعات -->
                 <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
                     <h3 class="font-bold text-sm text-yellow-400 flex items-center gap-2">
-                        <span>🏛️</span> توثيق الأصول السيادية (RWA) والدفع المزدوج
+                        <span>🏛️</span> <span data-i18n="secRwaTitle">توثيق الأصول السيادية (RWA) والدفع المزدوج</span>
                     </h3>
                     <div class="space-y-3 text-xs">
-                        <input id="assetName" placeholder="اسم الأصل (مثال: عقار رقم 01 - طرابلس)" class="w-full bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-yellow-500 outline-none">
+                        <input id="assetName" data-i18n-placeholder="assetNamePlaceholder" placeholder="اسم الأصل (مثال: عقار رقم 01 - طرابلس)" class="w-full bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-yellow-500 outline-none">
                         <div class="grid grid-cols-2 gap-2">
-                            <input id="assetVal" type="number" step="0.01" placeholder="القيمة المالية" class="bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-yellow-500 outline-none">
+                            <input id="assetVal" type="number" step="0.01" data-i18n-placeholder="assetValPlaceholder" placeholder="القيمة المالية" class="bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-yellow-500 outline-none">
                             <select id="assetCurrency" class="bg-black p-3 border border-zinc-800 rounded-xl text-yellow-400 font-bold focus:border-yellow-500 outline-none">
-                                <option value="PI">عملة Pi</option>
-                                <option value="OUSD">عملة مستقرة OUSD</option>
-                                <option value="LYO">عملة المنفعة LYO</option>
+                                <option value="PI" data-i18n="curPi">عملة Pi</option>
+                                <option value="OUSD" data-i18n="curOusd">عملة مستقرة OUSD</option>
+                                <option value="LYO" data-i18n="curLyo">عملة المنفعة LYO</option>
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-2 pt-2">
-                            <button onclick="processPayment()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold p-3 rounded-xl transition shadow">دفع عبر Pi SDK</button>
-                            <button onclick="processDualAssetSettlement()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-3 rounded-xl transition shadow">تسوية الأصل (RWA)</button>
+                            <button onclick="processPayment()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold p-3 rounded-xl transition shadow" data-i18n="btnPayPi">دفع عبر Pi SDK</button>
+                            <button onclick="processDualAssetSettlement()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-3 rounded-xl transition shadow" data-i18n="btnSettleRwa">تسوية الأصل (RWA)</button>
                         </div>
                     </div>
                 </div>
@@ -87,12 +89,12 @@
                 <!-- المساعد الذكي ووكيل التفاوض -->
                 <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
                     <h3 class="font-bold text-sm text-cyan-400 flex items-center gap-2">
-                        <span>🤖</span> المساعد الذكي ووكيل التفاوض الآلي
+                        <span>🤖</span> <span data-i18n="secAiTitle">المساعد الذكي ووكيل التفاوض الآلي</span>
                     </h3>
                     <div class="space-y-3 text-xs">
-                        <textarea id="localAiPrompt" placeholder="اطرح استفسارك على وكيل النظام الذكي..." class="w-full bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-cyan-500 outline-none h-20 resize-none"></textarea>
-                        <button onclick="sendToLocalAIModel()" class="w-full bg-cyan-700 hover:bg-cyan-600 text-white font-bold p-2.5 rounded-xl transition">إرسال الاستفسار للوكيل</button>
-                        <div id="aiResponseBox" class="p-3 bg-black border border-zinc-800 rounded-xl text-cyan-300 min-h-[45px] text-[11px] whitespace-pre-wrap font-mono">الرد الذكي سيظهر هنا...</div>
+                        <textarea id="localAiPrompt" data-i18n-placeholder="aiPromptPlaceholder" placeholder="اطرح استفسارك على وكيل النظام الذكي..." class="w-full bg-black p-3 border border-zinc-800 rounded-xl text-white focus:border-cyan-500 outline-none h-20 resize-none"></textarea>
+                        <button onclick="sendToLocalAIModel()" class="w-full bg-cyan-700 hover:bg-cyan-600 text-white font-bold p-2.5 rounded-xl transition" data-i18n="btnSendAi">إرسال الاستفسار للوكيل</button>
+                        <div id="aiResponseBox" class="p-3 bg-black border border-zinc-800 rounded-xl text-cyan-300 min-h-[45px] text-[11px] whitespace-pre-wrap font-mono" data-i18n="aiRespDefault">الرد الذكي سيظهر هنا...</div>
                     </div>
                 </div>
 
@@ -101,13 +103,13 @@
             <!-- حوكمة LYO والمسارات الخماسية -->
             <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
                 <h3 class="font-bold text-sm text-yellow-400 flex items-center gap-2">
-                    <span>⚡</span> منظومة حوكمة LYO والمسارات الذكية للشبكة
+                    <span>⚡</span> <span data-i18n="secPillarsTitle">منظومة حوكمة LYO والمسارات الذكية للشبكة</span>
                 </h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <button onclick="executeSorobanBridge()" class="p-3 bg-black hover:bg-zinc-800 border border-cyan-900 rounded-xl text-cyan-300 font-bold transition">🌉 جسر السيولة Soroban</button>
-                    <button onclick="submitDaoProposal()" class="p-3 bg-black hover:bg-zinc-800 border border-purple-900 rounded-xl text-purple-300 font-bold transition">🗳️ مقترح حوكمة DAO</button>
-                    <button onclick="runPredictiveSimulation()" class="p-3 bg-black hover:bg-zinc-800 border border-amber-900 rounded-xl text-amber-300 font-bold transition">📊 المحاكاة التنبؤية AI</button>
-                    <button onclick="runComplianceAudit()" class="p-3 bg-black hover:bg-zinc-800 border border-emerald-900 rounded-xl text-emerald-300 font-bold transition">🔍 التدقيق المالي AML</button>
+                    <button onclick="executeSorobanBridge()" class="p-3 bg-black hover:bg-zinc-800 border border-cyan-900 rounded-xl text-cyan-300 font-bold transition" data-i18n="pillarSoroban">🌉 جسر السيولة Soroban</button>
+                    <button onclick="submitDaoProposal()" class="p-3 bg-black hover:bg-zinc-800 border border-purple-900 rounded-xl text-purple-300 font-bold transition" data-i18n="pillarDao">🗳️ مقترح حوكمة DAO</button>
+                    <button onclick="runPredictiveSimulation()" class="p-3 bg-black hover:bg-zinc-800 border border-amber-900 rounded-xl text-amber-300 font-bold transition" data-i18n="pillarSim">📊 المحاكاة التنبؤية AI</button>
+                    <button onclick="runComplianceAudit()" class="p-3 bg-black hover:bg-zinc-800 border border-emerald-900 rounded-xl text-emerald-300 font-bold transition" data-i18n="pillarAml">🔍 التدقيق المالي AML</button>
                 </div>
                 <div id="pillarsResultBox" class="p-3 bg-black border border-zinc-800 rounded-xl text-xs text-emerald-400 min-h-[45px] whitespace-pre-wrap font-mono hidden"></div>
             </div>
@@ -121,8 +123,8 @@
             <div class="bg-zinc-900 p-6 rounded-2xl border border-cyan-600 glow-cyan space-y-4">
                 <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
                     <div>
-                        <h2 class="text-base font-bold text-cyan-400">🛡️ غرفة عمليات عقدة طرابلس والدفاع المقاوم للكم (PQC)</h2>
-                        <p class="text-[11px] text-zinc-400">لوحة التحكم السيادية الخاصة بالمدير العام (عبد القادر مختار)</p>
+                        <h2 class="text-base font-bold text-cyan-400" data-i18n="adminTitle">🛡️ غرفة عمليات عقدة طرابلس والدفاع المقاوم للكم (PQC)</h2>
+                        <p class="text-[11px] text-zinc-400" data-i18n="adminSub">لوحة التحكم السيادية الخاصة بالمدير العام (عبد القادر مختار)</p>
                     </div>
                     <span class="px-3 py-1 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-700 text-xs font-mono">Tripoli Node v0.6.3</span>
                 </div>
@@ -130,38 +132,38 @@
                 <!-- مؤشرات الأمان الحية الحصينة -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div class="bg-black p-3.5 rounded-xl border border-zinc-800">
-                        <span class="text-[11px] text-zinc-400 block">حالة درع PRISM AI</span>
-                        <span class="text-xs font-bold text-emerald-400">نشط 100% (مقاوم للكم PQC)</span>
+                        <span class="text-[11px] text-zinc-400 block" data-i18n="secPrismLbl">حالة درع PRISM AI</span>
+                        <span class="text-xs font-bold text-emerald-400" data-i18n="secPrismVal">نشط 100% (مقاوم للكم PQC)</span>
                     </div>
                     <div class="bg-black p-3.5 rounded-xl border border-zinc-800">
-                        <span class="text-[11px] text-zinc-400 block">بروتوكول Zero-Trust</span>
-                        <span class="text-xs font-bold text-yellow-400">مفعل على كافة المسارات</span>
+                        <span class="text-[11px] text-zinc-400 block" data-i18n="secZeroLbl">بروتوكول Zero-Trust</span>
+                        <span class="text-xs font-bold text-yellow-400" data-i18n="secZeroVal">مفعل على كافة المسارات</span>
                     </div>
                     <div class="bg-black p-3.5 rounded-xl border border-zinc-800">
-                        <span class="text-[11px] text-zinc-400 block">حالة قاعدة البيانات (assets.db)</span>
-                        <span class="text-xs font-bold text-purple-400">معزولة وآمنة تماماً</span>
+                        <span class="text-[11px] text-zinc-400 block" data-i18n="secDbLbl">حالة قاعدة البيانات (assets.db)</span>
+                        <span class="text-xs font-bold text-purple-400" data-i18n="secDbVal">معزولة وآمنة تماماً</span>
                     </div>
                 </div>
 
                 <!-- تصديق المدير العام (Human-in-the-Loop) -->
                 <div class="pt-2">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xs font-bold text-amber-400">📋 سجل تصديقات المدير العام المعلقة</h3>
-                        <button onclick="fetchPendingApprovals()" class="bg-amber-600 hover:bg-amber-500 text-black text-xs px-3 py-1 rounded font-bold transition">تحديث الطلبات 🔄</button>
+                        <h3 class="text-xs font-bold text-amber-400" data-i18n="pendingTitle">📋 سجل تصديقات المدير العام المعلقة</h3>
+                        <button onclick="fetchPendingApprovals()" class="bg-amber-600 hover:bg-amber-500 text-black text-xs px-3 py-1 rounded font-bold transition" data-i18n="btnRefreshPend">تحديث الطلبات 🔄</button>
                     </div>
                     <div class="overflow-x-auto border border-zinc-800 rounded-xl">
-                        <table class="w-full text-right text-xs">
+                        <table class="w-full text-xs" id="pendingTableElement">
                             <thead class="bg-zinc-950 text-amber-400 border-b border-zinc-800">
                                 <tr>
-                                    <th class="p-2.5">معرف الطلب</th>
-                                    <th class="p-2.5">اسم الوكيل</th>
-                                    <th class="p-2.5">نوع الإجراء</th>
-                                    <th class="p-2.5">التفاصيل</th>
-                                    <th class="p-2.5 text-center">القرار</th>
+                                    <th class="p-2.5" data-i18n="thReqId">معرف الطلب</th>
+                                    <th class="p-2.5" data-i18n="thAgentName">اسم الوكيل</th>
+                                    <th class="p-2.5" data-i18n="thActionType">نوع الإجراء</th>
+                                    <th class="p-2.5" data-i18n="thDetails">التفاصيل</th>
+                                    <th class="p-2.5 text-center" data-i18n="thDecision">القرار</th>
                                 </tr>
                             </thead>
                             <tbody id="pending-approvals-body" class="divide-y divide-zinc-800 text-zinc-300">
-                                <tr><td colspan="5" class="p-3 text-center text-zinc-500">جاري تحميل سجلات العقدة...</td></tr>
+                                <tr><td colspan="5" class="p-3 text-center text-zinc-500" data-i18n="loadingPend">جاري تحميل سجلات العقدة...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -170,25 +172,25 @@
                 <!-- الأرشيف الدائم وسجلات المعاملات -->
                 <div class="pt-2">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xs font-bold text-cyan-400">📜 السجل الدائم لعقدة طرابلس (Tripoli Node Ledger)</h3>
+                        <h3 class="text-xs font-bold text-cyan-400" data-i18n="ledgerTitle">📜 السجل الدائم لعقدة طرابلس (Tripoli Node Ledger)</h3>
                         <div class="flex gap-2">
-                            <button onclick="downloadSovereignCsv()" class="bg-emerald-600 hover:bg-emerald-500 text-black text-xs px-3 py-1 rounded font-bold transition">📥 تحميل الأرشيف CSV</button>
-                            <button onclick="loadDashboardData()" class="bg-cyan-700 hover:bg-cyan-600 text-white text-xs px-3 py-1 rounded font-bold transition">تحديث السجلات 🔄</button>
+                            <button onclick="downloadSovereignCsv()" class="bg-emerald-600 hover:bg-emerald-500 text-black text-xs px-3 py-1 rounded font-bold transition" data-i18n="btnDownloadCsv">📥 تحميل الأرشيف CSV</button>
+                            <button onclick="loadDashboardData()" class="bg-cyan-700 hover:bg-cyan-600 text-white text-xs px-3 py-1 rounded font-bold transition" data-i18n="btnRefreshLedger">تحديث السجلات 🔄</button>
                         </div>
                     </div>
                     <div class="overflow-x-auto border border-zinc-800 rounded-xl">
-                        <table class="w-full text-right text-xs">
+                        <table class="w-full text-xs" id="ledgerTableElement">
                             <thead class="bg-zinc-950 text-cyan-400 border-b border-zinc-800">
                                 <tr>
-                                    <th class="p-2.5">معرف الدفع</th>
-                                    <th class="p-2.5">معرف المستخدم</th>
-                                    <th class="p-2.5">القيمة والعملة</th>
-                                    <th class="p-2.5">الحالة الأمنية</th>
-                                    <th class="p-2.5">التوقيت</th>
+                                    <th class="p-2.5" data-i18n="thPayId">معرف الدفع</th>
+                                    <th class="p-2.5" data-i18n="thUserId">معرف المستخدم</th>
+                                    <th class="p-2.5" data-i18n="thValCurr">القيمة والعملة</th>
+                                    <th class="p-2.5" data-i18n="thSecStatus">الحالة الأمنية</th>
+                                    <th class="p-2.5" data-i18n="thTime">التوقيت</th>
                                 </tr>
                             </thead>
                             <tbody id="crosschainTableBody" class="divide-y divide-zinc-800 text-zinc-300">
-                                <tr><td colspan="5" class="p-3 text-center text-zinc-500">جاري جلب السجلات الدائمة...</td></tr>
+                                <tr><td colspan="5" class="p-3 text-center text-zinc-500" data-i18n="loadingLedger">جاري جلب السجلات الدائمة...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -201,20 +203,177 @@
 
     <!-- تذييل الصفحة -->
     <footer class="bg-zinc-950 border-t border-zinc-800 py-4 text-center text-[11px] text-zinc-500">
-        جميع الحقوق محفوظة © 2026 - أومنيفيرس وعقدة طرابلس ضمن النظام البيئي لشبكة Pi Network.
+        <span data-i18n="footerText">جميع الحقوق محفوظة © 2026 - أومنيفيرس وعقدة طرابلس ضمن النظام البيئي لشبكة Pi Network.</span>
     </footer>
 
-    <!-- سكربت الحماية بكلمة مرور والتبديل بين الواجهات -->
+    <!-- سكربت الحماية بكلمة مرور والتبديل بين الواجهات ونظام الترجمة الثنائية (AR/EN) -->
     <script>
-        // ضع مفتاح السيادة السري الخاص بك هنا بين علامتي التنصيص
         const ADMIN_SOVEREIGN_PIN = "Aa12800$$";
+        let currentLang = 'ar';
+
+        const translations = {
+            ar: {
+                pageTitle: "أومنيفيرس | النظام البيئي الذكي وعقدة طرابلس",
+                navTitle: "أومنيفيرس (Omniverse)",
+                navSub: "بوابة المدن الذكية - قمة شبكة باي 2026",
+                btnEco: "واجهة النظام البيئي",
+                btnAdmin: "غرفة عمليات طرابلس 🛡️",
+                badgeEco: "النظام البيئي المعتمد لشبكة باي",
+                heroTitle: "مستقبل المدن الذكية والأصول الرقمية الموثقة",
+                heroDesc: "منصة أومنيفيرس تتيح لك توثيق الأصول الحقيقية (RWA)، واستخدام وكلاء الذكاء الاصطناعي لإنجاز المهام اليومية، والدفع الآمن عبر عملة المنفعة LYO وعملة Pi حصراً للمستخدمين المجتازين لمرتبة KYC.",
+                btnPiSdk: "الاتصال بـ Pi Network SDK",
+                btnKyc: "تحقق الهوية PiVerify KYC",
+                secRwaTitle: "توثيق الأصول السيادية (RWA) والدفع المزدوج",
+                assetNamePlaceholder: "اسم الأصل (مثال: عقار رقم 01 - طرابلس)",
+                assetValPlaceholder: "القيمة المالية",
+                curPi: "عملة Pi",
+                curOusd: "عملة مستقرة OUSD",
+                curLyo: "عملة المنفعة LYO",
+                btnPayPi: "دفع عبر Pi SDK",
+                btnSettleRwa: "تسوية الأصل (RWA)",
+                secAiTitle: "المساعد الذكي ووكيل التفاوض الآلي",
+                aiPromptPlaceholder: "اطرح استفسارك على وكيل النظام الذكي...",
+                btnSendAi: "إرسال الاستفسار للوكيل",
+                aiResponseBox: "الرد الذكي سيظهر هنا...",
+                aiRespDefault: "الرد الذكي سيظهر هنا...",
+                secPillarsTitle: "منظومة حوكمة LYO والمسارات الذكية للشبكة",
+                pillarSoroban: "🌉 جسر السيولة Soroban",
+                pillarDao: "🗳️ مقترح حوكمة DAO",
+                pillarSim: "📊 المحاكاة التنبؤية AI",
+                pillarAml: "🔍 التدقيق المالي AML",
+                adminTitle: "🛡️ غرفة عمليات عقدة طرابلس والدفاع المقاوم للكم (PQC)",
+                adminSub: "لوحة التحكم السيادية الخاصة بالمدير العام (عبد القادر مختار)",
+                secPrismLbl: "حالة درع PRISM AI",
+                secPrismVal: "نشط 100% (مقاوم للكم PQC)",
+                secZeroLbl: "بروتوكول Zero-Trust",
+                secZeroVal: "مفعل على كافة المسارات",
+                secDbLbl: "حالة قاعدة البيانات (assets.db)",
+                secDbVal: "معزولة وآمنة تماماً",
+                pendingTitle: "📋 سجل تصديقات المدير العام المعلقة",
+                btnRefreshPend: "تحديث الطلبات 🔄",
+                thReqId: "معرف الطلب",
+                thAgentName: "اسم الوكيل",
+                thActionType: "نوع الإجراء",
+                thDetails: "التفاصيل",
+                thDecision: "القرار",
+                loadingPend: "جاري تحميل سجلات العقدة...",
+                ledgerTitle: "📜 السجل الدائم لعقدة طرابلس (Tripoli Node Ledger)",
+                btnDownloadCsv: "📥 تحميل الأرشيف CSV",
+                btnRefreshLedger: "تحديث السجلات 🔄",
+                thPayId: "معرف الدفع",
+                thUserId: "معرف المستخدم",
+                thValCurr: "القيمة والعملة",
+                thSecStatus: "الحالة الأمنية",
+                thTime: "التوقيت",
+                loadingLedger: "جاري جلب السجلات الدائمة...",
+                footerText: "جميع الحقوق محفوظة © 2026 - أومنيفيرس وعقدة طرابلس ضمن النظام البيئي لشبكة Pi Network.",
+                pinPrompt: "🔒 إدخال مفتاح السيادة الخاص بالمدير العام:",
+                pinError: "❌ خطأ: مفتاح السيادة غير صحيح! هذه الغرفة محصنة ومخصصة للمدير العام فقط."
+            },
+            en: {
+                pageTitle: "Omniverse | Smart Ecosystem & Tripoli Node",
+                navTitle: "Omniverse",
+                navSub: "Smart Cities Gateway - Pi Summit 2026",
+                btnEco: "Ecosystem Interface",
+                btnAdmin: "Tripoli Operations Room 🛡️",
+                badgeEco: "Certified Pi Network Ecosystem",
+                heroTitle: "Future of Smart Cities & Verified Digital Assets",
+                heroDesc: "Omniverse platform enables RWA tokenization, AI agents for task automation, and secure payments via LYO utility token and Pi strictly for KYC-verified users.",
+                btnPiSdk: "Connect Pi Network SDK",
+                btnKyc: "PiVerify KYC Check",
+                secRwaTitle: "Sovereign RWA Tokenization & Dual Payment",
+                assetNamePlaceholder: "Asset Name (e.g., Real Estate 01 - Tripoli)",
+                assetValPlaceholder: "Financial Value",
+                curPi: "Pi Currency",
+                curOusd: "OUSD Stablecoin",
+                curLyo: "LYO Utility Token",
+                btnPayPi: "Pay via Pi SDK",
+                btnSettleRwa: "Settle Asset (RWA)",
+                secAiTitle: "AI Assistant & Autonomous Negotiation Agent",
+                aiPromptPlaceholder: "Ask your query to the smart system agent...",
+                btnSendAi: "Send Query to Agent",
+                aiResponseBox: "Smart response will appear here...",
+                aiRespDefault: "Smart response will appear here...",
+                secPillarsTitle: "LYO Governance & Smart Network Pillars",
+                pillarSoroban: "🌉 Soroban Liquidity Bridge",
+                pillarDao: "🗳️ DAO Governance Proposal",
+                pillarSim: "📊 AI Predictive Simulation",
+                pillarAml: "🔍 AML Financial Audit",
+                adminTitle: "🛡️ Tripoli Node Operations Room & Post-Quantum Defense (PQC)",
+                adminSub: "Sovereign Control Panel for General Manager (Abd al-Qader Mokhtar)",
+                secPrismLbl: "PRISM AI Shield Status",
+                secPrismVal: "100% Active (PQC Protected)",
+                secZeroLbl: "Zero-Trust Protocol",
+                secZeroVal: "Enabled Across All Routes",
+                secDbLbl: "Database Status (assets.db)",
+                secDbVal: "Isolated & Completely Secure",
+                pendingTitle: "📋 Pending General Manager Approvals",
+                btnRefreshPend: "Refresh Requests 🔄",
+                thReqId: "Request ID",
+                thAgentName: "Agent Name",
+                thActionType: "Action Type",
+                thDetails: "Details",
+                thDecision: "Decision",
+                loadingPend: "Loading node records...",
+                ledgerTitle: "📜 Tripoli Node Permanent Ledger",
+                btnDownloadCsv: "📥 Download CSV Archive",
+                btnRefreshLedger: "Refresh Ledger 🔄",
+                thPayId: "Payment ID",
+                thUserId: "User ID",
+                thValCurr: "Value & Currency",
+                thSecStatus: "Security Status",
+                thTime: "Timestamp",
+                loadingLedger: "Fetching permanent ledgers...",
+                footerText: "All Rights Reserved © 2026 - Omniverse & Tripoli Node within Pi Network Ecosystem.",
+                pinPrompt: "🔒 Enter General Manager Sovereign PIN:",
+                pinError: "❌ Error: Invalid Sovereign PIN! This room is secure and restricted to the General Manager."
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            const htmlRoot = document.getElementById('htmlRoot');
+            const btnLangToggle = document.getElementById('btnLangToggle');
+            const pendingTable = document.getElementById('pendingTableElement');
+            const ledgerTable = document.getElementById('ledgerTableElement');
+
+            if (currentLang === 'en') {
+                htmlRoot.setAttribute('lang', 'en');
+                htmlRoot.setAttribute('dir', 'ltr');
+                btnLangToggle.innerText = 'العربية 🌐';
+                if (pendingTable) pendingTable.className = "w-full text-left text-xs";
+                if (ledgerTable) ledgerTable.className = "w-full text-left text-xs";
+            } else {
+                htmlRoot.setAttribute('lang', 'ar');
+                htmlRoot.setAttribute('dir', 'rtl');
+                btnLangToggle.innerText = 'English 🌐';
+                if (pendingTable) pendingTable.className = "w-full text-right text-xs";
+                if (ledgerTable) ledgerTable.className = "w-full text-right text-xs";
+            }
+
+            // تحديث النصوص العادية
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+
+            // تحديث العناصر النصية المؤقتة placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (translations[currentLang][key]) {
+                    el.setAttribute('placeholder', translations[currentLang][key]);
+                }
+            });
+        }
 
         function requestAdminAccess() {
-            let enteredPin = prompt("🔒 إدخال مفتاح السيادة الخاص بالمدير العام:");
+            let enteredPin = prompt(translations[currentLang].pinPrompt);
             if (enteredPin === ADMIN_SOVEREIGN_PIN && ADMIN_SOVEREIGN_PIN !== "") {
                 switchView('admin');
             } else if (enteredPin !== null) {
-                alert("❌ خطأ: مفتاح السيادة غير صحيح! هذه الغرفة محصنة ومخصصة للمدير العام فقط.");
+                alert(translations[currentLang].pinError);
             }
         }
 
