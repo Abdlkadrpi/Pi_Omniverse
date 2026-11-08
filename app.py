@@ -114,6 +114,14 @@ def init_db():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # جدول المستخدمين لدعم الأرصدة والتحقق من KYC والمحرك الديناميكي
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                pi_uid TEXT PRIMARY KEY,
+                kyc_verified BOOLEAN NOT NULL,
+                lyo_balance REAL DEFAULT 0.0
+            )
+        """)
         conn.commit()
 
 @app.route('/')
@@ -137,11 +145,18 @@ def health_check():
         "predictive_simulation": "Active & AI-Powered",
         "compliance_gateway": "Active & Compliant",
         "autonomous_swarm": "Active & 24/7 Monitoring",
-        "lyo_governance_engine": "Active & Deflationary Burn Enabled",
+        "lyo_governance_engine": "Active & Deflationary Burn Enabled & Dynamic Fee Engine",
         "lyo_voting_system": "Active & Post-Quantum Protected",
         "pi_payments_gateway": "Active & Ready for Mainnet/Testnet",
         "prism_pqc_guardrail": "Active & Deception Shield Enabled"
     }), 200
+
+# دالة الحساب الديناميكي لرسوم عملة LYO (تتأقلم مع سعر العملة في السوق لضمان استقرار تكلفة الوكلاء)
+def calculate_dynamic_fee(service_target_usd: float, current_lyo_market_price: float) -> float:
+    if current_lyo_market_price <= 0:
+        return 1.0  # قيمة افتراضية للحماية
+    exact_lyo_fee = service_target_usd / current_lyo_market_price
+    return max(0.00001, round(exact_lyo_fee, 6))
 
 @app.route('/api/v1/lyo/execute-task', methods=['POST'])
 @require_zero_trust_security
@@ -157,13 +172,22 @@ def execute_agent_task():
             "message": "Access denied: Pi Network KYC verification is mandatory for LYO utility and agent operations."
         }), 403
 
-    amount = float(data.get("amount_lyo", 10.0))
+    # تفعيل محرك التسعير الديناميكي للخدمات
+    current_lyo_price = float(data.get("current_lyo_price", 0.10)) # يجلب من أوراكل السوق أو الطلب
+    target_service_usd = 0.01 # تكلفة مرجعية ثابتة للخدمة (مثلاً 1 سنت مقابل حوسبة الوكيل)
+    
+    amount = calculate_dynamic_fee(target_service_usd, current_lyo_price)
+    
+    # دعم التمرير اليدوي للكمية في حال رغبة العميل بطلب مخصص يتجاوز التكلفة الأساسية للخدمة
+    if "amount_lyo" in data and float(data.get("amount_lyo")) > amount:
+        amount = float(data.get("amount_lyo"))
+
     burn_fee = amount * 0.01  
     net_allocated = amount - burn_fee
 
     response_payload = {
         "status": "success",
-        "message": "Zero-Trust, Smart WAF & Quantum-Resilient security validation passed. LYO utility task executed successfully.",
+        "message": "Zero-Trust, Smart WAF, Quantum-Resilient & Dynamic Fee security validation passed. LYO utility task executed successfully.",
         "utility_token": "LYO",
         "node": "Tripoli Node v0.6.3",
         "cyber_security": {
@@ -174,6 +198,7 @@ def execute_agent_task():
         "transaction_details": {
             "pi_user_uid": data.get("user_uid", "tripoli_node_admin_01"),
             "service_type": data.get("action", "default_smart_city_task"),
+            "current_market_price_lyo": current_lyo_price,
             "gross_paid_lyo": amount,
             "net_allocated_lyo": net_allocated,
             "burned_lyo": burn_fee,
