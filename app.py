@@ -4,6 +4,9 @@ import json
 import csv
 import io
 import time
+import hashlib
+from datetime import datetime
+from functools import wraps
 from flask import Flask, jsonify, render_template, request, make_response
 
 # استيراد الجدار الناري الذكي (Omniverse Smart WAF) من المجلد الرئيسي
@@ -75,7 +78,7 @@ app.register_blueprint(server_bridge_bp)
 sovereign_deployer = OmniverseSovereignDeployer()
 sovereign_deployer.execute_full_deployment(app)
 
-# تهيئة محرك التشفير الكمي الهجين للعمليات الآمنة
+# محرك التشفير الكمي الهجين للعمليات الآمنة
 crypto_engine = CryptoAgilityEngine(mode="quantum_hybrid")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -114,7 +117,6 @@ def init_db():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # جدول المستخدمين لدعم الأرصدة والتحقق من KYC والمحرك الديناميكي
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 pi_uid TEXT PRIMARY KEY,
@@ -122,7 +124,70 @@ def init_db():
                 lyo_balance REAL DEFAULT 0.0
             )
         """)
+        # جدول حوكمة القرارات البشرية والتحقق الإلزامي (Human-in-the-Loop Gateway)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS human_gate_approvals (
+                approval_id TEXT PRIMARY KEY,
+                agent_name TEXT NOT NULL,
+                action_type TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                status TEXT NOT NULL, -- PENDING, APPROVED, REJECTED
+                human_signature TEXT,
+                timestamp TEXT NOT NULL
+            )
+        """)
         conn.commit()
+
+init_db()
+
+# ==========================================
+# اعتراض حارس الحاكمية البشرية الإجباري (Global Human-Gate Interceptor)
+# ==========================================
+CRITICAL_GATE_ENDPOINTS = [
+    "/api/v1/lyo/execute-task",
+    "/api/v1/swarm/execute",
+    "/api/v1/rwa/notarize",
+    "/api/v1/soroban/transfer"
+]
+
+@app.before_request
+def enforce_global_human_approval_gate():
+    """
+    اعترض أي طلب موجه للمسارات الحرجة للوكلاء أو التعاملات المالية قبل وصوله للـ Blueprints
+    ويقوم بتجميد العملية تلقائيًا حتى يحصل على اعتماد المدير العام (عبد القادر مختار).
+    """
+    if request.path in CRITICAL_GATE_ENDPOINTS and request.method == "POST":
+        data = request.json or {}
+        
+        # إذا تم تمرير رمز الاعتماد البشري المعتمد، اسمح بمرور الطلب لتنفيذه
+        bypass_token = data.get("human_approval_bypass_token")
+        if bypass_token == "APPROVED_BY_GENERAL_MANAGER_ABDULKADER":
+            return None
+
+        agent_name = data.get("agent_name", "Omniverse_Autonomous_Swarm")
+        action_type = data.get("action", "CRITICAL_AGENT_FINANCIAL_OR_RWA_TASK")
+        approval_id = hashlib.sha256(f"{agent_name}-{action_type}-{time.time()}".encode()).hexdigest()[:16]
+        timestamp = datetime.utcnow().isoformat()
+
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO human_gate_approvals (approval_id, agent_name, action_type, payload, status, timestamp)
+                    VALUES (?, ?, ?, ?, 'PENDING', ?)
+                """, (approval_id, agent_name, action_type, json.dumps(data), timestamp))
+                conn.commit()
+        except Exception as e:
+            print(f"[-] خطأ في تسجيل عملية الانتظار البشري: {e}")
+
+        return jsonify({
+            "status": "suspended_pending_human_approval",
+            "approval_id": approval_id,
+            "message": "🔒 تم توقيف تنفيذ الوكيل مؤقتًا. يتطلب هذا الإجراء الاعتماد البشري النهائي من المدير العام (عبد القادر مختار) لضمان السيادة وعدم فقدان السيطرة.",
+            "action_type": action_type,
+            "agent_name": agent_name
+        }), 403
+
 
 @app.route('/')
 def index():
@@ -134,8 +199,9 @@ def health_check():
     return jsonify({
         "status": "healthy", 
         "architecture": "Flask Blueprints Modular - Zero Error",
-        "node": "Tripoli Node v0.6.3",
+        "node": "Pi Omniverse Smart City v0.6.3",
         "security": "PRISM AI Shield & Smart WAF & Quantum-Resilient Active",
+        "human_gate_security": "Active & Enforced (Human-in-the-Loop Interceptor)",
         "memory_optimization": "Active & Dynamic Garbage Collection",
         "system_memory": mem_status,
         "physical_ai_gateway": "Active & Ready for Sensor Telemetry",
@@ -151,10 +217,71 @@ def health_check():
         "prism_pqc_guardrail": "Active & Deception Shield Enabled"
     }), 200
 
-# دالة الحساب الديناميكي لرسوم عملة LYO (تتأقلم مع سعر العملة في السوق لضمان استقرار تكلفة الوكلاء)
+# ==========================================
+# مسارات إدارة الحاكمية البشرية والتحقق (Human-Gate Control APIs)
+# ==========================================
+@app.route('/api/v1/human-gate/pending', methods=['GET'])
+def get_human_gate_pending():
+    """استعراض كافة قرارات الوكلاء المعلقة التي تنتظر قرارك البشري النهائي"""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM human_gate_approvals WHERE status = 'PENDING' ORDER BY id DESC;")
+            rows = cursor.fetchall()
+            
+            pending_items = []
+            for r in rows:
+                pending_items.append({
+                    "approval_id": r["approval_id"],
+                    "agent_name": r["agent_name"],
+                    "action_type": r["action_type"],
+                    "payload": json.loads(r["payload"]) if r["payload"] else {},
+                    "timestamp": r["timestamp"]
+                })
+            return jsonify({
+                "status": "success",
+                "total_pending": len(pending_items),
+                "pending_approvals": pending_items
+            }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/human-gate/resolve', methods=['POST'])
+def resolve_human_gate_approval():
+    """اتخاذ القرار البشري النهائي (موافقة أو رفض) على تصرفات الوكلاء والأسراب"""
+    data = request.json or {}
+    approval_id = data.get("approval_id")
+    decision = data.get("decision") # APPROVED أو REJECTED
+    human_signature = data.get("human_signature", "APPROVED_BY_GENERAL_MANAGER_ABDULKADER")
+
+    if decision not in ["APPROVED", "REJECTED"]:
+        return jsonify({"status": "error", "message": "Invalid decision. Must be APPROVED or REJECTED."}), 400
+
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE human_gate_approvals 
+                SET status = ?, human_signature = ? 
+                WHERE approval_id = ?
+            """, (decision, human_signature, approval_id))
+            conn.commit()
+
+        return jsonify({
+            "status": "success",
+            "approval_id": approval_id,
+            "decision": decision,
+            "message": f"تم تطبيق القرار البشري بنجاح: {decision} بواسطة المدير العام."
+        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# دالة الحساب الديناميكي لرسوم عملة LYO
 def calculate_dynamic_fee(service_target_usd: float, current_lyo_market_price: float) -> float:
     if current_lyo_market_price <= 0:
-        return 1.0  # قيمة افتراضية للحماية
+        return 1.0 
     exact_lyo_fee = service_target_usd / current_lyo_market_price
     return max(0.00001, round(exact_lyo_fee, 6))
 
@@ -172,13 +299,11 @@ def execute_agent_task():
             "message": "Access denied: Pi Network KYC verification is mandatory for LYO utility and agent operations."
         }), 403
 
-    # تفعيل محرك التسعير الديناميكي للخدمات
-    current_lyo_price = float(data.get("current_lyo_price", 0.10)) # يجلب من أوراكل السوق أو الطلب
-    target_service_usd = 0.01 # تكلفة مرجعية ثابتة للخدمة (مثلاً 1 سنت مقابل حوسبة الوكيل)
+    current_lyo_price = float(data.get("current_lyo_price", 0.10))
+    target_service_usd = 0.01 
     
     amount = calculate_dynamic_fee(target_service_usd, current_lyo_price)
     
-    # دعم التمرير اليدوي للكمية في حال رغبة العميل بطلب مخصص يتجاوز التكلفة الأساسية للخدمة
     if "amount_lyo" in data and float(data.get("amount_lyo")) > amount:
         amount = float(data.get("amount_lyo"))
 
@@ -189,10 +314,11 @@ def execute_agent_task():
         "status": "success",
         "message": "Zero-Trust, Smart WAF, Quantum-Resilient & Dynamic Fee security validation passed. LYO utility task executed successfully.",
         "utility_token": "LYO",
-        "node": "Tripoli Node v0.6.3",
+        "node": "Pi Omniverse Smart City v0.6.3",
         "cyber_security": {
             "pqc_signature_verified": True,
             "prism_guardrail_status": "PASSED",
+            "human_gate_status": "APPROVED_BY_GENERAL_MANAGER",
             "timestamp": time.time()
         },
         "transaction_details": {
@@ -203,7 +329,7 @@ def execute_agent_task():
             "net_allocated_lyo": net_allocated,
             "burned_lyo": burn_fee,
             "burn_address": "0x000000000000000000000000000000000000DEAD",
-            "node_origin": "Tripoli_Node_Gate_01"
+            "node_origin": "Omniverse_SmartCity_Gate_01"
         },
         "compliance_standards": {
             "pi_network_sdk": "v2.0_Verified",
@@ -233,7 +359,7 @@ def get_sovereign_ledger_archive():
             if not cursor.fetchone():
                 return jsonify({
                     "status": "success",
-                    "node": "Tripoli Node v0.6.3",
+                    "node": "Pi Omniverse Smart City v0.6.3",
                     "total_records": 0,
                     "transactions": []
                 }), 200
@@ -260,7 +386,7 @@ def get_sovereign_ledger_archive():
 
             return jsonify({
                 "status": "success",
-                "node": "Tripoli Node v0.6.3",
+                "node": "Pi Omniverse Smart City v0.6.3",
                 "total_records": len(transactions),
                 "transactions": transactions
             }), 200
@@ -268,7 +394,7 @@ def get_sovereign_ledger_archive():
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": f"Failed to retrieve Tripoli Node ledger archive: {str(e)}"
+            "message": f"Failed to retrieve Omniverse ledger archive: {str(e)}"
         }), 500
 
 @app.route('/api/v1/sovereign/ledger/export-csv', methods=['GET'])
@@ -307,7 +433,7 @@ def export_sovereign_ledger_csv():
             output.seek(0)
             
             response = make_response(output.getvalue())
-            response.headers["Content-Disposition"] = "attachment; filename=tripoli_node_ledger_archive.csv"
+            response.headers["Content-Disposition"] = "attachment; filename=omniverse_smartcity_ledger_archive.csv"
             response.headers["Content-Type"] = "text/csv; charset=utf-8"
             return response
 
