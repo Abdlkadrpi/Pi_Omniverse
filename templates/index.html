@@ -11,6 +11,9 @@
         body { font-family: 'Cairo', sans-serif; background-color: #030712; color: #f3f4f6; }
         .glow-gold { box-shadow: 0 0 25px rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.3); }
         .glow-cyan { box-shadow: 0 0 25px rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); }
+        .table-custom th { color: #58a6ff; font-size: 0.75rem; border-bottom: 2px solid #30363d; }
+        .table-custom td { font-size: 0.8rem; vertical-align: middle; }
+        .hash-badge { font-family: monospace; font-size: 0.7rem; background: #21262d; padding: 2px 6px; border-radius: 4px; color: #79c0ff; border: 1px solid #30363d; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-yellow-500 selection:text-black">
@@ -169,28 +172,35 @@
                     </div>
                 </div>
 
-                <!-- الأرشيف الدائم وسجلات المعاملات -->
+                <!-- الأرشيف الدائم وسجلات المعاملات والتدقيق المالي (Sovereign Ledger Archive) -->
                 <div class="pt-2">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xs font-bold text-cyan-400" data-i18n="ledgerTitle">📜 السجل الدائم لعقدة طرابلس (Tripoli Node Ledger)</h3>
+                    <div class="flex flex-col md:flex-row justify-between items-md-center gap-2 mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold text-cyan-400" data-i18n="ledgerTitle">📜 أرشيف التدقيق المالي السيادي (Sovereign LYO Ledger Archive)</h3>
+                            <span id="archiveTotalBadge" class="text-[10px] text-zinc-400">0 سجلات موثقة</span>
+                        </div>
                         <div class="flex gap-2">
-                            <button onclick="downloadSovereignCsv()" class="bg-emerald-600 hover:bg-emerald-500 text-black text-xs px-3 py-1 rounded font-bold transition" data-i18n="btnDownloadCsv">📥 تحميل الأرشيف CSV</button>
-                            <button onclick="loadDashboardData()" class="bg-cyan-700 hover:bg-cyan-600 text-white text-xs px-3 py-1 rounded font-bold transition" data-i18n="btnRefreshLedger">تحديث السجلات 🔄</button>
+                            <button onclick="downloadSovereignCsv()" class="bg-emerald-600 hover:bg-emerald-500 text-black text-xs px-3 py-1.5 rounded font-bold transition" data-i18n="btnDownloadCsv">📥 تحميل الأرشيف CSV</button>
+                            <button onclick="loadDashboardData()" class="bg-cyan-700 hover:bg-cyan-600 text-white text-xs px-3 py-1.5 rounded font-bold transition" data-i18n="btnRefreshLedger">تحديث السجلات 🔄</button>
                         </div>
                     </div>
                     <div class="overflow-x-auto border border-zinc-800 rounded-xl">
-                        <table class="w-full text-xs" id="ledgerTableElement">
+                        <table class="w-full text-xs table-custom" id="ledgerTableElement">
                             <thead class="bg-zinc-950 text-cyan-400 border-b border-zinc-800">
                                 <tr>
-                                    <th class="p-2.5" data-i18n="thPayId">معرف الدفع</th>
-                                    <th class="p-2.5" data-i18n="thUserId">معرف المستخدم</th>
-                                    <th class="p-2.5" data-i18n="thValCurr">القيمة والعملة</th>
-                                    <th class="p-2.5" data-i18n="thSecStatus">الحالة الأمنية</th>
-                                    <th class="p-2.5" data-i18n="thTime">التوقيت</th>
+                                    <th class="p-2.5">رقم المعاملة</th>
+                                    <th class="p-2.5">المستخدم (Pi UID)</th>
+                                    <th class="p-2.5">نوع الخدمة</th>
+                                    <th class="p-2.5">الإجمالي (LYO)</th>
+                                    <th class="p-2.5">الصافي الموزع</th>
+                                    <th class="p-2.5">الحرق (1%)</th>
+                                    <th class="p-2.5">المصدر</th>
+                                    <th class="p-2.5">الأمان (PQC)</th>
+                                    <th class="p-2.5">التوقيت (UTC)</th>
                                 </tr>
                             </thead>
                             <tbody id="crosschainTableBody" class="divide-y divide-zinc-800 text-zinc-300">
-                                <tr><td colspan="5" class="p-3 text-center text-zinc-500" data-i18n="loadingLedger">جاري جلب السجلات الدائمة...</td></tr>
+                                <tr><td colspan="9" class="p-3 text-center text-zinc-500" data-i18n="loadingLedger">جاري جلب السجلات الدائمة...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -206,7 +216,7 @@
         <span data-i18n="footerText">جميع الحقوق محفوظة © 2026 - أومنيفيرس وعقدة طرابلس ضمن النظام البيئي لشبكة Pi Network.</span>
     </footer>
 
-    <!-- سكربت الحماية بكلمة مرور والتبديل بين الواجهات ونظام الترجمة الثنائية (AR/EN) -->
+    <!-- سكربت الحماية بكلمة مرور والتبديل بين الواجهات ونظام الترجمة الثنائية والبيانات الحية -->
     <script>
         const ADMIN_SOVEREIGN_PIN = "Aa12800$$";
         let currentLang = 'ar';
@@ -257,14 +267,9 @@
                 thDetails: "التفاصيل",
                 thDecision: "القرار",
                 loadingPend: "جاري تحميل سجلات العقدة...",
-                ledgerTitle: "📜 السجل الدائم لعقدة طرابلس (Tripoli Node Ledger)",
+                ledgerTitle: "📜 أرشيف التدقيق المالي السيادي (Sovereign LYO Ledger Archive)",
                 btnDownloadCsv: "📥 تحميل الأرشيف CSV",
                 btnRefreshLedger: "تحديث السجلات 🔄",
-                thPayId: "معرف الدفع",
-                thUserId: "معرف المستخدم",
-                thValCurr: "القيمة والعملة",
-                thSecStatus: "الحالة الأمنية",
-                thTime: "التوقيت",
                 loadingLedger: "جاري جلب السجلات الدائمة...",
                 footerText: "جميع الحقوق محفوظة © 2026 - أومنيفيرس وعقدة طرابلس ضمن النظام البيئي لشبكة Pi Network.",
                 pinPrompt: "🔒 إدخال مفتاح السيادة الخاص بالمدير العام:",
@@ -315,14 +320,9 @@
                 thDetails: "Details",
                 thDecision: "Decision",
                 loadingPend: "Loading node records...",
-                ledgerTitle: "📜 Tripoli Node Permanent Ledger",
+                ledgerTitle: "📜 Sovereign LYO Ledger Archive",
                 btnDownloadCsv: "📥 Download CSV Archive",
                 btnRefreshLedger: "Refresh Ledger 🔄",
-                thPayId: "Payment ID",
-                thUserId: "User ID",
-                thValCurr: "Value & Currency",
-                thSecStatus: "Security Status",
-                thTime: "Timestamp",
                 loadingLedger: "Fetching permanent ledgers...",
                 footerText: "All Rights Reserved © 2026 - Omniverse & Tripoli Node within Pi Network Ecosystem.",
                 pinPrompt: "🔒 Enter General Manager Sovereign PIN:",
@@ -342,16 +342,15 @@
                 htmlRoot.setAttribute('dir', 'ltr');
                 btnLangToggle.innerText = 'العربية 🌐';
                 if (pendingTable) pendingTable.className = "w-full text-left text-xs";
-                if (ledgerTable) ledgerTable.className = "w-full text-left text-xs";
+                if (ledgerTable) ledgerTable.className = "w-full text-left text-xs table-custom";
             } else {
                 htmlRoot.setAttribute('lang', 'ar');
                 htmlRoot.setAttribute('dir', 'rtl');
                 btnLangToggle.innerText = 'English 🌐';
                 if (pendingTable) pendingTable.className = "w-full text-right text-xs";
-                if (ledgerTable) ledgerTable.className = "w-full text-right text-xs";
+                if (ledgerTable) ledgerTable.className = "w-full text-right text-xs table-custom";
             }
 
-            // تحديث النصوص العادية
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (translations[currentLang][key]) {
@@ -359,7 +358,6 @@
                 }
             });
 
-            // تحديث العناصر النصية المؤقتة placeholders
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (translations[currentLang][key]) {
@@ -395,6 +393,109 @@
                 btnUser.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-800 text-zinc-400 hover:text-white transition border border-zinc-700";
                 loadDashboardData();
                 fetchPendingApprovals();
+            }
+        }
+
+        // دالة جلب الأرشيف الدائم للتدقيق المالي في واجهة أومنيفيرس
+        async function loadDashboardData() {
+            const tbody = document.getElementById('crosschainTableBody');
+            const badge = document.getElementById('archiveTotalBadge');
+            try {
+                const res = await fetch('/api/v1/sovereign/ledger/archive');
+                const data = await res.json();
+                const records = data.transactions || [];
+                badge.innerText = `${records.length} سجلات موثقة`;
+
+                let html = '';
+                if (records.length > 0) {
+                    records.forEach(r => {
+                        const txId = r.transaction_id || r.payment_id || 'N/A';
+                        const uid = r.pi_user_uid || r.user_uid || 'N/A';
+                        const service = r.service_type || 'Smart City Task';
+                        const gross = r.gross_paid_lyo !== undefined ? r.gross_paid_lyo : (r.amount || 0);
+                        const net = r.net_allocated_lyo !== undefined ? r.net_allocated_lyo : (gross * 0.99).toFixed(4);
+                        const burned = r.burned_lyo !== undefined ? r.burned_lyo : (gross * 0.01).toFixed(4);
+                        const origin = r.node_origin || r.node_location || 'Tripoli_Node';
+                        const pqcBadge = (r.pqc_verified || r.pqc_signature) 
+                            ? '<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px]">🛡️ PQC موثق</span>' 
+                            : '<span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[10px]">Standard</span>';
+                        const time = r.timestamp || '';
+
+                        html += `
+                        <tr class="hover:bg-zinc-900/50">
+                            <td class="p-2.5"><span class="hash-badge">${txId}</span></td>
+                            <td class="p-2.5">${uid}</td>
+                            <td class="p-2.5">${service}</td>
+                            <td class="p-2.5 font-bold text-yellow-400">${gross} LYO</td>
+                            <td class="p-2.5 text-emerald-400">${net} LYO</td>
+                            <td class="p-2.5 text-red-400">🔥 ${burned} LYO</td>
+                            <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-[10px]">${origin}</span></td>
+                            <td class="p-2.5">${pqcBadge}</td>
+                            <td class="p-2.5 text-zinc-400 text-[11px]">${time}</td>
+                        </tr>`;
+                    });
+                } else {
+                    html = '<tr><td colspan="9" class="p-4 text-center text-zinc-500">لا توجد معاملات مؤرشفة حتى الآن</td></tr>';
+                }
+                tbody.innerHTML = html;
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-red-400">تعذر الاتصال بخادم الأرشيف المالي.</td></tr>';
+            }
+        }
+
+        function downloadSovereignCsv() {
+            window.open('/api/v1/sovereign/ledger/export-csv', '_blank');
+        }
+
+        async function fetchPendingApprovals() {
+            const tbody = document.getElementById('pending-approvals-body');
+            try {
+                const res = await fetch('/api/v1/human-gate/pending');
+                const data = await res.json();
+                const pending = data.pending_approvals || [];
+
+                if (pending.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-zinc-500">لا توجد عمليات معلقة بانتظار اعتماد المدير العام حالياً.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                pending.forEach(item => {
+                    html += `
+                    <tr class="hover:bg-zinc-900/50">
+                        <td class="p-2.5"><span class="hash-badge">${item.approval_id}</span></td>
+                        <td class="p-2.5 text-yellow-400 font-bold">${item.agent_name}</td>
+                        <td class="p-2.5">${item.action_type}</td>
+                        <td class="p-2.5 text-zinc-400 text-[11px]"><pre class="bg-black p-1 rounded text-zinc-300 max-w-xs overflow-x-auto">${JSON.stringify(item.payload)}</pre></td>
+                        <td class="p-2.5 text-center flex justify-center gap-1">
+                            <button onclick="resolveApproval('${item.approval_id}', 'APPROVED')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] px-2.5 py-1 rounded font-bold transition">✔️ اعتماد</button>
+                            <button onclick="resolveApproval('${item.approval_id}', 'REJECTED')" class="bg-red-600 hover:bg-red-500 text-white text-[11px] px-2.5 py-1 rounded font-bold transition">✖️ رفض</button>
+                        </td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-zinc-500">لا توجد طلبات معلقة.</td></tr>';
+            }
+        }
+
+        async function resolveApproval(approvalId, decision) {
+            try {
+                const res = await fetch('/api/v1/human-gate/resolve', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        approval_id: approvalId,
+                        decision: decision,
+                        human_signature: "APPROVED_BY_GENERAL_MANAGER_ABDULKADER"
+                    })
+                });
+                const data = await res.json();
+                alert(data.message || "تم تسجيل القرار السيادي بنجاح.");
+                fetchPendingApprovals();
+                loadDashboardData();
+            } catch (e) {
+                alert("حدث خطأ أثناء تنفيذ القرار البشري.");
             }
         }
     </script>

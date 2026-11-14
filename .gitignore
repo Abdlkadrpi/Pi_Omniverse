@@ -1,33 +1,36 @@
-# Node modules & frontend dependencies
-node_modules/
-
-# Python bytecode and cache files
+# Python bytecode & cache
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
 env/
 venv/
 ENV/
-build/
-dist/
-*.egg-info/
+env.bak/
+venv.bak/
 
-# Local databases, journals and runtime logs
-assets.db
-assets.db-journal
-*.log
-prism_supervisor_audit.log
-*.sqlite3
-
-# Temporary and test scripts
-test_claude.py
-*.tmp
-*.bak
-
-# Environment and IDE configurations
+# Environment variables & secrets
 .env
+.env.*
+secrets.json
+keys/
+
+# Local databases & persistent storage (Ephemeral on Render)
+*.db
+*.sqlite
+*.sqlite3
+assets.db
+
+# Exported reports & test outputs
+*.csv
+*.log
+stress_test_nodes.py
+
+# IDE & OS specific files
 .vscode/
+.idea/
 .DS_Store
 Thumbs.db
+*.swp
+*.swonode_modules/
