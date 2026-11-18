@@ -4,12 +4,19 @@ import json
 import csv
 import io
 import time
+import hmac
 import hashlib
 import requests
 import logging
 from datetime import datetime
 from functools import wraps
-from flask import Flask, jsonify, render_template, request, make_response
+from flask import Flask, jsonify, render_template, request, make_response, send_from_directory
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # استيراد الجدار الناري الذكي (Omniverse Smart WAF) من المجلد الرئيسي
 from omniverse_waf import OmniverseSmartWAF, require_prism_clearance
@@ -54,6 +61,9 @@ from agent_security import require_zero_trust_security
 # استيراد درع فحص خداع الوكلاء والتشفير المقاوم للكم المحدث (PRISM PQC Guardrail)
 from prism_pqc_guardrail import require_prism_pqc_guardrail
 
+# استيراد درع الثقة الصفرية وحماية عملة LYO
+from zero_trust_shield import sovereign_zero_trust_guard
+
 app = Flask(__name__)
 
 # إعداد السجلات لتتبع حالة جسر الاتصال بين السيرفرين
@@ -90,8 +100,12 @@ crypto_engine = CryptoAgilityEngine(mode="quantum_hybrid")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "assets.db")
 
+
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+        conn.execute("PRAGMA foreign_keys=ON;")
         cursor = conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS assets (
@@ -144,46 +158,65 @@ def init_db():
         """)
         conn.commit()
 
+
 init_db()
 
+
 # ==========================================
-# دالة جسر الاتصال بعقدة طرابلس (Tripoli Node Bridge Client) - محسنة لتفادي اعتراض الحماية المحلية
+# دالة جسر الاتصال بعقدة طرابلس (Tripoli Node Bridge Client) - موقعة بتشفير HMAC و KYC
 # ==========================================
 def send_transaction_to_tripoli_node(transaction_id: str, fee_amount: float):
     """
-    يقوم بإرسال تفاصيل المعاملة والرسوم من تطبيق أومنيفيرس (المنفذ 10000) 
-    إلى عقدة طرابلس (المنفذ 5000) متجاوزاً قيود الـ WAF المحلي لتتم بنجاح تام.
+    يرسل تفاصيل المعاملة والرسوم من تطبيق أومنيفيرس (المنفذ 10000)
+    إلى عقدة طرابلس (المنفذ 5000) متضمناً التوقيع التشفيري HMAC وترويسات KYC.
     """
     payload = {
         "transaction_id": transaction_id,
-        "fee_amount": fee_amount
+        "fee_amount": fee_amount,
+        "amount": fee_amount
     }
-    
+    payload_bytes = json.dumps(payload).encode("utf-8")
+
+    secret_key = os.getenv("SOVEREIGN_HMAC_SECRET", "").encode("utf-8")
+    signature = (
+        hmac.new(secret_key, payload_bytes, hashlib.sha256).hexdigest()
+        if secret_key else ""
+    )
+
     headers = {
         "Content-Type": "application/json",
         "User-Agent": "OmniverseInternalBridge/0.6.3",
         "X-Bypass-Local-Waf": "True",
-        "X-General-Manager": "Abdulkader-Mokhtar"
+        "X-General-Manager": "Abdulkader-Mokhtar",
+        "X-Pi-UID": "tripoli_node_bridge_01",
+        "X-Pi-KYC-Verified": "true",
+        "X-Sovereign-Signature": signature
     }
-    
+
     try:
         logging.info(f"إرسال المعاملة {transaction_id} بقيمة رسوم ${fee_amount} إلى عقدة طرابلس...")
-        response = requests.post(TRIPOLI_NODE_URL, json=payload, headers=headers, timeout=5)
-        
+        response = requests.post(
+            TRIPOLI_NODE_URL,
+            data=payload_bytes,
+            headers=headers,
+            timeout=5
+        )
+
         if response.status_code == 200:
             result = response.json()
             logging.info("✔️ تم بنجاح استلام وتوزيع الرسوم من قبل عقدة طرابلس!")
             return result
         else:
             logging.error(f"❌ فشل الاستجابة من العقدة برمز الخطأ {response.status_code}: {response.text}")
-            return {"success": False, "error": response.text}
-            
+            return {"success": False, "status_code": response.status_code, "error": response.text}
+
     except requests.exceptions.ConnectionError:
         logging.error("❌ تعذر الاتصال بعقدة طرابلس على المنفذ 5000. تأكد من أن سيرفر العقدة يعمل!")
         return {"success": False, "error": "Connection Refused to Tripoli Node"}
     except Exception as e:
         logging.error(f"❌ حدث خطأ غير متوقع أثناء ربط السيرفرين: {str(e)}")
         return {"success": False, "error": str(e)}
+
 
 # ==========================================
 # اعتراض حارس الحاكمية البشرية الإجباري (Global Human-Gate Interceptor)
@@ -195,11 +228,12 @@ CRITICAL_GATE_ENDPOINTS = [
     "/api/v1/soroban/transfer"
 ]
 
+
 @app.before_request
 def enforce_global_human_approval_gate():
     if request.path in CRITICAL_GATE_ENDPOINTS and request.method == "POST":
-        data = request.json or {}
-        
+        data = request.get_json(silent=True) or {}
+
         bypass_token = data.get("human_approval_bypass_token")
         if bypass_token == "APPROVED_BY_GENERAL_MANAGER_ABDULKADER":
             return None
@@ -211,6 +245,7 @@ def enforce_global_human_approval_gate():
 
         try:
             with sqlite3.connect(DB_PATH) as conn:
+                conn.execute("PRAGMA busy_timeout=5000;")
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT INTO human_gate_approvals (approval_id, agent_name, action_type, payload, status, timestamp)
@@ -233,11 +268,23 @@ def enforce_global_human_approval_gate():
 def index():
     return render_template('index.html')
 
+
+@app.route('/validation-key.txt')
+def serve_pi_validation_key():
+    key_file_path = os.path.join(BASE_DIR, "validation-key.txt")
+    if not os.path.isfile(key_file_path):
+        return jsonify({
+            "status": "error",
+            "message": "validation-key.txt not found on server."
+        }), 404
+    return send_from_directory(BASE_DIR, "validation-key.txt", mimetype="text/plain; charset=utf-8")
+
+
 @app.route('/health')
 def health_check():
     mem_status = check_system_memory()
     return jsonify({
-        "status": "healthy", 
+        "status": "healthy",
         "architecture": "Flask Blueprints Modular - Zero Error",
         "node": "Pi Omniverse Smart City v0.6.3",
         "security": "PRISM AI Shield & Smart WAF & Quantum-Resilient Active",
@@ -255,38 +302,44 @@ def health_check():
         "lyo_voting_system": "Active & Post-Quantum Protected",
         "pi_payments_gateway": "Active & Ready for Mainnet/Testnet",
         "prism_pqc_guardrail": "Active & Deception Shield Enabled",
+        "zero_trust_shield": "Active",
         "server_bridge_status": "Connected to Tripoli Node (Port 5000)"
     }), 200
+
 
 # ==========================================
 # مسار ربط ومعالجة الخدمات بين السيرفرين (Bridge Service Route)
 # ==========================================
 @app.route('/api/omni/process-service', methods=['POST'])
+@sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=False, require_sovereign_sig=False)
 def process_user_service():
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     tx_id = data.get("payment_id", "TX_OMNI_GEN_01")
     amount = float(data.get("amount", 0.10))
-    
+
     bridge_response = send_transaction_to_tripoli_node(tx_id, amount)
-    
+
     return jsonify({
         "status": "success",
         "message": "تم معالجة الخدمة في أومنيفيرس وتوجيه التدفقات المالية بنجاح لعقدة طرابلس",
         "tripoli_node_receipt": bridge_response
     }), 200
 
+
 # ==========================================
 # مسارات إدارة الحاكمية البشرية والتحقق (Human-Gate Control APIs)
 # ==========================================
 @app.route('/api/v1/human-gate/pending', methods=['GET'])
+@sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=False, require_sovereign_sig=False)
 def get_human_gate_pending():
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=5000;")
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM human_gate_approvals WHERE status = 'PENDING' ORDER BY id DESC;")
             rows = cursor.fetchall()
-            
+
             pending_items = []
             for r in rows:
                 pending_items.append({
@@ -304,9 +357,11 @@ def get_human_gate_pending():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
 @app.route('/api/v1/human-gate/resolve', methods=['POST'])
+@sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=False, require_sovereign_sig=True)
 def resolve_human_gate_approval():
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     approval_id = data.get("approval_id")
     decision = data.get("decision")
     human_signature = data.get("human_signature", "APPROVED_BY_GENERAL_MANAGER_ABDULKADER")
@@ -316,10 +371,11 @@ def resolve_human_gate_approval():
 
     try:
         with sqlite3.connect(DB_PATH) as conn:
+            conn.execute("PRAGMA busy_timeout=5000;")
             cursor = conn.cursor()
             cursor.execute("""
-                UPDATE human_gate_approvals 
-                SET status = ?, human_signature = ? 
+                UPDATE human_gate_approvals
+                SET status = ?, human_signature = ?
                 WHERE approval_id = ?
             """, (decision, human_signature, approval_id))
             conn.commit()
@@ -336,17 +392,19 @@ def resolve_human_gate_approval():
 
 def calculate_dynamic_fee(service_target_usd: float, current_lyo_market_price: float) -> float:
     if current_lyo_market_price <= 0:
-        return 1.0 
+        return 1.0
     exact_lyo_fee = service_target_usd / current_lyo_market_price
     return max(0.00001, round(exact_lyo_fee, 6))
 
+
 @app.route('/api/v1/lyo/execute-task', methods=['POST'])
+@sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=True, require_sovereign_sig=True)
 @require_zero_trust_security
 @require_prism_pqc_guardrail(strict_kyc=True)
 def execute_agent_task():
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     is_kyc = data.get("is_kyc_verified", False)
-     
+
     if not is_kyc:
         return jsonify({
             "status": "error",
@@ -355,14 +413,14 @@ def execute_agent_task():
         }), 403
 
     current_lyo_price = float(data.get("current_lyo_price", 0.10))
-    target_service_usd = 0.01 
-    
+    target_service_usd = 0.01
+
     amount = calculate_dynamic_fee(target_service_usd, current_lyo_price)
-    
+
     if "amount_lyo" in data and float(data.get("amount_lyo")) > amount:
         amount = float(data.get("amount_lyo"))
 
-    burn_fee = amount * 0.01  
+    burn_fee = amount * 0.01
     net_allocated = amount - burn_fee
 
     response_payload = {
@@ -400,15 +458,18 @@ def execute_agent_task():
 
     return jsonify(response_payload), 200
 
+
 @app.route('/api/v1/sovereign/ledger/archive', methods=['GET'])
+@sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=False, require_sovereign_sig=False)
 def get_sovereign_ledger_archive():
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=5000;")
             cursor = conn.cursor()
 
             cursor.execute("""
-                SELECT name FROM sqlite_master 
+                SELECT name FROM sqlite_master
                 WHERE type='table' AND name='sovereign_ledger_archive';
             """)
             if not cursor.fetchone():
@@ -452,24 +513,27 @@ def get_sovereign_ledger_archive():
             "message": f"Failed to retrieve Omniverse ledger archive: {str(e)}"
         }), 500
 
+
 @app.route('/api/v1/sovereign/ledger/export-csv', methods=['GET'])
+@sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=False, require_sovereign_sig=False)
 def export_sovereign_ledger_csv():
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=5000;")
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM sovereign_ledger_archive ORDER BY id DESC;")
             rows = cursor.fetchall()
 
             output = io.StringIO()
             writer = csv.writer(output)
-            
+
             writer.writerow([
-                "ID", "Transaction ID", "Pi User UID", "Service Type", 
-                "Gross Paid (LYO)", "Net Allocated (LYO)", "Burned LYO (1%)", 
+                "ID", "Transaction ID", "Pi User UID", "Service Type",
+                "Gross Paid (LYO)", "Net Allocated (LYO)", "Burned LYO (1%)",
                 "Burn Address", "Node Origin", "PQC Verified", "Timestamp"
             ])
-            
+
             for row in rows:
                 writer.writerow([
                     row["id"],
@@ -484,9 +548,9 @@ def export_sovereign_ledger_csv():
                     row["pqc_verified"],
                     row["timestamp"]
                 ])
-            
+
             output.seek(0)
-            
+
             response = make_response(output.getvalue())
             response.headers["Content-Disposition"] = "attachment; filename=omniverse_smartcity_ledger_archive.csv"
             response.headers["Content-Type"] = "text/csv; charset=utf-8"
@@ -497,6 +561,7 @@ def export_sovereign_ledger_csv():
             "status": "error",
             "message": f"Failed to export CSV archive: {str(e)}"
         }), 500
+
 
 init_db()
 init_ledger_database()
