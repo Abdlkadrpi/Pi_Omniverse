@@ -501,5 +501,17 @@
         }
     </script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+    var b = document.getElementById("piStatusBanner");
+    if (b) {
+        b.classList.remove("hidden");
+        var piOk = (typeof window.Pi !== "undefined");
+        var fn1 = (typeof window.connectPi === "function");
+        var fn2 = (typeof window.authenticatePiVerify === "function");
+        b.innerText = "Diag | PiSDK:" + piOk + " | connectPi:" + fn1 + " | PiVerify:" + fn2;
+    }
+});
+</script>
 </body>
 </html>
