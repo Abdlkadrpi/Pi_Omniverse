@@ -73,9 +73,23 @@ const jsTranslations = {
     }
 };
 
+function setPiStatus(msg, isError = false) {
+    const el = document.getElementById("piStatusBanner");
+    if (!el) return;
+    el.classList.remove("hidden");
+    el.className = isError
+        ? "mt-3 text-xs font-semibold text-red-300 bg-red-950/60 border border-red-700 rounded-lg px-3 py-2"
+        : "mt-3 text-xs font-semibold text-emerald-300 bg-emerald-950/50 border border-emerald-700 rounded-lg px-3 py-2";
+    el.innerText = msg;
+}
+
 function initPiSDK() {
-    if (typeof Pi !== 'undefined') {
-        Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
+    try {
+        if (typeof Pi !== 'undefined') {
+            Pi.init({ version: "2.0", sandbox: isSandbox, clientId: CLIENT_ID });
+        }
+    } catch (e) {
+        console.warn("Pi.init warning:", e);
     }
     const envBtn = document.getElementById('envToggleBtn');
     const helperSec = document.getElementById('testnetHelperSection');
@@ -121,12 +135,16 @@ async function authenticatePiVerify() {
         piverifyAccessToken = "mock_piverify_token_secure_999";
         localStorage.setItem("piverify_token", piverifyAccessToken);
         const piVerifyBtn = document.getElementById('piVerifyBtn');
-        if (piVerifyBtn) piVerifyBtn.innerText = "✅ " + (currentLang === 'ar' ? "تم التحقق عبر PiVerify: Tripoli Node Admin" : "Verified via PiVerify: Tripoli Node Admin");
-        alert(jsTranslations[currentLang].piVerifySuccess);
-        loadDashboardData();
+        if (piVerifyBtn) {
+            piVerifyBtn.innerText = "✅ " + (currentLang === 'ar' ? "تم التحقق عبر PiVerify: Tripoli Node Admin" : "Verified via PiVerify: Tripoli Node Admin");
+        }
+        setPiStatus(jsTranslations[currentLang].piVerifySuccess);
+        if (typeof loadDashboardData === "function") {
+            loadDashboardData();
+        }
     } catch (err) {
         console.error("PiVerify Auth Error:", err);
-        alert(currentLang === 'ar' ? "حدث خطأ أثناء الاتصال ببوابة PiVerify." : "An error occurred while connecting to PiVerify gateway.");
+        setPiStatus(currentLang === 'ar' ? "حدث خطأ أثناء الاتصال ببوابة PiVerify." : "An error occurred while connecting to PiVerify gateway.", true);
     }
 }
 

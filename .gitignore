@@ -34,3 +34,4 @@ stress_test_nodes.py
 Thumbs.db
 *.swp
 *.swonode_modules/
+*.bak

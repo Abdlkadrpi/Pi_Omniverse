@@ -566,6 +566,27 @@ def export_sovereign_ledger_csv():
 init_db()
 init_ledger_database()
 
+@app.route("/privacy")
+@app.route("/privacy.html")
+def serve_privacy_policy():
+    privacy_path = os.path.join(BASE_DIR, "privacy.html")
+    if not os.path.exists(privacy_path):
+        return jsonify({"status": "error", "message": "privacy.html not found"}), 404
+    return send_from_directory(BASE_DIR, "privacy.html", mimetype="text/html; charset=utf-8")
+
+
+@app.route("/api/v1/pinet/status", methods=["GET"])
+def pinet_readiness_status():
+    return jsonify({
+        "status": "ready",
+        "app_name": "Omniverse",
+        "utility_token": "LYO",
+        "pinet_enabled": True,
+        "privacy_policy": "/privacy",
+        "validation_endpoint": "/validation-key.txt"
+    }), 200
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port, debug=False)
