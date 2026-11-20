@@ -603,5 +603,41 @@ window.addEventListener("DOMContentLoaded", function() {
         }
     });
 });</script>
+<script>
+(function() {
+    function bindPayButtonNow() {
+        var box = document.getElementById("payStatusBox");
+        var btns = document.querySelectorAll("button");
+        btns.forEach(function(btn) {
+            var t = (btn.innerText || btn.textContent || "");
+            if (t.indexOf("Pi SDK") !== -1 || t.indexOf("دفع عبر") !== -1) {
+                var handler = function(ev) {
+                    if (ev) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                    }
+                    if (box) {
+                        box.className = "mt-3 text-xs font-mono text-amber-300 bg-zinc-950 border border-amber-600 rounded-xl p-3 break-all";
+                        box.innerText = "⚡ تم التقاط الضغط على زر الدفع | processPayment=" + (typeof window.processPayment) + " | Pi=" + (typeof window.Pi);
+                    }
+                    if (typeof window.processPayment === "function") {
+                        window.processPayment();
+                    } else if (box) {
+                        box.innerText = "❌ window.processPayment غير معرفة حتى الآن";
+                    }
+                };
+                btn.onclick = handler;
+                btn.addEventListener("pointerdown", handler, { passive: false });
+            }
+        });
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bindPayButtonNow);
+    } else {
+        bindPayButtonNow();
+    }
+    setTimeout(bindPayButtonNow, 800);
+})();
+</script>
 </body>
 </html>
