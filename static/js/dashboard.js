@@ -179,6 +179,7 @@ async function verifyPaymentOnServer(paymentId, txid) {
     }
 }
 
+window.processPayment = processPayment;
 async function processPayment() {
     const nameEl = document.getElementById('assetName');
     const valEl = document.getElementById('assetVal');

@@ -576,5 +576,29 @@ window.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
+<script>window.addEventListener("DOMContentLoaded", function() {
+    var payBtns = Array.from(document.querySelectorAll("button")).filter(function(btn) {
+        return btn.textContent && (btn.textContent.indexOf("دفع عبر Pi SDK") !== -1 || btn.textContent.indexOf("Pi SDK") !== -1);
+    });
+    payBtns.forEach(function(btn) {
+        if (!btn.dataset.boundPayClick) {
+            btn.dataset.boundPayClick = "1";
+            btn.addEventListener("click", function(e) {
+                e.preventDefault();
+                var banner = document.getElementById("piStatusBanner");
+                if (banner) {
+                    banner.classList.remove("hidden");
+                    banner.className = "mt-3 text-xs font-semibold text-emerald-300 bg-emerald-950/50 border border-emerald-700 rounded-lg px-3 py-2";
+                    banner.innerText = "⏳ تم الضغط على دفع عبر Pi SDK — جاري التنفيذ...";
+                }
+                if (typeof window.processPayment === "function") {
+                    window.processPayment();
+                } else if (banner) {
+                    banner.innerText = "❌ دالة processPayment غير معرفة";
+                }
+            });
+        }
+    });
+});</script>
 </body>
 </html>
