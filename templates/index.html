@@ -701,7 +701,7 @@ window.addEventListener("DOMContentLoaded", function() {
                             },
                             onError: function(error, payment) {
                                 var pid = payment && payment.identifier ? payment.identifier : "";
-                                showPayMsg("❌ خطأ Pi SDK (" + pid + "): " + (error && error.message ? error.message : String(error)), true);
+                                showPayMsg("❌ خطأ Pi SDK (" + pid + "): " + (error && error.message ? error.message : JSON.stringify(error || {})), true);
                             }
                         }
                     );
