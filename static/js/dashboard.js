@@ -180,11 +180,123 @@ async function verifyPaymentOnServer(paymentId, txid) {
 }
 
 async function processPayment() {
-    const name = document.getElementById('assetName').value;
-    const val = parseFloat(document.getElementById('assetVal').value);
-    const currency = document.getElementById('assetCurrency').value;
+    const nameEl = document.getElementById('assetName');
+    const valEl = document.getElementById('assetVal');
+    const curEl = document.getElementById('assetCurrency');
+    const name = nameEl ? nameEl.value.trim() : "";
+    const val = valEl ? parseFloat(valEl.value) : NaN;
+    const currency = curEl ? curEl.value : "PI";
 
-    if (!name || isNaN(val) || val <= 0) return alert(jsTranslations[currentLang].assetInputError);
+    if (!name || isNaN(val) || val <= 0) {
+        return alert(jsTranslations[currentLang].assetInputError);
+    }
+
+    const userLabel = currentUser && currentUser.username ? currentUser.username : "pi_user";
+
+    // إذا كانت العملة PI و SDK متوفر في Pi Browser: إطلاق نافذة Pi.createPayment الحقيقية
+    if (currency === "PI" && typeof window.Pi !== "undefined" && typeof window.Pi.createPayment === "function") {
+        try {
+            setPiStatus(currentLang === "ar"
+                ? `⏳ جاري فتح نافذة دفع Pi Testnet (${val} Pi) للحساب ${userLabel}...`
+                : `⏳ Opening Pi Testnet payment window (${val} Pi) for ${userLabel}...`);
+
+            const paymentData = {
+                amount: Number(val),
+                memo: `Omniverse RWA: ${name} (${userLabel})`,
+                metadata: {
+                    asset_name: name,
+                    currency: currency,
+                    user_uid: userLabel,
+                    mode: isSandbox ? "testnet" : "mainnet"
+                }
+            };
+
+            const callbacks = {
+                onReadyForServerApproval: async function(paymentId) {
+                    setPiStatus(currentLang === "ar"
+                        ? `🔄 بانتظار موافقة السيرفر على الدفع | paymentId: ${paymentId}`
+                        : `🔄 Awaiting server approval | paymentId: ${paymentId}`);
+                    try {
+                        await fetch(`${TRIPOLI_NODE_URL}/api/v1/lyo/execute-task`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-PQC-Signature": "mock_lattice_signature_hash_secure_999",
+                                "X-PQC-PublicKey": "tripoli_node_pqc_pub_key_01",
+                                "X-Timestamp": Math.floor(Date.now() / 1000).toString(),
+                                "X-PiVerify-Access-Token": piverifyAccessToken || ""
+                            },
+                            body: JSON.stringify({
+                                payment_id: paymentId,
+                                stage: "approval",
+                                user_uid: userLabel,
+                                amount_lyo: val,
+                                is_kyc_verified: true,
+                                action: `Pi SDK Approval (${name})`
+                            })
+                        });
+                    } catch (e) {
+                        console.warn("Approval notify warning:", e);
+                    }
+                },
+                onReadyForServerCompletion: async function(paymentId, txid) {
+                    setPiStatus(currentLang === "ar"
+                        ? `✅ اكتملت معاملة Pi Testnet! paymentId: ${paymentId} | txid: ${txid}`
+                        : `✅ Pi Testnet payment completed! paymentId: ${paymentId} | txid: ${txid}`);
+                    try {
+                        const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/lyo/execute-task`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-PQC-Signature": "mock_lattice_signature_hash_secure_999",
+                                "X-PQC-PublicKey": "tripoli_node_pqc_pub_key_01",
+                                "X-Timestamp": Math.floor(Date.now() / 1000).toString(),
+                                "X-PiVerify-Access-Token": piverifyAccessToken || ""
+                            },
+                            body: JSON.stringify({
+                                payment_id: paymentId,
+                                txid: txid,
+                                user_uid: userLabel,
+                                amount_lyo: val,
+                                is_kyc_verified: true,
+                                action: `Pi Testnet TX (${name}) [id:${paymentId}] [tx:${txid}]`
+                            })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.status === "success") {
+                            alert(`✅ Testnet TX Completed!
+User: ${userLabel}
+paymentId: ${paymentId}
+txid: ${txid}`);
+                            if (typeof loadDashboardData === "function") loadDashboardData();
+                        }
+                    } catch (err) {
+                        console.error("Completion record error:", err);
+                    }
+                },
+                onCancel: function(paymentId) {
+                    setPiStatus(currentLang === "ar"
+                        ? `⚠️ تم إلغاء معاملة الدفع (${paymentId || "ملغاة"}).`
+                        : `⚠️ Payment cancelled (${paymentId || "cancelled"}).`, true);
+                },
+                onError: function(error, payment) {
+                    const pid = payment && payment.identifier ? payment.identifier : "";
+                    setPiStatus(currentLang === "ar"
+                        ? `❌ خطأ في دفع Pi (${pid}): ${error && error.message ? error.message : String(error)}`
+                        : `❌ Pi payment error (${pid}): ${error && error.message ? error.message : String(error)}`, true);
+                }
+            };
+
+            await window.Pi.createPayment(paymentData, callbacks);
+            return;
+        } catch (sdkErr) {
+            console.error("Pi.createPayment error:", sdkErr);
+            setPiStatus(currentLang === "ar"
+                ? `❌ تعذر تشغيل Pi.createPayment: ${sdkErr && sdkErr.message ? sdkErr.message : String(sdkErr)}`
+                : `❌ Failed to start Pi.createPayment: ${sdkErr && sdkErr.message ? sdkErr.message : String(sdkErr)}`, true);
+            return;
+        }
+    }
 
     try {
         const res = await fetch(`${TRIPOLI_NODE_URL}/api/v1/lyo/execute-task`, {
@@ -196,7 +308,7 @@ async function processPayment() {
                 'X-Timestamp': Math.floor(Date.now() / 1000).toString()
             },
             body: JSON.stringify({
-                user_uid: currentUser ? currentUser.username : "tripoli_node_admin_01",
+                user_uid: userLabel,
                 amount_lyo: val,
                 is_kyc_verified: true,
                 action: `RWA Asset Notary: ${name} (${currency})`
