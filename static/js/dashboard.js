@@ -147,6 +147,7 @@ async function authenticatePiVerify() {
         setPiStatus(currentLang === 'ar' ? "حدث خطأ أثناء الاتصال ببوابة PiVerify." : "An error occurred while connecting to PiVerify gateway.", true);
     }
 }
+window.authenticatePiVerify = authenticatePiVerify;
 
 function onIncompletePayment(payment) {
     verifyPaymentOnServer(payment.identifier, payment.transaction ? payment.transaction.txid : null);
