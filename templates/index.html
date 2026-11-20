@@ -639,5 +639,105 @@ window.addEventListener("DOMContentLoaded", function() {
     setTimeout(bindPayButtonNow, 800);
 })();
 </script>
+<script>
+(function() {
+    function showPayMsg(msg, isErr) {
+        var box = document.getElementById("payStatusBox");
+        if (box) {
+            box.className = isErr
+                ? "mt-3 text-xs font-mono text-red-300 bg-red-950/70 border border-red-700 rounded-xl p-3 break-all"
+                : "mt-3 text-xs font-mono text-emerald-300 bg-emerald-950/50 border border-emerald-700 rounded-xl p-3 break-all";
+            box.innerText = msg;
+        }
+    }
+
+    if (typeof window.processPayment !== "function") {
+        window.processPayment = async function() {
+            var nameEl = document.getElementById("assetName");
+            var valEl = document.getElementById("assetVal");
+            var curEl = document.getElementById("assetCurrency");
+            var name = nameEl ? nameEl.value.trim() : "";
+            var val = valEl ? parseFloat(valEl.value) : NaN;
+            var currency = curEl ? curEl.value : "PI";
+
+            showPayMsg("⏳ بدء الدفع | العملة: " + currency + " | القيمة: " + val, false);
+
+            if (!name || isNaN(val) || val <= 0) {
+                showPayMsg("❌ يرجى إدخال اسم الأصل وقيمة مالية أكبر من صفر.", true);
+                return;
+            }
+
+            if (currency === "PI") {
+                if (typeof window.Pi === "undefined" || typeof window.Pi.createPayment !== "function") {
+                    showPayMsg("⚠️ Pi SDK غير متاح (window.Pi=" + (typeof window.Pi) + "). تأكد من فتح الرابط داخل Pi Browser.", true);
+                    return;
+                }
+                try {
+                    if (typeof window.Pi.init === "function") {
+                        try { window.Pi.init({ version: "2.0", sandbox: true }); } catch (e0) {}
+                    }
+                    if (typeof window.Pi.authenticate === "function") {
+                        showPayMsg("⏳ جاري مصادقة الحساب (username, payments)...", false);
+                        await window.Pi.authenticate(["username", "payments"], function(incompletePayment) {
+                            console.log("Incomplete payment:", incompletePayment);
+                        });
+                    }
+                    showPayMsg("⏳ جاري فتح نافذة Pi.createPayment بمبلغ " + val + " Pi...", false);
+                    var created = window.Pi.createPayment(
+                        {
+                            amount: Number(val),
+                            memo: "Omniverse RWA: " + name,
+                            metadata: { asset_name: name, currency: currency, mode: "testnet" }
+                        },
+                        {
+                            onReadyForServerApproval: function(paymentId) {
+                                showPayMsg("🔄 بانتظار موافقة السيرفر | paymentId: " + paymentId, false);
+                            },
+                            onReadyForServerCompletion: function(paymentId, txid) {
+                                showPayMsg("✅ تمت معاملة Testnet! paymentId: " + paymentId + " | txid: " + txid, false);
+                            },
+                            onCancel: function(paymentId) {
+                                showPayMsg("⚠️ تم إلغاء الدفع (" + (paymentId || "ملغاة") + ").", true);
+                            },
+                            onError: function(error, payment) {
+                                var pid = payment && payment.identifier ? payment.identifier : "";
+                                showPayMsg("❌ خطأ Pi SDK (" + pid + "): " + (error && error.message ? error.message : String(error)), true);
+                            }
+                        }
+                    );
+                    if (created && typeof created.then === "function") {
+                        await created;
+                    }
+                } catch (err) {
+                    showPayMsg("❌ خطأ أثناء تشغيل الدفع: " + (err && err.message ? err.message : String(err)), true);
+                }
+                return;
+            }
+
+            try {
+                showPayMsg("⏳ جاري إرسال التسوية للسيرفر...", false);
+                var res = await fetch("/api/v1/lyo/execute-task", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        user_uid: "pi_user",
+                        amount_lyo: val,
+                        is_kyc_verified: true,
+                        action: "RWA Asset Notary: " + name + " (" + currency + ")"
+                    })
+                });
+                var data = await res.json();
+                if (res.ok && data.status === "success") {
+                    showPayMsg("✅ تم تسجيل العملية بنجاح: " + name, false);
+                } else {
+                    showPayMsg("❌ فشل التسجيل: " + (data.message || res.status), true);
+                }
+            } catch (eNet) {
+                showPayMsg("❌ تعذر الاتصال بالسيرفر: " + eNet.message, true);
+            }
+        };
+    }
+})();
+</script>
 </body>
 </html>
