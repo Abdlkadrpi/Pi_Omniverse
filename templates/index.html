@@ -722,7 +722,7 @@ function showPayMsg(msg, isErr) {
             var nameEl = document.getElementById("assetName");
             var valEl = document.getElementById("assetVal");
             var curEl = document.getElementById("assetCurrency");
-            if (window._piPayInFlight && window._piPayStartedAt && (Date.now() - window._piPayStartedAt > 20000)) {
+            if (window._piPayInFlight && (!window._piPayStartedAt || (Date.now() - window._piPayStartedAt > 5000))) {
                     window._piPayInFlight = false;
                 }
                 if (window._piPayInFlight) {
@@ -731,7 +731,7 @@ function showPayMsg(msg, isErr) {
             }
             window._piPayInFlight = true; window._piPayStartedAt = Date.now();
                 clearTimeout(window._piPayWatchdog);
-                window._piPayWatchdog = setTimeout(() => { if (window._piPayInFlight && !window._piWalletModalOpen) { window._piPayInFlight = false; } }, 20000);
+                window._piPayWatchdog = setTimeout(() => { window._piPayInFlight = false; }, 5000);
             setTimeout(function() { window._piPayInFlight = false; }, 65000);
             var name = nameEl ? nameEl.value.trim() : "";
             var val = valEl ? parseFloat(valEl.value) : NaN;
