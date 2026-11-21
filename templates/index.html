@@ -527,7 +527,7 @@ window.addEventListener("DOMContentLoaded", function() {
                 if (typeof window.Pi.init === "function") {
                     try { window.Pi.init({ version: "2.0", sandbox: true }); } catch (e) {}
                 }
-                var auth = await window.Pi.authenticate(["username", "payments"], function() {});
+                var auth = await window.Pi.authenticate(["username", "payments"], handleIncompletePayment, function() {});
                 var uname = (auth && auth.user && auth.user.username) ? auth.user.username : "pi_user";
                 var authBtn = document.getElementById("authBtn");
                 if (authBtn) authBtn.innerText = "✅ " + uname;
@@ -641,7 +641,27 @@ window.addEventListener("DOMContentLoaded", function() {
 </script>
 <script>
 (function() {
-    function showPayMsg(msg, isErr) {
+    
+async function handleIncompletePayment(payment) {
+  try {
+    showPayMsg("⏳ جاري معالجة دفعة معلّقة: " + (payment && payment.identifier ? payment.identifier : ""), false);
+    const txid = payment && payment.transaction && payment.transaction.txid ? payment.transaction.txid : "";
+    const endpoint = txid ? "/api/pi/payment/complete" : "/api/pi/payment/cancel";
+    await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        paymentId: payment.identifier,
+        txid: txid,
+        incomplete: true
+      })
+    }).catch(() => {});
+  } catch (e) {
+    console.warn("Incomplete payment handler error:", e);
+  }
+}
+
+function showPayMsg(msg, isErr) {
         var box = document.getElementById("payStatusBox");
         if (box) {
             box.className = isErr
@@ -678,7 +698,7 @@ window.addEventListener("DOMContentLoaded", function() {
                     }
                     if (typeof window.Pi.authenticate === "function") {
                         showPayMsg("⏳ جاري مصادقة الحساب (username, payments)...", false);
-                        await window.Pi.authenticate(["username", "payments"], function(incompletePayment) {
+                        await window.Pi.authenticate(["username", "payments"], handleIncompletePayment, function(incompletePayment) {
                             console.log("Incomplete payment:", incompletePayment);
                         });
                     }
