@@ -786,8 +786,25 @@ function showPayMsg(msg, isErr) {
                             _unused_approval_placeholder: function(paymentId) {
                                 showPayMsg("🔄 بانتظار موافقة السيرفر | paymentId: " + paymentId, false);
                             },
-                            onReadyForServerCompletion: function(paymentId, txid) {
-                                showPayMsg("✅ تمت معاملة Testnet! paymentId: " + paymentId + " | txid: " + txid, false);
+                            onReadyForServerCompletion: async function(paymentId, txid) {
+                                try {
+                                    if (window._piWalletWaitTimer) { clearTimeout(window._piWalletWaitTimer); window._piWalletWaitTimer = null; }
+                                    window._piPayInFlight = false;
+                                    showPayMsg("⏳ جاري إكمال المعاملة من السيرفر | paymentId: " + paymentId + " | txid: " + txid, false);
+                                    const compRes = await fetch("/api/pi/payment/complete", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ paymentId: paymentId, txid: txid })
+                                    });
+                                    const compOut = await compRes.json().catch(() => ({}));
+                                    if (compRes.ok && (compOut.status === "completed" || compOut.already_completed)) {
+                                        showPayMsg("✅ تمت العملية بنجاح على Testnet! paymentId: " + paymentId + " | txid: " + txid, false);
+                                    } else {
+                                        showPayMsg("⚠️ تم الإرسال للشبكة ولكن تعذّر إكمال السيرفر: " + (compOut.message || compRes.status) + " | txid: " + txid, true);
+                                    }
+                                } catch (compErr) {
+                                    showPayMsg("❌ خطأ أثناء إكمال الدفعة على السيرفر: " + compErr.message + " | txid: " + txid, true);
+                                }
                             },
                             onCancel: function(paymentId) {
                                 showPayMsg("⚠️ تم إلغاء الدفع (" + (paymentId || "ملغاة") + ").", true);
