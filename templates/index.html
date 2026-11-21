@@ -761,7 +761,11 @@ function showPayMsg(msg, isErr) {
                                     });
                                     const out = await res.json().catch(() => ({}));
                                     if (res.ok && out.already_approved) {
-                                        if (typeof showPayMsg === "function") showPayMsg("✅ الدفعة معتمدة مسبقاً، بانتظار تأكيد المحفظة...", false);
+                                        if (typeof showPayMsg === "function") showPayMsg("✅ الدفعة معتمدة مسبقاً، بانتظار تأكيد المحفظة... (إذا لم تظهر نافذة المحفظة خلال 30 ثانية فتحقق من إعدادات التطبيق في Developer Portal)", false);
+                                    if (window._piWalletWaitTimer) clearTimeout(window._piWalletWaitTimer);
+                                    window._piWalletWaitTimer = setTimeout(function() {
+                                        if (typeof showPayMsg === "function") showPayMsg("⚠️ لم تفتح نافذة تأكيد المحفظة في الوقت المحدد. تأكد أن التطبيق على Testnet في Developer Portal وأن المحفظة على Testnet ثم أعد المحاولة.", true);
+                                    }, 30000);
                                     }
                                     if (!res.ok || out.status === "error" || out.status === "pi_api_error") {
                                         if (typeof showPayMsg === "function") showPayMsg("❌ فشل اعتماد الدفعة: " + (out.message || res.status), true);
