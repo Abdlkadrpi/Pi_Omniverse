@@ -141,3 +141,52 @@ def handle_incomplete_payment():
         "status": "acknowledged",
         "message": f"تم رصد المعاملة المعلقة {payment_id} وجاري معالجتها."
     }), 200
+
+@pi_bp.route("/api/pi/payment/incomplete", methods=["POST"])
+def incomplete_pi_payment_v2():
+    import urllib.request
+    import urllib.error
+    import json
+
+    data = request.get_json(silent=True) or {}
+    payment_id = "".join((data.get("paymentId") or "").split())
+    txid = "".join((data.get("txid") or "").split())
+    print(f"[PI_INCOMPLETE_V2] payment_id={payment_id!r} txid={txid!r}", flush=True)
+
+    if not payment_id:
+        return jsonify({"status": "ignored", "message": "missing paymentId"}), 200
+
+    api_key = (os.environ.get("PI_API_KEY") or "").strip()
+    if not api_key:
+        print("[PI_INCOMPLETE_V2] missing PI_API_KEY", flush=True)
+        return jsonify({"status": "error", "message": "PI_API_KEY missing"}), 500
+
+    if txid:
+        url = f"https://api.minepi.com/v2/payments/{payment_id}/complete"
+        payload = json.dumps({"txid": txid}).encode("utf-8")
+    else:
+        url = f"https://api.minepi.com/v2/payments/{payment_id}/cancel"
+        payload = b"{}"
+
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        headers={
+            "Authorization": f"Key {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "PiOmniverse/1.0"
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+            print(f"[PI_INCOMPLETE_V2_OK] {payment_id} -> {body}", flush=True)
+            return jsonify({"status": "resolved", "paymentId": payment_id, "txid": txid, "pi_response": body}), 200
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")
+        print(f"[PI_INCOMPLETE_V2_ERR] {payment_id} code={e.code} -> {err_body}", flush=True)
+        return jsonify({"status": "pi_api_err", "code": e.code, "message": err_body}), 200
+    except Exception as exc:
+        print(f"[PI_INCOMPLETE_V2_EXC] {payment_id} -> {exc}", flush=True)
+        return jsonify({"status": "error", "message": str(exc)}), 200

@@ -812,9 +812,13 @@ function showPayMsg(msg, isErr) {
                                 }
                             },
                             onCancel: function(paymentId) {
+                                    window._piPayInFlight = false;
+                                    if (window._piWalletWaitTimer) { clearTimeout(window._piWalletWaitTimer); window._piWalletWaitTimer = null; }
                                 showPayMsg("⚠️ تم إلغاء الدفع (" + (paymentId || "ملغاة") + ").", true);
                             },
                             onError: function(error, payment) {
+                                    window._piPayInFlight = false;
+                                    if (window._piWalletWaitTimer) { clearTimeout(window._piWalletWaitTimer); window._piWalletWaitTimer = null; }
                                 var pid = payment && payment.identifier ? payment.identifier : "";
                                 showPayMsg("❌ خطأ Pi SDK (" + pid + "): " + (error && error.message ? error.message : JSON.stringify(error || {})), true);
                             }
