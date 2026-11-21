@@ -797,12 +797,18 @@ function showPayMsg(msg, isErr) {
                                     if (window._piWalletWaitTimer) { clearTimeout(window._piWalletWaitTimer); window._piWalletWaitTimer = null; }
                                     window._piPayInFlight = false;
                                     showPayMsg("⏳ جاري إكمال المعاملة من السيرفر | paymentId: " + paymentId + " | txid: " + txid, false);
-                                    const compRes = await fetch("/api/pi/payment/complete", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({ paymentId: paymentId, txid: txid })
-                                    });
-                                    const compOut = await compRes.json().catch(() => ({}));
+                                    let compRes = null;
+                                    let compOut = {};
+                                    for (let attempt = 1; attempt <= 4; attempt++) {
+                                        compRes = await fetch("/api/pi/payment/complete", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ paymentId: paymentId, txid: txid })
+                                        });
+                                        compOut = await compRes.json().catch(() => ({}));
+                                        if (compRes.ok && (compOut.status === "completed" || compOut.already_completed)) break;
+                                        if (attempt < 4) await new Promise(r => setTimeout(r, 2500));
+                                    }
                                     if (compRes.ok && (compOut.status === "completed" || compOut.already_completed)) {
                                         showPayMsg("✅ تمت العملية بنجاح على Testnet! paymentId: " + paymentId + " | txid: " + txid, false);
                                     } else {
