@@ -170,6 +170,8 @@ def incomplete_pi_payment_v2():
             print(f"[PI_INCOMPLETE_V2_OK] {payment_id} -> {body}", flush=True)
             return jsonify({"status": "resolved", "paymentId": payment_id, "txid": txid, "pi_response": body}), 200
     except urllib.error.HTTPError as e:
+        err_raw = e.read().decode('utf-8', errors='replace')
+        print(f'[PI_COMPLETE_ERR_DETAIL] status={e.code} paymentId={payment_id} txid={txid} err={err_raw}', flush=True)
         err_body = e.read().decode("utf-8", errors="replace")
         print(f"[PI_INCOMPLETE_V2_ERR] {payment_id} code={e.code} -> {err_body}", flush=True)
         return jsonify({"status": "pi_api_err", "code": e.code, "message": err_body}), 200
