@@ -23,6 +23,29 @@ window.handleIncompletePayment = async function(payment) {
 };
 var handleIncompletePayment = window.handleIncompletePayment;
 </script>
+<script>
+(function() {
+  async function _omniHandleIncomplete(payment) {
+    try {
+      const pid = payment && payment.identifier ? payment.identifier : "";
+      const txid = payment && payment.transaction && payment.transaction.txid ? payment.transaction.txid : "";
+      if (typeof window.showPayMsg === "function") {
+        window.showPayMsg("⏳ جاري معالجة دفعة معلّقة: " + pid, false);
+      }
+      await fetch("/api/pi/payment/incomplete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: pid, txid: txid, incomplete: true })
+      }).catch(() => {});
+    } catch (e) {
+      console.warn("Incomplete payment handler error:", e);
+    }
+  }
+  window.handleIncompletePayment = _omniHandleIncomplete;
+  globalThis.handleIncompletePayment = _omniHandleIncomplete;
+})();
+</script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>

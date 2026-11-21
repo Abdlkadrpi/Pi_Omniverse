@@ -1,3 +1,24 @@
+(function() {
+  async function _omniHandleIncomplete(payment) {
+    try {
+      const pid = payment && payment.identifier ? payment.identifier : "";
+      const txid = payment && payment.transaction && payment.transaction.txid ? payment.transaction.txid : "";
+      if (typeof window.showPayMsg === "function") {
+        window.showPayMsg("⏳ جاري معالجة دفعة معلّقة: " + pid, false);
+      }
+      await fetch("/api/pi/payment/incomplete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: pid, txid: txid, incomplete: true })
+      }).catch(() => {});
+    } catch (e) {
+      console.warn("Incomplete payment handler error:", e);
+    }
+  }
+  window.handleIncompletePayment = _omniHandleIncomplete;
+  globalThis.handleIncompletePayment = _omniHandleIncomplete;
+})();
+
 // ==========================================
 // OMNIVERSE HUB & TRIPOLI NODE DASHBOARD JS
 // ==========================================
