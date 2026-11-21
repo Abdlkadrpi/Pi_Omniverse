@@ -722,17 +722,13 @@ function showPayMsg(msg, isErr) {
             var nameEl = document.getElementById("assetName");
             var valEl = document.getElementById("assetVal");
             var curEl = document.getElementById("assetCurrency");
-            if (window._piPayInFlight && (!window._piPayStartedAt || (Date.now() - window._piPayStartedAt > 5000))) {
-                    window._piPayInFlight = false;
-                }
-                if (window._piPayInFlight) {
-                showPayMsg("⏳ هناك عملية دفع قيد التنفيذ بالفعل، يرجى الانتظار...", false);
+            if (window._piPayInFlight && window._piPayStartedAt && (Date.now() - window._piPayStartedAt < 1200)) {
                 return;
             }
-            window._piPayInFlight = true; window._piPayStartedAt = Date.now();
-                clearTimeout(window._piPayWatchdog);
-                window._piPayWatchdog = setTimeout(() => { window._piPayInFlight = false; }, 5000);
-            setTimeout(function() { window._piPayInFlight = false; }, 65000);
+            window._piPayInFlight = true;
+            window._piPayStartedAt = Date.now();
+            clearTimeout(window._piPayWatchdog);
+            window._piPayWatchdog = setTimeout(function() { window._piPayInFlight = false; }, 1500);
             var name = nameEl ? nameEl.value.trim() : "";
             var val = valEl ? parseFloat(valEl.value) : NaN;
             var currency = curEl ? curEl.value : "PI";
