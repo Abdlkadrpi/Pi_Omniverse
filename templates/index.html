@@ -739,8 +739,11 @@ function showPayMsg(msg, isErr) {
                     }
                     if (typeof window.Pi.authenticate === "function") {
                         showPayMsg("⏳ جاري مصادقة الحساب (username, payments)...", false);
-                        await window.Pi.authenticate(["username", "payments"], handleIncompletePayment, function(incompletePayment) {
+                        await window.Pi.authenticate(["username", "payments"], function(incompletePayment) {
                             console.log("Incomplete payment:", incompletePayment);
+                            if (typeof handleIncompletePayment === "function") {
+                                try { handleIncompletePayment(incompletePayment); } catch (eInc) {}
+                            }
                         });
                     }
                     showPayMsg("⏳ جاري فتح نافذة Pi.createPayment بمبلغ " + val + " Pi...", false);
