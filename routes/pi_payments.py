@@ -62,7 +62,7 @@ def approve_pi_payment():
             }), 200
     except urllib.error.HTTPError as e:
         err_body = e.read().decode("utf-8", errors="replace")
-        if "already_approve" in err_body:
+        if "already_approve" in err_body or "cancelled_payment" in err_body or "already cancelled" in err_body:
             return jsonify({
                 "status": "approved",
                 "already_approved": True,
