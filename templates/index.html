@@ -4,7 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">أومنيفيرس | النظام البيئي الذكي وعقدة طرابلس</title>
-    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="https://sdk.minepi.com/pi-sdk.js">
+window.handleIncompletePayment = async function(payment) {
+  try {
+    const pid = payment && payment.identifier ? payment.identifier : "";
+    const txid = payment && payment.transaction && payment.transaction.txid ? payment.transaction.txid : "";
+    if (typeof showPayMsg === "function") {
+      showPayMsg("⏳ جاري معالجة دفعة معلّقة: " + pid, false);
+    }
+    await fetch("/api/pi/payment/incomplete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentId: pid, txid: txid, incomplete: true })
+    }).catch(() => {});
+  } catch (e) {
+    console.warn("Incomplete payment handler error:", e);
+  }
+};
+var handleIncompletePayment = window.handleIncompletePayment;
+</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
