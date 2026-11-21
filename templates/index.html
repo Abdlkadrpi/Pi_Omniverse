@@ -646,7 +646,7 @@ async function handleIncompletePayment(payment) {
   try {
     showPayMsg("⏳ جاري معالجة دفعة معلّقة: " + (payment && payment.identifier ? payment.identifier : ""), false);
     const txid = payment && payment.transaction && payment.transaction.txid ? payment.transaction.txid : "";
-    const endpoint = txid ? "/api/pi/payment/complete" : "/api/pi/payment/cancel";
+    const endpoint = "/api/pi/payment/incomplete";
     await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
