@@ -128,20 +128,6 @@ def complete_pi_payment():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@pi_bp.route('/api/pi/payment/incomplete', methods=['POST'])
-def handle_incomplete_payment():
-    """
-    معالجة المعاملات المعلقة أو غير المكتملة بناءً على توجيهات Pi SDK
-    """
-    data = request.get_json()
-    payment_id = data.get('paymentId')
-    
-    # سجل المعاملة المعلقة لمراجعتها أو إلغائها برمجياً
-    return jsonify({
-        "status": "acknowledged",
-        "message": f"تم رصد المعاملة المعلقة {payment_id} وجاري معالجتها."
-    }), 200
-
 @pi_bp.route("/api/pi/payment/incomplete", methods=["POST"])
 def incomplete_pi_payment_v2():
     import urllib.request
