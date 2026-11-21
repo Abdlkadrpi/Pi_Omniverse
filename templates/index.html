@@ -758,6 +758,7 @@ function showPayMsg(msg, isErr) {
                         });
                     }
                     showPayMsg("⏳ جاري فتح نافذة Pi.createPayment بمبلغ " + val + " Pi...", false);
+                    window._piLastAttempt = { amount: Number(val), memo: "Omniverse RWA: " + name, ts: Date.now() };
                     var created = window.Pi.createPayment(
                         {
                             amount: Number(val),
