@@ -11,6 +11,70 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+@pi_bp.route('/api/pi/payment/approve', methods=['POST'])
+def approve_pi_payment():
+    """
+    الموافقة المبدئية على الدفعة من جهة السيرفر عبر Pi Platform API
+    """
+    import urllib.request
+    import urllib.error
+    import json
+
+    data = request.get_json(silent=True) or {}
+    payment_id = (data.get("paymentId") or "").strip()
+
+    if not payment_id:
+        return jsonify({"status": "error", "message": "معرّف الدفعة paymentId مفقود"}), 400
+
+    api_key = (
+        os.environ.get("PI_API_KEY")
+        or os.environ.get("PI_SERVER_API_KEY")
+        or os.environ.get("PI_APP_SECRET")
+        or ""
+    ).strip()
+
+    if not api_key:
+        return jsonify({
+            "status": "error",
+            "paymentId": payment_id,
+            "message": "متغير PI_API_KEY غير مضبوط في بيئة السيرفر للموافقة على الدفعة"
+        }), 500
+
+    url = f"https://api.minepi.com/v2/payments/{payment_id}/approve"
+    req = urllib.request.Request(
+        url,
+        data=b"{}",
+        method="POST",
+        headers={
+            "Authorization": f"Key {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+            return jsonify({
+                "status": "approved",
+                "paymentId": payment_id,
+                "pi_response": body,
+                "message": f"تمت الموافقة المبدئية على الدفعة {payment_id} عبر Pi Platform API."
+            }), 200
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")
+        return jsonify({
+            "status": "pi_api_error",
+            "paymentId": payment_id,
+            "http_code": e.code,
+            "message": f"فشل اعتماد الدفعة {payment_id} من Pi API ({e.code}): {err_body}"
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "paymentId": payment_id,
+            "message": f"تعذر الاتصال بـ Pi Platform API أثناء الموافقة: {str(e)}"
+        }), 500
+
 @pi_bp.route('/api/pi/payment/complete', methods=['POST'])
 def complete_pi_payment():
     """

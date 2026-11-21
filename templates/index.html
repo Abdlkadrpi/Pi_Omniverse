@@ -751,7 +751,23 @@ function showPayMsg(msg, isErr) {
                             metadata: { asset_name: name, currency: currency, mode: "testnet" }
                         },
                         {
-                            onReadyForServerApproval: function(paymentId) {
+                            onReadyForServerApproval: async function(paymentId) {
+                                try {
+                                    if (typeof showPayMsg === "function") showPayMsg("⏳ جاري اعتماد الدفعة من السيرفر: " + paymentId, false);
+                                    const res = await fetch("/api/pi/payment/approve", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ paymentId: paymentId })
+                                    });
+                                    const out = await res.json().catch(() => ({}));
+                                    if (!res.ok || out.status === "error" || out.status === "pi_api_error") {
+                                        if (typeof showPayMsg === "function") showPayMsg("❌ فشل اعتماد الدفعة: " + (out.message || res.status), true);
+                                    }
+                                } catch (err) {
+                                    if (typeof showPayMsg === "function") showPayMsg("❌ خطأ شبكة أثناء اعتماد الدفعة: " + err.message, true);
+                                }
+                            },
+                            _unused_approval_placeholder: function(paymentId) {
                                 showPayMsg("🔄 بانتظار موافقة السيرفر | paymentId: " + paymentId, false);
                             },
                             onReadyForServerCompletion: function(paymentId, txid) {
