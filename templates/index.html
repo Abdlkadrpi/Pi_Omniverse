@@ -760,6 +760,9 @@ function showPayMsg(msg, isErr) {
                                         body: JSON.stringify({ paymentId: paymentId })
                                     });
                                     const out = await res.json().catch(() => ({}));
+                                    if (res.ok && out.already_approved) {
+                                        if (typeof showPayMsg === "function") showPayMsg("✅ الدفعة معتمدة مسبقاً، بانتظار تأكيد المحفظة...", false);
+                                    }
                                     if (!res.ok || out.status === "error" || out.status === "pi_api_error") {
                                         if (typeof showPayMsg === "function") showPayMsg("❌ فشل اعتماد الدفعة: " + (out.message || res.status), true);
                                     }

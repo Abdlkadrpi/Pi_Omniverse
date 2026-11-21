@@ -62,6 +62,14 @@ def approve_pi_payment():
             }), 200
     except urllib.error.HTTPError as e:
         err_body = e.read().decode("utf-8", errors="replace")
+        if "already_approve" in err_body:
+            return jsonify({
+                "status": "approved",
+                "already_approved": True,
+                "paymentId": payment_id,
+                "pi_response": err_body,
+                "message": f"الدفعة {payment_id} معتمدة مسبقاً لدى Pi API."
+            }), 200
         return jsonify({
             "status": "pi_api_error",
             "paymentId": payment_id,
