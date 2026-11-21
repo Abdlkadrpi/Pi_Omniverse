@@ -32,11 +32,16 @@ var handleIncompletePayment = window.handleIncompletePayment;
       if (typeof window.showPayMsg === "function") {
         window.showPayMsg("⏳ جاري معالجة دفعة معلّقة: " + pid, false);
       }
-      await fetch("/api/pi/payment/incomplete", {
+      const rInc = await fetch("/api/pi/payment/incomplete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentId: pid, txid: txid, incomplete: true })
-      }).catch(() => {});
+      }).catch(() => null);
+      window._piPayInFlight = false;
+      if (window._piWalletWaitTimer) { clearTimeout(window._piWalletWaitTimer); window._piWalletWaitTimer = null; }
+      if (typeof window.showPayMsg === "function") {
+        window.showPayMsg("✅ تمت معالجة الدفعة المعلّقة (" + pid + "). يمكنك الآن الضغط على دفع عبر Pi SDK لبدء معاملة جديدة.", false);
+      }
     } catch (e) {
       console.warn("Incomplete payment handler error:", e);
     }
