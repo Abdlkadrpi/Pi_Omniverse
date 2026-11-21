@@ -828,6 +828,8 @@ function showPayMsg(msg, isErr) {
                         await created;
                     }
                 } catch (err) {
+                    window._piPayInFlight = false;
+                    if (window._piWalletWaitTimer) { clearTimeout(window._piWalletWaitTimer); window._piWalletWaitTimer = null; }
                     showPayMsg("❌ خطأ أثناء تشغيل الدفع: " + (err && err.message ? err.message : String(err)), true);
                 }
                 return;
