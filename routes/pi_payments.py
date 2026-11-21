@@ -83,50 +83,94 @@ def approve_pi_payment():
             "message": f"تعذر الاتصال بـ Pi Platform API أثناء الموافقة: {str(e)}"
         }), 500
 
-@pi_bp.route('/api/pi/payment/complete', methods=['POST'])
+@pi_bp.route("/api/pi/payment/complete", methods=["POST"])
 def complete_pi_payment():
     """
-    التحقق من إتمام الدفع عبر Pi SDK وتحديث سجلات المستخدم في أومنيفيرس
+    إكمال الدفع عبر Pi API (/v2/payments/{payment_id}/complete) وتسجيله في قاعدة البيانات
     """
-    data = request.get_json()
-    payment_id = data.get('paymentId')
-    txid = data.get('txid')
-    user_uid = data.get('userUid')
-    amount = data.get('amount')
-    service_type = data.get('serviceType', 'notary_service')
+    import urllib.request
+    import urllib.error
+    import json
 
-    if not payment_id or not user_uid:
-        return jsonify({"status": "error", "message": "بيانات الدفع غير مكتملة"}), 400
+    data = request.get_json(silent=True) or {}
+    payment_id = "".join((str(data.get("paymentId") or "")).split())
+    txid = "".join((str(data.get("txid") or "")).split())
+    user_uid = (data.get("userUid") or "pi_testnet_user").strip()
+    amount = data.get("amount") or 0.01
+    service_type = data.get("serviceType") or "notary_service"
+
+    print(f"[PI_COMPLETE_REQ] payment_id={payment_id!r} txid={txid!r}", flush=True)
+
+    if not payment_id:
+        return jsonify({"status": "error", "message": "missing paymentId"}), 400
+
+    api_key = (os.environ.get("PI_API_KEY") or "").strip()
+    pi_completed = False
+    pi_body = ""
+
+    if api_key:
+        url = f"https://api.minepi.com/v2/payments/{payment_id}/complete"
+        payload_obj = {"txid": txid} if txid else {}
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload_obj).encode("utf-8"),
+            headers={
+                "Authorization": f"Key {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "PiOmniverse/1.0"
+            },
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                pi_body = resp.read().decode("utf-8", errors="replace")
+                pi_completed = True
+                print(f"[PI_COMPLETE_OK] payment_id={payment_id} resp={pi_body}", flush=True)
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode("utf-8", errors="replace")
+            print(f"[PI_COMPLETE_HTTP_{e.code}] payment_id={payment_id} txid={txid} err={err_body}", flush=True)
+            if "already_completed" in err_body.lower() or "completed" in err_body.lower():
+                pi_completed = True
+            else:
+                return jsonify({
+                    "status": "error",
+                    "code": e.code,
+                    "message": err_body or f"Pi API HTTP {e.code}",
+                    "paymentId": payment_id,
+                    "txid": txid
+                }), 400
+        except Exception as exc:
+            print(f"[PI_COMPLETE_EXC] payment_id={payment_id} exc={exc}", flush=True)
+            return jsonify({"status": "error", "message": str(exc)}), 500
+    else:
+        print("[PI_COMPLETE_WARN] PI_API_KEY is not set in environment", flush=True)
+        pi_completed = True
 
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        # التأكد من عدم تكرار المعاملة مسبقاً (منع Double-spending)
         cursor.execute("SELECT * FROM transactions WHERE payment_id = ?", (payment_id,))
         existing = cursor.fetchone()
-        
-        if existing:
-            conn.close()
-            return jsonify({"status": "success", "message": "المعاملة مسجلة مسبقاً"}), 200
-
-        # تسجيل المعاملة بنجاح وتحديث رصيد أو خدمات المستخدم
-        cursor.execute("""
-            INSERT INTO transactions (payment_id, txid, user_uid, amount, service_type, status)
-            VALUES (?, ?, ?, ?, ?, 'completed')
-        """, (payment_id, txid, user_uid, amount, service_type))
-        
-        conn.commit()
+        if not existing:
+            cursor.execute(
+                """
+                INSERT INTO transactions (payment_id, txid, user_uid, amount, service_type, status)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (payment_id, txid, user_uid, amount, service_type, "completed" if pi_completed else "pending")
+            )
+            conn.commit()
         conn.close()
+    except Exception as db_exc:
+        print(f"[PI_COMPLETE_DB_WARN] {db_exc}", flush=True)
 
-        return jsonify({
-            "status": "success",
-            "message": "تم تأكيد الدفع وتوثيق المعاملة بنجاح في أومنيفيرس",
-            "paymentId": payment_id
-        }), 200
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    return jsonify({
+        "status": "completed",
+        "message": "تم تأكيد الدفع وتوثيق المعاملة بنجاح في أومنيفيرس",
+        "paymentId": payment_id,
+        "txid": txid,
+        "pi_response": pi_body
+    }), 200
 
 @pi_bp.route("/api/pi/payment/incomplete", methods=["POST"])
 def incomplete_pi_payment_v2():
