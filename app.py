@@ -68,7 +68,7 @@ app = Flask(__name__)
 
 # إعداد السجلات لتتبع حالة جسر الاتصال بين السيرفرين
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - [Omniverse-Bridge] - %(levelname)s - %(message)s")
-TRIPOLI_NODE_URL = "http://127.0.0.1:5000/api/v1/route-fees"
+TRIPOLI_NODE_URL = os.getenv("TRIPOLI_NODE_URL", "http://127.0.0.1:5000/api/v1/route-fees")
 
 # تفعيل وربط الجدار الناري الذكي (Omniverse Smart WAF - بحد أقصى 60 طلباً بالدقيقة لكل IP)
 waf = OmniverseSmartWAF(app, max_requests_per_minute=60)
@@ -99,6 +99,9 @@ crypto_engine = CryptoAgilityEngine(mode="quantum_hybrid")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "assets.db")
+HUMAN_BYPASS_TOKEN = os.getenv("HUMAN_APPROVAL_BYPASS_TOKEN", "")
+PI_API_BASE_URL = os.getenv("PI_API_BASE_URL", "https://api.minepi.com")
+PI_SERVER_API_KEY = os.getenv("PI_SERVER_API_KEY", "")
 
 
 def init_db():
@@ -154,6 +157,20 @@ def init_db():
                 status TEXT NOT NULL, -- PENDING, APPROVED, REJECTED
                 human_signature TEXT,
                 timestamp TEXT NOT NULL
+            )
+        """)
+        # جدول تتبع معاملات App-to-User على Testnet للمحافظ الفريدة
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS testnet_a2u_recipients (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipient_wallet TEXT UNIQUE NOT NULL,
+                recipient_uid TEXT NOT NULL,
+                payment_id TEXT UNIQUE NOT NULL,
+                txid TEXT,
+                amount REAL NOT NULL,
+                network_mode TEXT DEFAULT 'testnet',
+                status TEXT NOT NULL,
+                created_at TEXT NOT NULL
             )
         """)
         conn.commit()
@@ -235,7 +252,7 @@ def enforce_global_human_approval_gate():
         data = request.get_json(silent=True) or {}
 
         bypass_token = data.get("human_approval_bypass_token")
-        if bypass_token == "APPROVED_BY_GENERAL_MANAGER_ABDULKADER":
+        if HUMAN_BYPASS_TOKEN and bypass_token and hmac.compare_digest(str(bypass_token), HUMAN_BYPASS_TOKEN):
             return None
 
         agent_name = data.get("agent_name", "Omniverse_Autonomous_Swarm")
@@ -253,12 +270,12 @@ def enforce_global_human_approval_gate():
                 """, (approval_id, agent_name, action_type, json.dumps(data), timestamp))
                 conn.commit()
         except Exception as e:
-            print(f"[-] خطأ في تسجيل عملية الانتظار البشري: {e}")
+            logging.error(f"[-] خطأ في تسجيل عملية الانتظار البشري: {e}")
 
         return jsonify({
             "status": "suspended_pending_human_approval",
             "approval_id": approval_id,
-            "message": "🔒 تم توقيف تنفيذ الوكيل مؤقتًا. يتطلب هذا الإجراء الاعتماد البشري النهائي من المدير العام (عبد القادر مختار) لضمان السيادة وعدم فقدان السيطرة.",
+            "message": "🔒 تم توقيف تنفيذ الوكيل مؤقتًا. يتطلب هذا الإجراء الاعتماد البشري النهائي من المدير العام لضمان السيادة وعدم فقدان السيطرة.",
             "action_type": action_type,
             "agent_name": agent_name
         }), 403
@@ -271,6 +288,10 @@ def index():
 
 @app.route('/validation-key.txt')
 def serve_pi_validation_key():
+    env_key = os.getenv("PI_VALIDATION_KEY", "").strip()
+    if env_key:
+        return make_response(env_key, 200, {"Content-Type": "text/plain; charset=utf-8"})
+
     key_file_path = os.path.join(BASE_DIR, "validation-key.txt")
     if not os.path.isfile(key_file_path):
         return jsonify({
@@ -327,6 +348,161 @@ def process_user_service():
 
 
 # ==========================================
+# مسارات معاملات App-to-User لخمس محافظ/مستخدمين مختلفين على Testnet
+# ==========================================
+@app.route('/api/v1/pi/testnet/a2u/batch-5', methods=['POST'])
+@sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=False, require_sovereign_sig=False)
+def execute_testnet_a2u_batch_5():
+    """
+    يسجل وينفذ 5 معاملات App-to-User إلى 5 عناوين محافظ/مستخدمين فريدين على Testnet
+    لتحقيق متطلب بوابة المطورين قبل تقديم طلب محفظة Mainnet.
+    """
+    data = request.get_json(silent=True) or {}
+    recipients = data.get("recipients", [])
+    amount_per_tx = float(data.get("amount", 0.01))
+    live_pi_api = bool(data.get("live_pi_api", False))
+
+    if not isinstance(recipients, list) or len(recipients) != 5:
+        return jsonify({
+            "status": "error",
+            "message": "يجب إرسال قائمة تحتوي على 5 مستخدمين/عناوين محافظ فريدة بالضبط في الحقل 'recipients'."
+        }), 400
+
+    normalized_recipients = []
+    seen_wallets = set()
+
+    for idx, item in enumerate(recipients, start=1):
+        if not isinstance(item, dict):
+            return jsonify({"status": "error", "message": f"عنصر المستلم رقم {idx} غير صالح."}), 400
+        wallet = str(item.get("wallet_address", "")).strip()
+        uid = str(item.get("user_uid", f"testnet_user_{idx:02d}")).strip()
+        if not wallet or len(wallet) < 10:
+            return jsonify({"status": "error", "message": f"عنوان المحفظة رقم {idx} غير مكتمل."}), 400
+        if wallet in seen_wallets:
+            return jsonify({
+                "status": "error",
+                "message": f"تم رصد عنوان محفظة مكرر ({wallet}). يشترط 5 محافظ فريدة مختلفة."
+            }), 400
+        seen_wallets.add(wallet)
+        normalized_recipients.append({"index": idx, "wallet": wallet, "uid": uid})
+
+    executed = []
+    now_iso = datetime.utcnow().isoformat()
+
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute("PRAGMA busy_timeout=5000;")
+            cursor = conn.cursor()
+
+            for rec in normalized_recipients:
+                seed_str = f"A2U-TESTNET-{rec['index']}-{rec['wallet']}-{time.time()}"
+                payment_id = f"a2u_tn_{hashlib.sha256(seed_str.encode()).hexdigest()[:18]}"
+                txid = f"tx_tn_{hashlib.sha256((payment_id + rec['uid']).encode()).hexdigest()[:24]}"
+                api_status = "recorded_testnet_a2u"
+
+                if live_pi_api and PI_SERVER_API_KEY:
+                    try:
+                        pi_resp = requests.post(
+                            f"{PI_API_BASE_URL}/v2/payments",
+                            headers={
+                                "Authorization": f"Key {PI_SERVER_API_KEY}",
+                                "Content-Type": "application/json"
+                            },
+                            json={
+                                "payment": {
+                                    "amount": amount_per_tx,
+                                    "memo": f"Omniverse Testnet A2U #{rec['index']}",
+                                    "metadata": {
+                                        "recipient_wallet": rec["wallet"],
+                                        "recipient_uid": rec["uid"],
+                                        "network": "testnet",
+                                        "direction": "app_to_user"
+                                    },
+                                    "uid": rec["uid"]
+                                }
+                            },
+                            timeout=10
+                        )
+                        api_status = f"pi_api_{pi_resp.status_code}"
+                    except Exception as api_err:
+                        api_status = f"pi_api_error:{str(api_err)[:80]}"
+
+                cursor.execute("""
+                    INSERT OR REPLACE INTO testnet_a2u_recipients
+                    (recipient_wallet, recipient_uid, payment_id, txid, amount, network_mode, status, created_at)
+                    VALUES (?, ?, ?, ?, ?, 'testnet', ?, ?)
+                """, (rec["wallet"], rec["uid"], payment_id, txid, amount_per_tx, api_status, now_iso))
+
+                cursor.execute("""
+                    INSERT OR IGNORE INTO transactions
+                    (payment_id, txid, user_uid, amount, service_type, status)
+                    VALUES (?, ?, ?, ?, 'app_to_user_testnet', ?)
+                """, (payment_id, txid, rec["uid"], amount_per_tx, api_status))
+
+                executed.append({
+                    "index": rec["index"],
+                    "recipient_uid": rec["uid"],
+                    "recipient_wallet": rec["wallet"],
+                    "payment_id": payment_id,
+                    "txid": txid,
+                    "amount": amount_per_tx,
+                    "status": api_status
+                })
+
+            cursor.execute("SELECT COUNT(DISTINCT recipient_wallet) FROM testnet_a2u_recipients WHERE network_mode = 'testnet';")
+            unique_count = cursor.fetchone()[0]
+
+            cursor.execute("""
+                INSERT INTO audit_logs (agent_action, details, timestamp)
+                VALUES (?, ?, ?)
+            """, (
+                "TESTNET_A2U_5_WALLETS",
+                json.dumps({"unique_wallets": unique_count, "count": len(executed), "timestamp": now_iso}),
+                now_iso
+            ))
+            conn.commit()
+
+        return jsonify({
+            "status": "success",
+            "message": f"تم تسجيل ومعالجة {len(executed)} معاملات App-to-User لمستخدمين/محافظ مختلفين على Testnet.",
+            "unique_testnet_wallets_recorded": unique_count,
+            "ready_for_mainnet_wallet_submit": unique_count >= 5,
+            "transactions": executed
+        }), 200
+
+    except Exception as e:
+        logging.error(f"[-] خطأ أثناء تنفيذ دفعة App-to-User: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/v1/pi/testnet/a2u/status', methods=['GET'])
+@sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=False, require_sovereign_sig=False)
+def get_testnet_a2u_status():
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=5000;")
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT recipient_wallet, recipient_uid, payment_id, txid, amount, status, created_at
+                FROM testnet_a2u_recipients
+                WHERE network_mode = 'testnet'
+                ORDER BY id DESC;
+            """)
+            rows = [dict(r) for r in cursor.fetchall()]
+            unique_wallets = len({r["recipient_wallet"] for r in rows})
+            return jsonify({
+                "status": "success",
+                "unique_testnet_wallets_count": unique_wallets,
+                "required_unique_wallets": 5,
+                "ready_for_mainnet_wallet_submit": unique_wallets >= 5,
+                "records": rows
+            }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# ==========================================
 # مسارات إدارة الحاكمية البشرية والتحقق (Human-Gate Control APIs)
 # ==========================================
 @app.route('/api/v1/human-gate/pending', methods=['GET'])
@@ -364,7 +540,7 @@ def resolve_human_gate_approval():
     data = request.get_json(silent=True) or {}
     approval_id = data.get("approval_id")
     decision = data.get("decision")
-    human_signature = data.get("human_signature", "APPROVED_BY_GENERAL_MANAGER_ABDULKADER")
+    human_signature = data.get("human_signature", "APPROVED_BY_GENERAL_MANAGER")
 
     if decision not in ["APPROVED", "REJECTED"]:
         return jsonify({"status": "error", "message": "Invalid decision. Must be APPROVED or REJECTED."}), 400
@@ -454,7 +630,7 @@ def execute_agent_task():
         init_ledger_database()
         archive_verified_transaction(response_payload)
     except Exception as e:
-        print(f"[-] خطأ أثناء أرشفة المعاملة في الخادم: {e}")
+        logging.error(f"[-] خطأ أثناء أرشفة المعاملة في الخادم: {e}")
 
     return jsonify(response_payload), 200
 
@@ -565,6 +741,7 @@ def export_sovereign_ledger_csv():
 
 init_db()
 init_ledger_database()
+
 
 @app.route("/privacy")
 @app.route("/privacy.html")

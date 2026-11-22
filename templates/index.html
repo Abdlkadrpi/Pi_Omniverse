@@ -89,7 +89,7 @@ var handleIncompletePayment = window.handleIncompletePayment;
 
         <!-- ================= قسم المستخدم العادي واللجان (User/Ecosystem Hub) ================= -->
         <section id="viewUser" class="space-y-6">
-            
+
             <!-- لوحة الترحيب والقيمة المضافة -->
             <div class="bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 md:p-8 rounded-2xl glow-gold relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -113,7 +113,7 @@ var handleIncompletePayment = window.handleIncompletePayment;
 
             <!-- شبكة الخدمات والأصول (RWA & AI Agents) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 <!-- توثيق الأصول والمدفوعات -->
                 <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
                     <h3 class="font-bold text-sm text-yellow-400 flex items-center gap-2">
@@ -135,6 +135,23 @@ var handleIncompletePayment = window.handleIncompletePayment;
                         </div>
                         <div id="payStatusBox" class="mt-3 text-xs font-mono text-cyan-300 bg-black/80 border border-zinc-700 rounded-xl p-3 break-all">
                             جاهز لبدء الدفع عبر Pi SDK (Testnet / Sandbox).
+                        </div>
+
+                        <!-- قسم معاملات App-to-User إلى 5 محافظ مختلفة على Testnet -->
+                        <div class="pt-3 border-t border-zinc-800 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-amber-400" data-i18n="a2uSectionTitle">💸 معاملات App-to-User لـ 5 محافظ (Testnet)</span>
+                                <span class="text-[10px] text-zinc-400 font-mono">5 Wallets</span>
+                            </div>
+                            <input id="a2uWallet1" data-i18n-placeholder="a2uWallet1Ph" placeholder="عنوان المحفظة 1 (Testnet G...)" class="w-full bg-black p-2 border border-zinc-800 rounded-lg text-white font-mono text-[11px] focus:border-amber-500 outline-none">
+                            <input id="a2uWallet2" data-i18n-placeholder="a2uWallet2Ph" placeholder="عنوان المحفظة 2 (Testnet G...)" class="w-full bg-black p-2 border border-zinc-800 rounded-lg text-white font-mono text-[11px] focus:border-amber-500 outline-none">
+                            <input id="a2uWallet3" data-i18n-placeholder="a2uWallet3Ph" placeholder="عنوان المحفظة 3 (Testnet G...)" class="w-full bg-black p-2 border border-zinc-800 rounded-lg text-white font-mono text-[11px] focus:border-amber-500 outline-none">
+                            <input id="a2uWallet4" data-i18n-placeholder="a2uWallet4Ph" placeholder="عنوان المحفظة 4 (Testnet G...)" class="w-full bg-black p-2 border border-zinc-800 rounded-lg text-white font-mono text-[11px] focus:border-amber-500 outline-none">
+                            <input id="a2uWallet5" data-i18n-placeholder="a2uWallet5Ph" placeholder="عنوان المحفظة 5 (Testnet G...)" class="w-full bg-black p-2 border border-zinc-800 rounded-lg text-white font-mono text-[11px] focus:border-amber-500 outline-none">
+                            <button id="btnRunA2U5" type="button" onclick="executeTestnetA2U5Wallets()" class="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold p-2.5 rounded-xl transition shadow" data-i18n="btnRunA2U5">تنفيذ 5 معاملات App-to-User (Testnet)</button>
+                            <div id="a2uBatchStatusBox" class="text-[11px] font-mono text-amber-200 bg-black/80 border border-zinc-800 rounded-xl p-2.5 break-all">
+                                بانتظار إدخال 5 محافظ Testnet مختلفة وتنفيذ المعاملات.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -172,7 +189,7 @@ var handleIncompletePayment = window.handleIncompletePayment;
 
         <!-- ================= غرفة عمليات عقدة طرابلس السيادية (Admin / Node Command Center) ================= -->
         <section id="viewAdmin" class="space-y-6 hidden">
-            
+
             <div class="bg-zinc-900 p-6 rounded-2xl border border-cyan-600 glow-cyan space-y-4">
                 <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
                     <div>
@@ -291,6 +308,13 @@ var handleIncompletePayment = window.handleIncompletePayment;
                 curLyo: "عملة المنفعة LYO",
                 btnPayPi: "دفع عبر Pi SDK",
                 btnSettleRwa: "تسوية الأصل (RWA)",
+                a2uSectionTitle: "💸 معاملات App-to-User لـ 5 محافظ (Testnet)",
+                a2uWallet1Ph: "عنوان المحفظة 1 (Testnet G...)",
+                a2uWallet2Ph: "عنوان المحفظة 2 (Testnet G...)",
+                a2uWallet3Ph: "عنوان المحفظة 3 (Testnet G...)",
+                a2uWallet4Ph: "عنوان المحفظة 4 (Testnet G...)",
+                a2uWallet5Ph: "عنوان المحفظة 5 (Testnet G...)",
+                btnRunA2U5: "تنفيذ 5 معاملات App-to-User (Testnet)",
                 secAiTitle: "المساعد الذكي ووكيل التفاوض الآلي",
                 aiPromptPlaceholder: "اطرح استفسارك على وكيل النظام الذكي...",
                 btnSendAi: "إرسال الاستفسار للوكيل",
@@ -344,6 +368,13 @@ var handleIncompletePayment = window.handleIncompletePayment;
                 curLyo: "LYO Utility Token",
                 btnPayPi: "Pay via Pi SDK",
                 btnSettleRwa: "Settle Asset (RWA)",
+                a2uSectionTitle: "💸 App-to-User Batch for 5 Wallets (Testnet)",
+                a2uWallet1Ph: "Wallet 1 Address (Testnet G...)",
+                a2uWallet2Ph: "Wallet 2 Address (Testnet G...)",
+                a2uWallet3Ph: "Wallet 3 Address (Testnet G...)",
+                a2uWallet4Ph: "Wallet 4 Address (Testnet G...)",
+                a2uWallet5Ph: "Wallet 5 Address (Testnet G...)",
+                btnRunA2U5: "Run 5 App-to-User Transactions (Testnet)",
                 secAiTitle: "AI Assistant & Autonomous Negotiation Agent",
                 aiPromptPlaceholder: "Ask your query to the smart system agent...",
                 btnSendAi: "Send Query to Agent",
@@ -466,8 +497,8 @@ var handleIncompletePayment = window.handleIncompletePayment;
                         const net = r.net_allocated_lyo !== undefined ? r.net_allocated_lyo : (gross * 0.99).toFixed(4);
                         const burned = r.burned_lyo !== undefined ? r.burned_lyo : (gross * 0.01).toFixed(4);
                         const origin = r.node_origin || r.node_location || 'Tripoli_Node';
-                        const pqcBadge = (r.pqc_verified || r.pqc_signature) 
-                            ? '<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px]">🛡️ PQC موثق</span>' 
+                        const pqcBadge = (r.pqc_verified || r.pqc_signature)
+                            ? '<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px]">🛡️ PQC موثق</span>'
                             : '<span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[10px]">Standard</span>';
                         const time = r.timestamp || '';
 
@@ -548,6 +579,68 @@ var handleIncompletePayment = window.handleIncompletePayment;
                 alert("حدث خطأ أثناء تنفيذ القرار البشري.");
             }
         }
+
+        async function executeTestnetA2U5Wallets() {
+            const box = document.getElementById('a2uBatchStatusBox');
+            const wallets = [1, 2, 3, 4, 5].map(i => {
+                const el = document.getElementById('a2uWallet' + i);
+                return el ? el.value.trim() : '';
+            });
+
+            if (wallets.some(w => !w)) {
+                if (box) {
+                    box.className = "text-[11px] font-mono text-red-300 bg-red-950/70 border border-red-700 rounded-xl p-2.5 break-all";
+                    box.innerText = "❌ يرجى إدخال عناوين المحافظ الخمسة بالكامل.";
+                }
+                return;
+            }
+
+            if (new Set(wallets).size !== 5) {
+                if (box) {
+                    box.className = "text-[11px] font-mono text-red-300 bg-red-950/70 border border-red-700 rounded-xl p-2.5 break-all";
+                    box.innerText = "❌ يجب أن تكون المحافظ الخمسة مختلفة وفريدة (5 unique wallets).";
+                }
+                return;
+            }
+
+            const recipients = wallets.map((w, idx) => ({
+                wallet_address: w,
+                user_uid: "testnet_recipient_" + (idx + 1)
+            }));
+
+            try {
+                if (box) {
+                    box.className = "text-[11px] font-mono text-amber-200 bg-zinc-950 border border-amber-600 rounded-xl p-2.5 break-all";
+                    box.innerText = "⏳ جاري تنفيذ وإرسال معاملات App-to-User للمحافظ الخمس على Testnet...";
+                }
+                const res = await fetch('/api/v1/pi/testnet/a2u/batch-5', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipients: recipients,
+                        amount: 0.01,
+                        live_pi_api: true
+                    })
+                });
+                const out = await res.json().catch(() => ({}));
+                if (res.ok && out.status === "success") {
+                    if (box) {
+                        box.className = "text-[11px] font-mono text-emerald-300 bg-emerald-950/50 border border-emerald-700 rounded-xl p-2.5 break-all";
+                        box.innerText = "✅ " + (out.message || "تمت المعالجة") + " | المحافظ الفريدة: " + out.unique_testnet_wallets_recorded;
+                    }
+                } else {
+                    if (box) {
+                        box.className = "text-[11px] font-mono text-red-300 bg-red-950/70 border border-red-700 rounded-xl p-2.5 break-all";
+                        box.innerText = "❌ " + (out.message || ("HTTP " + res.status));
+                    }
+                }
+            } catch (err) {
+                if (box) {
+                    box.className = "text-[11px] font-mono text-red-300 bg-red-950/70 border border-red-700 rounded-xl p-2.5 break-all";
+                    box.innerText = "❌ خطأ اتصال بالسيرفر: " + (err && err.message ? err.message : String(err));
+                }
+            }
+        }
     </script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
@@ -567,7 +660,7 @@ window.addEventListener("DOMContentLoaded", function() {
             try {
                 showBanner("⏳ جاري الاتصال بـ Pi Network SDK...");
                 if (typeof window.Pi === "undefined") {
-                    showBanner("⚠️ بيئة Pi Browser غير متوفرة أو لم يُحمَّل SDK.", true);
+                    showBanner("⚠️ بيئة Pi Browser غير متوفرة أو لم يُحمَّل SDK.", true);
                     return;
                 }
                 if (typeof window.Pi.init === "function") {
@@ -687,7 +780,7 @@ window.addEventListener("DOMContentLoaded", function() {
 </script>
 <script>
 (function() {
-    
+
 async function handleIncompletePayment(payment) {
   try {
     showPayMsg("⏳ جاري معالجة دفعة معلّقة: " + (payment && payment.identifier ? payment.identifier : ""), false);
