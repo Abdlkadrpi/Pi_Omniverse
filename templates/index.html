@@ -675,9 +675,25 @@ window.addEventListener("DOMContentLoaded", function() {
                 }
                 var auth = await window.Pi.authenticate(["username", "payments"], handleIncompletePayment, function() {});
                 var uname = (auth && auth.user && auth.user.username) ? auth.user.username : "pi_user";
+                var uid = (auth && auth.user && auth.user.uid) ? String(auth.user.uid) : "";
+                window.piUser = (auth && auth.user) ? auth.user : { username: uname, uid: uid };
+                if (uid) localStorage.setItem("pi_uid", uid);
+                if (uname) localStorage.setItem("pi_username", uname);
+
                 var authBtn = document.getElementById("authBtn");
-                if (authBtn) authBtn.innerText = "✅ " + uname;
-                showBanner("✅ تم الاتصال بحساب Pi: " + uname);
+                if (authBtn) {
+                    authBtn.innerText = "✅ " + uname;
+                    var uidBox = document.getElementById("piUidDisplayBox");
+                    if (!uidBox) {
+                        uidBox = document.createElement("div");
+                        uidBox.id = "piUidDisplayBox";
+                        uidBox.className = "mt-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-amber-500/40 text-xs text-amber-300 flex items-center justify-between gap-2";
+                        authBtn.parentNode.insertBefore(uidBox, authBtn.nextSibling);
+                    }
+                    uidBox.innerHTML = '<span class="font-mono break-all select-all">UID: ' + (uid || "غير متوفر") + '</span>' +
+                        (uid ? '<button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(\'' + uid + '\'); showBanner(\'✅ تم نسخ UID بنجاح\');" class="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold shrink-0">نسخ</button>' : '');
+                }
+                showBanner("✅ تم الاتصال بحساب Pi: " + uname + (uid ? " | UID: " + uid : ""));
             } catch (err) {
                 showBanner("فشل الاتصال بـ Pi: " + (err && err.message ? err.message : String(err)), true);
             }
