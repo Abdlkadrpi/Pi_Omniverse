@@ -4,3 +4,4 @@ requests
 gunicorn
 cryptography>=41.0.0
 psutil
+stellar-sdk
