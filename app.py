@@ -354,13 +354,19 @@ def process_user_service():
 @sovereign_zero_trust_guard(require_kyc=True, is_lyo_financial=False, require_sovereign_sig=False)
 def execute_testnet_a2u_batch_5():
     """
-    يسجل وينفذ 5 معاملات App-to-User إلى 5 عناوين محافظ/مستخدمين فريدين على Testnet
-    لتحقيق متطلب بوابة المطورين قبل تقديم طلب محفظة Mainnet.
+    ينفذ ويسجل 5 معاملات App-to-User إلى 5 محافظ/مستخدمين فريدين على Testnet
+    مع دعم الإرسال والإكمال الفعلي عبر Pi Payment API v2 وبلوكشين Testnet عند توفر الإعدادات.
     """
     data = request.get_json(silent=True) or {}
     recipients = data.get("recipients", [])
     amount_per_tx = float(data.get("amount", 0.01))
-    live_pi_api = bool(data.get("live_pi_api", False))
+    live_pi_api = bool(data.get("live_pi_api", True))
+
+    if amount_per_tx <= 0 or amount_per_tx > 100:
+        return jsonify({
+            "status": "error",
+            "message": "قيمة المعاملة 'amount' يجب أن تكون أكبر من 0."
+        }), 400
 
     if not isinstance(recipients, list) or len(recipients) != 5:
         return jsonify({
@@ -375,7 +381,7 @@ def execute_testnet_a2u_batch_5():
         if not isinstance(item, dict):
             return jsonify({"status": "error", "message": f"عنصر المستلم رقم {idx} غير صالح."}), 400
         wallet = str(item.get("wallet_address", "")).strip()
-        uid = str(item.get("user_uid", f"testnet_user_{idx:02d}")).strip()
+        uid = str(item.get("user_uid", "")).strip()
         if not wallet or len(wallet) < 10:
             return jsonify({"status": "error", "message": f"عنوان المحفظة رقم {idx} غير مكتمل."}), 400
         if wallet in seen_wallets:
@@ -386,8 +392,56 @@ def execute_testnet_a2u_batch_5():
         seen_wallets.add(wallet)
         normalized_recipients.append({"index": idx, "wallet": wallet, "uid": uid})
 
+    wallet_seed = (
+        os.environ.get("PI_TESTNET_WALLET_SEED")
+        or os.environ.get("PI_APP_WALLET_SEED")
+        or ""
+    ).strip()
+    horizon_url = (
+        os.environ.get("PI_TESTNET_HORIZON_URL")
+        or "https://api.testnet.minepi.com"
+    ).strip()
+
     executed = []
     now_iso = datetime.utcnow().isoformat()
+
+    def _submit_testnet_onchain_tx(dest_wallet: str, amt: float, memo_text: str):
+        if not wallet_seed:
+            return None, "missing_wallet_seed"
+        try:
+            from stellar_sdk import Server, Keypair, TransactionBuilder, Asset
+        except ImportError:
+            return None, "stellar_sdk_not_installed"
+
+        try:
+            kp = Keypair.from_secret(wallet_seed)
+            server = Server(horizon_url)
+            source_acc = server.load_account(kp.public_key)
+            base_fee = server.fetch_base_fee()
+            passphrase = os.environ.get("PI_TESTNET_PASSPHRASE") or "Pi Testnet"
+            tx = (
+                TransactionBuilder(
+                    source_account=source_acc,
+                    network_passphrase=passphrase,
+                    base_fee=base_fee,
+                )
+                .append_payment_op(
+                    destination=dest_wallet,
+                    asset=Asset.native(),
+                    amount=f"{amt:.7f}".rstrip("0").rstrip("."),
+                )
+                .add_text_memo(memo_text[:28])
+                .set_timeout(30)
+                .build()
+            )
+            tx.sign(kp)
+            resp = server.submit_transaction(tx)
+            tx_hash = resp.get("hash") or resp.get("id")
+            if tx_hash:
+                return tx_hash, "onchain_submitted"
+            return None, "missing_tx_hash"
+        except Exception as onchain_err:
+            return None, f"onchain_err:{str(onchain_err)[:80]}"
 
     try:
         with sqlite3.connect(DB_PATH) as conn:
@@ -397,10 +451,11 @@ def execute_testnet_a2u_batch_5():
             for rec in normalized_recipients:
                 seed_str = f"A2U-TESTNET-{rec['index']}-{rec['wallet']}-{time.time()}"
                 payment_id = f"a2u_tn_{hashlib.sha256(seed_str.encode()).hexdigest()[:18]}"
-                txid = f"tx_tn_{hashlib.sha256((payment_id + rec['uid']).encode()).hexdigest()[:24]}"
+                txid = f"tx_tn_{hashlib.sha256((payment_id + rec['wallet']).encode()).hexdigest()[:24]}"
                 api_status = "recorded_testnet_a2u"
+                pi_detail = ""
 
-                if live_pi_api and PI_SERVER_API_KEY:
+                if live_pi_api and PI_SERVER_API_KEY and rec["uid"]:
                     try:
                         pi_resp = requests.post(
                             f"{PI_API_BASE_URL}/v2/payments",
@@ -421,33 +476,72 @@ def execute_testnet_a2u_batch_5():
                                     "uid": rec["uid"]
                                 }
                             },
-                            timeout=10
+                            timeout=12
                         )
                         api_status = f"pi_api_{pi_resp.status_code}"
+                        try:
+                            resp_json = pi_resp.json()
+                        except Exception:
+                            resp_json = {}
+
+                        created_pid = resp_json.get("identifier") or resp_json.get("id")
+                        if pi_resp.status_code in (200, 201) and created_pid:
+                            payment_id = str(created_pid)
+                            onchain_hash, onchain_state = _submit_testnet_onchain_tx(
+                                rec["wallet"],
+                                amount_per_tx,
+                                f"Omniverse A2U #{rec['index']}"
+                            )
+                            if onchain_hash:
+                                txid = str(onchain_hash)
+                                comp_resp = requests.post(
+                                    f"{PI_API_BASE_URL}/v2/payments/{payment_id}/complete",
+                                    headers={
+                                        "Authorization": f"Key {PI_SERVER_API_KEY}",
+                                        "Content-Type": "application/json"
+                                    },
+                                    json={"txid": txid},
+                                    timeout=12
+                                )
+                                api_status = (
+                                    "pi_a2u_completed"
+                                    if comp_resp.status_code in (200, 201)
+                                    else f"pi_created_complete_{comp_resp.status_code}"
+                                )
+                            else:
+                                api_status = f"pi_created_{onchain_state}"
+                        elif pi_resp.status_code >= 400:
+                            pi_detail = str(resp_json.get("error") or resp_json.get("message") or pi_resp.text)[:90]
                     except Exception as api_err:
                         api_status = f"pi_api_error:{str(api_err)[:80]}"
+                elif live_pi_api and not rec["uid"]:
+                    api_status = "recorded_testnet_a2u_no_uid"
 
                 cursor.execute("""
                     INSERT OR REPLACE INTO testnet_a2u_recipients
                     (recipient_wallet, recipient_uid, payment_id, txid, amount, network_mode, status, created_at)
                     VALUES (?, ?, ?, ?, ?, 'testnet', ?, ?)
-                """, (rec["wallet"], rec["uid"], payment_id, txid, amount_per_tx, api_status, now_iso))
+                """, (rec["wallet"], rec["uid"] or f"wallet_only_{rec['index']}", payment_id, txid, amount_per_tx, api_status, now_iso))
 
                 cursor.execute("""
                     INSERT OR IGNORE INTO transactions
                     (payment_id, txid, user_uid, amount, service_type, status)
                     VALUES (?, ?, ?, ?, 'app_to_user_testnet', ?)
-                """, (payment_id, txid, rec["uid"], amount_per_tx, api_status))
+                """, (payment_id, txid, rec["uid"] or f"wallet_only_{rec['index']}", amount_per_tx, api_status))
 
-                executed.append({
+                item_out = {
                     "index": rec["index"],
-                    "recipient_uid": rec["uid"],
+                    "recipient_uid": rec["uid"] or None,
                     "recipient_wallet": rec["wallet"],
                     "payment_id": payment_id,
                     "txid": txid,
                     "amount": amount_per_tx,
                     "status": api_status
-                })
+                }
+                if pi_detail:
+                    item_out["detail"] = pi_detail
+                executed.append(item_out)
+
 
             cursor.execute("SELECT COUNT(DISTINCT recipient_wallet) FROM testnet_a2u_recipients WHERE network_mode = 'testnet';")
             unique_count = cursor.fetchone()[0]
