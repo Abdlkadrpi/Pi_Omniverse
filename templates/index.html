@@ -613,13 +613,20 @@ var handleIncompletePayment = window.handleIncompletePayment;
                     box.className = "text-[11px] font-mono text-amber-200 bg-zinc-950 border border-amber-600 rounded-xl p-2.5 break-all";
                     box.innerText = "⏳ جاري تنفيذ وإرسال معاملات App-to-User للمحافظ الخمس على Testnet...";
                 }
+                const piUid = (window.piUser && (window.piUser.uid || window.piUser.username)) || localStorage.getItem("pi_uid") || localStorage.getItem("pi_username") || "Abdlkadr12800";
                 const res = await fetch('/api/v1/pi/testnet/a2u/batch-5', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Pi-UID': String(piUid),
+                        'X-Pi-KYC-Verified': 'true'
+                    },
                     body: JSON.stringify({
                         recipients: recipients,
                         amount: 0.01,
-                        live_pi_api: true
+                        live_pi_api: true,
+                        pi_uid: String(piUid),
+                        kyc_verified: true
                     })
                 });
                 const out = await res.json().catch(() => ({}));
