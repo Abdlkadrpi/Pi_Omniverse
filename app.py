@@ -100,11 +100,11 @@ crypto_engine = CryptoAgilityEngine(mode="quantum_hybrid")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "assets.db")
 HUMAN_BYPASS_TOKEN = os.getenv("HUMAN_APPROVAL_BYPASS_TOKEN", "")
-PI_API_BASE_URL = _clean_env_secret("PI_API_BASE_URL", "https://api.minepi.com")
 def _clean_env_secret(name: str, default: str = "") -> str:
     val = os.getenv(name, default) or default
     return "".join(val.replace("\r", "").replace("\n", "").split()).strip()
 
+PI_API_BASE_URL = _clean_env_secret("PI_API_BASE_URL", "https://api.minepi.com")
 PI_SERVER_API_KEY = _clean_env_secret("PI_SERVER_API_KEY", "")
 
 
