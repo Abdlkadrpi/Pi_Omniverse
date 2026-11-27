@@ -850,6 +850,15 @@ def serve_privacy_policy():
         return jsonify({"status": "error", "message": "privacy.html not found"}), 404
     return send_from_directory(BASE_DIR, "privacy.html", mimetype="text/html; charset=utf-8")
 
+@app.route("/legal.html", methods=["GET"])
+def serve_legal_html():
+    templates_dir = os.path.join(BASE_DIR, "templates")
+    legal_path = os.path.join(templates_dir, "legal.html")
+    if not os.path.exists(legal_path):
+        return jsonify({"status": "error", "message": "legal.html not found"}), 404
+    return send_from_directory(templates_dir, "legal.html", mimetype="text/html; charset=utf-8")
+
+
 
 @app.route("/api/v1/pinet/status", methods=["GET"])
 def pinet_readiness_status():
