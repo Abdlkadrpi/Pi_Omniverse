@@ -15,6 +15,7 @@ import hashlib
 import time
 import logging
 from functools import wraps
+from werkzeug.exceptions import HTTPException
 from flask import Flask, request, jsonify, g
 
 # إعداد السجلات الجراحية (Audit Logs)
@@ -61,6 +62,9 @@ class OmniverseSovereignDeployer:
         @app.before_request
         def global_threat_mitigation():
             # تسجيل وقت البدء للوقاية من هجمات الحرمان من الخدمة (DDoS / Slowloris)
+            if request.method == "GET" and request.path == "/legal.html":
+                g.start_time = time.time()
+                return None
             g.start_time = time.time()
             client_ip = request.remote_addr
             user_agent = request.headers.get('User-Agent', '')
@@ -73,6 +77,8 @@ class OmniverseSovereignDeployer:
 
         @app.errorhandler(Exception)
         def handle_security_exception(e):
+            if isinstance(e, HTTPException):
+                return e
             logger.error(f"CRITICAL EXCEPTION CAUGHT BY PRISM SHIELD: {str(e)}")
             return jsonify({
                 "status": "error",
